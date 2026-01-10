@@ -1,0 +1,27 @@
+// Design System Colors (Canonical)
+// Source: User Provided 'Colors' Image
+
+// Brand Colors
+$color-ocean-green: #4EA674; // Primary Brand
+$color-cyprus: #023337; // Secondary Brand (Dark)
+$color-surf-crest: #C1E6BA; // Secondary Brand (Light)
+$color-aqua-spring: #EAF8E7; // Accent
+
+// Functional Colors
+$color-primary: #6467F2; // CTAs / Focus
+$color-success: #21C45D; // Valid fields
+$color-pending: #F0D411; // Pending messages
+$color-error: #EF4343; // Error messages
+$color-grey: #7C7C7C; // Subtle text
+
+// Semantic Mappings (Usage)
+$brand: $color-ocean-green;
+$brand-dark: $color-cyprus;
+$brand-light: $color-surf-crest;
+$brand-accent: $color-aqua-spring;
+
+$action: $color-primary;
+$action-hover: darken($color-primary, 5%);
+
+$text-main: $color-cyprus;
+$text-sub: $color-grey;

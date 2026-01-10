@@ -1,0 +1,20 @@
+@use '../variables' as *;
+
+// Public Store Specific Styles
+.public-layout {
+    // Example: Public headers might use the Brand Light background
+    background-color: #ffffff;
+    color: $text-main;
+
+    .hero-section {
+        background-color: $brand-accent;
+    }
+
+    .product-card {
+        border: 1px solid lighten($color-grey, 30%);
+
+        &:hover {
+            border-color: $brand;
+        }
+    }
+}

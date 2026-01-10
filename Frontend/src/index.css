@@ -1,0 +1,8 @@
+/* Default styles removed to allow Tailwind to control the design system. */
+/* See src/styles/main.scss for Tailwind imports. */
+
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
