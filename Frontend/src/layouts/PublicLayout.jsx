@@ -1,8 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { ShoppingCart, User, Search, Heart, Store, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import api from '../utils/api';
 
 const PublicLayout = () => {
+    const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                // Fetch simple category list (id, name, slug)
+                // Note: Ensure your backend has this endpoint exposed publicly
+                const response = await api.get('/store/public/categories/');
+                setCategories(response.data.results || response.data);
+            } catch (error) {
+                console.error("Failed to load categories:", error);
+                // Fallback to empty list, effectively showing only Home and Shop
+            }
+        };
+        fetchCategories();
+    }, []);
+
     return (
         <div className="flex flex-col min-h-screen font-sans">
             {/* Header */}
@@ -30,7 +48,6 @@ const PublicLayout = () => {
                     {/* Icons / Actions */}
                     <div className="flex items-center gap-6">
                         <Link to="/profile" className="flex flex-col items-center text-gray-500 hover:text-brand transition-colors group">
-                            {/* Filled Style: fill="currentColor" + slightly thicker stroke for boldness if needed, or default stroke */}
                             <User size={24} className="mb-0.5 group-hover:scale-110 transition-transform fill-current" />
                             <span className="text-[10px] font-medium uppercase tracking-wide">Account</span>
                         </Link>
@@ -50,15 +67,19 @@ const PublicLayout = () => {
                 <div className="border-t border-gray-100">
                     <div className="container mx-auto px-4">
                         <nav className="flex items-center justify-center md:justify-start gap-8 py-3 overflow-x-auto no-scrollbar">
-                            {['Home', 'Shop', 'Men', 'Women', 'Kids', 'Accessories', 'Electronics'].map((item) => (
+                            <Link to="/" className="text-sm font-medium text-text-main hover:text-brand whitespace-nowrap transition-colors">Home</Link>
+                            <Link to="/products" className="text-sm font-medium text-text-main hover:text-brand whitespace-nowrap transition-colors">Shop</Link>
+
+                            {categories.map((cat) => (
                                 <Link
-                                    key={item}
-                                    to={item === 'Home' ? '/' : `/products?category=${item}`}
+                                    key={cat.id || cat.name}
+                                    to={`/products?category=${cat.id}`}
                                     className="text-sm font-medium text-text-main hover:text-brand whitespace-nowrap transition-colors"
                                 >
-                                    {item}
+                                    {cat.name}
                                 </Link>
                             ))}
+
                             <span className="flex-1"></span>
                             <Link to="/vendor/register" className="text-sm font-medium text-brand hover:text-brand-dark transition-colors">
                                 Become a Seller

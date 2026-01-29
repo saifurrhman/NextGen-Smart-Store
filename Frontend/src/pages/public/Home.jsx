@@ -2,42 +2,61 @@ import React, { useEffect, useState } from 'react';
 import { Camera, ArrowRight, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import api from '../../utils/api'; // Use centralized API
 
 const Home = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [heroData, setHeroData] = useState({
+        title: "Discover the Latest",
+        highlight: "Deals Up to 50% Off",
+        description: "Experience the future of shopping with our AR Try-On technology. Find the perfect fit from the comfort of your home.",
+        image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop",
+        badge: "New Collection 2026"
+    });
 
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
-                // Fetching from Public Product List Endpoint
-                const response = await axios.get('http://127.0.0.1:8000/api/store/public/products/?limit=4'); // Assuming limit/pagination or just slice later
-                setProducts(response.data.results || response.data);
+                // 1. Fetch Trending Products
+                const prodResponse = await api.get('/store/public/products/?limit=4');
+                setProducts(prodResponse.data.results || prodResponse.data);
+
+                // 2. Fetch Hero Banner (If API exists)
+                try {
+                    const bannerResponse = await api.get('/store/public/hero-banner/');
+                    if (bannerResponse.data) {
+                        setHeroData(prev => ({ ...prev, ...bannerResponse.data }));
+                    }
+                } catch (bannerError) {
+                    console.log("Hero banner API not ready, using default.");
+                }
+
             } catch (error) {
-                console.error("Error fetching trending products:", error);
+                console.error("Error fetching home data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchProducts();
+        fetchData();
     }, []);
 
     return (
         <div className="bg-gray-50">
             {/* Hero Section - Light & Fresh */}
-            <div className="bg-[#EAF8E7] relative overflow-hidden"> {/* Using Brand Accent/Aqua Spring */}
+            <div className="bg-[#EAF8E7] relative overflow-hidden">
                 <div className="container mx-auto px-4 py-20 md:py-32 relative z-10 flex flex-col md:flex-row items-center justify-between">
                     <div className="md:w-1/2 space-y-8">
                         <span className="inline-block px-4 py-1.5 bg-white text-brand-dark text-xs font-bold uppercase tracking-wider rounded-full shadow-sm">
-                            New Collection 2026
+                            {heroData.badge}
                         </span>
                         <h1 className="text-5xl md:text-7xl font-bold leading-tight text-brand-dark">
-                            Discover the Latest <br />
-                            <span className="text-brand">Deals Up to 50% Off</span>
+                            {heroData.title} <br />
+                            <span className="text-brand">{heroData.highlight}</span>
                         </h1>
                         <p className="text-text-sub text-lg max-w-lg leading-relaxed">
-                            Experience the future of shopping with our AR Try-On technology. Find the perfect fit from the comfort of your home.
+                            {heroData.description}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
                             <Link to="/products" className="px-8 py-4 bg-brand text-white font-bold rounded-full hover:bg-brand-dark transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
@@ -54,7 +73,7 @@ const Home = () => {
                     <div className="md:w-1/2 mt-12 md:mt-0 flex justify-center relative">
                         <div className="absolute w-[120%] h-[120%] bg-white/40 rounded-full blur-3xl -z-10 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                         <img
-                            src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop"
+                            src={heroData.image}
                             alt="Fashion Model"
                             className="relative z-10 w-full max-w-lg rounded-2xl shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-700"
                         />

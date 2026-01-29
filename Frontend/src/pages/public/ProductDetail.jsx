@@ -1,29 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ShoppingCart, Heart, Camera, Box, Star, Truck, Share2 } from 'lucide-react';
+import api from '../../utils/api';
 
 const ProductDetail = () => {
     const { id } = useParams();
     const [activeImage, setActiveImage] = useState(0);
     const [viewMode, setViewMode] = useState('image'); // image, 3d, ar
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Mock Data
-    const product = {
-        id: id,
-        name: "Nike Air Zoom AR Special",
-        price: 120.00,
-        description: "Experience the future of comfort with these AR-enabled running shoes. Featuring responsive cushioning and breathable mesh.",
-        images: [
-            "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1000&q=80",
-            "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1000&q=80&auto=format&fit=crop&flip=h",
-        ],
-        rating: 4.8,
-        reviews: 124,
-        has_ar: true,
-        has_3d: true,
-        colors: ['Red', 'Blue', 'Black'],
-        sizes: [7, 8, 9, 10, 11]
-    };
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const response = await api.get(`/store/public/products/${id}/`);
+                setProduct(response.data);
+            } catch (err) {
+                console.error("Failed to fetch product details", err);
+                setError("Product not found or failed to load.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProduct();
+    }, [id]);
+
+    if (loading) return <div className="flex justify-center items-center py-40 font-bold text-brand animate-pulse">Loading Details...</div>;
+    if (error || !product) return <div className="flex justify-center items-center py-40 text-functional-error font-bold">{error || "Product not found"}</div>;
+
+    // Helper to get image URL safely
+    const getImageUrl = (index) => product.images?.[index]?.image || 'https://via.placeholder.com/600';
+    const images = product.images?.length > 0 ? product.images : [{ image: 'https://via.placeholder.com/600' }]; // Fallback array
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -33,7 +41,7 @@ const ProductDetail = () => {
                 <div className="w-full md:w-1/2 space-y-4">
                     <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
                         {viewMode === 'image' && (
-                            <img src={product.images[activeImage]} alt={product.name} className="w-full h-full object-cover" />
+                            <img src={getImageUrl(activeImage)} alt={product.name} className="w-full h-full object-cover" />
                         )}
                         {viewMode === '3d' && (
                             <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white">
@@ -88,13 +96,13 @@ const ProductDetail = () => {
 
                     {/* Thumbnails */}
                     <div className="flex gap-4 overflow-x-auto pb-2">
-                        {product.images.map((img, idx) => (
+                        {images.map((imgObj, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => { setActiveImage(idx); setViewMode('image'); }}
                                 className={`w-20 h-20 rounded-lg overflow-hidden border-2 ${activeImage === idx && viewMode === 'image' ? 'border-brand' : 'border-transparent'}`}
                             >
-                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                <img src={imgObj.image} alt="" className="w-full h-full object-cover" />
                             </button>
                         ))}
                     </div>
@@ -123,28 +131,33 @@ const ProductDetail = () => {
 
                     <p className="text-text-main leading-relaxed">{product.description}</p>
 
-                    {/* Selectors */}
+                    {/* Selectors (Dynamic Check) */}
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-text-sub mb-2">Select Color</label>
-                            <div className="flex gap-3">
-                                {product.colors.map(color => (
-                                    <button key={color} className="px-4 py-2 border border-gray-300 rounded-lg hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand text-text-main">
-                                        {color}
-                                    </button>
-                                ))}
+                        {product.colors && product.colors.length > 0 && (
+                            <div>
+                                <label className="block text-sm font-medium text-text-sub mb-2">Select Color</label>
+                                <div className="flex gap-3">
+                                    {product.colors.map(color => (
+                                        <button key={color} className="px-4 py-2 border border-gray-300 rounded-lg hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand text-text-main">
+                                            {color}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-text-sub mb-2">Select Size</label>
-                            <div className="flex gap-3">
-                                {product.sizes.map(size => (
-                                    <button key={size} className="w-12 h-12 border border-gray-300 rounded-lg hover:border-brand flex items-center justify-center font-medium text-text-main">
-                                        {size}
-                                    </button>
-                                ))}
+                        )}
+
+                        {product.sizes && product.sizes.length > 0 && (
+                            <div>
+                                <label className="block text-sm font-medium text-text-sub mb-2">Select Size</label>
+                                <div className="flex gap-3">
+                                    {product.sizes.map(size => (
+                                        <button key={size} className="w-12 h-12 border border-gray-300 rounded-lg hover:border-brand flex items-center justify-center font-medium text-text-main">
+                                            {size}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     <div className="flex gap-4 pt-6 border-t border-gray-100">

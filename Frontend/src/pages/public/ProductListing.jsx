@@ -1,17 +1,32 @@
-import React, { useState } from 'react';
-import { Filter, ChevronDown, ShoppingCart, Heart, Camera } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Filter, ChevronDown, ShoppingCart, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-// Mock Data (until API linked)
-const MOCK_PRODUCTS = [
-    { id: 1, name: "Nike Air Zoom AR", price: 120, image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80", category: "Footwear", hasAr: true },
-    { id: 2, name: "Smart Watch Elite", price: 250, image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80", category: "Electronics", hasAr: false },
-    { id: 3, name: "Urban Hoodie", price: 85, image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500&q=80", category: "Apparel", hasAr: true },
-    { id: 4, name: "VR Headset Pro", price: 399, image: "https://images.unsplash.com/photo-1622979135225-d2ba269fb1ac?w=500&q=80", category: "Electronics", hasAr: false },
-];
+import api from '../../utils/api'; // Use centralized API utility
 
 const ProductListing = () => {
     const navigate = useNavigate();
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await api.get('/store/public/products/');
+                setProducts(response.data.results || response.data);
+            } catch (err) {
+                console.error("Failed to fetch products", err);
+                setError("Failed to load products. Please try again later.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
+    if (loading) return <div className="text-center py-20 text-brand font-bold animate-pulse">Loading Products...</div>;
+    if (error) return <div className="text-center py-20 text-functional-error">{error}</div>;
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -56,35 +71,45 @@ const ProductListing = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {MOCK_PRODUCTS.map(product => (
-                            <div
-                                key={product.id}
-                                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer border border-gray-100"
-                                onClick={() => navigate(`/products/${product.id}`)}
-                            >
-                                <div className="relative h-64 bg-gray-100">
-                                    <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                    {/* AR Badge */}
-                                    {product.hasAr && (
-                                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm text-brand-dark">
-                                            <Camera size={18} />
+                    {products.length === 0 ? (
+                        <div className="text-center py-12 bg-gray-50 rounded-xl">
+                            <p className="text-text-sub text-lg">No products found.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {products.map(product => (
+                                <div
+                                    key={product.id}
+                                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group cursor-pointer border border-gray-100"
+                                    onClick={() => navigate(`/products/${product.id}`)}
+                                >
+                                    <div className="relative h-64 bg-gray-100">
+                                        <img
+                                            src={product.images?.[0]?.image || 'https://via.placeholder.com/500'}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                        {/* AR Badge */}
+                                        {product.has_ar && ( // Assuming has_ar comes from backend
+                                            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm text-brand-dark">
+                                                <Camera size={18} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="p-4">
+                                        <p className="text-sm text-brand font-medium mb-1">{product.category_name || 'General'}</p>
+                                        <h3 className="font-bold text-lg text-brand-dark mb-2 truncate">{product.name}</h3>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xl font-bold text-brand-dark">${product.price}</span>
+                                            <button className="p-2 bg-brand-accent text-brand rounded-full hover:bg-brand hover:text-white transition-colors">
+                                                <ShoppingCart size={20} />
+                                            </button>
                                         </div>
-                                    )}
-                                </div>
-                                <div className="p-4">
-                                    <p className="text-sm text-brand font-medium mb-1">{product.category}</p>
-                                    <h3 className="font-bold text-lg text-brand-dark mb-2 truncate">{product.name}</h3>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xl font-bold text-brand-dark">${product.price}</span>
-                                        <button className="p-2 bg-brand-accent text-brand rounded-full hover:bg-brand hover:text-white transition-colors">
-                                            <ShoppingCart size={20} />
-                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
