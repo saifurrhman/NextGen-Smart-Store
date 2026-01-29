@@ -1,0 +1,7 @@
+/* Admin Specific Theme Overrides */
+
+/* Example: Darker Sidebar for Admin */
+.admin-sidebar {
+    background-color: var(--color-brand-dark);
+    color: white;
+}

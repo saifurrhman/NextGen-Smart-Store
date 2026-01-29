@@ -1,0 +1,7 @@
+/* Public & Vendor Specific Theme Overrides */
+
+/* Example: Light Backgrounds for Public Pages */
+.public-body {
+    background-color: #f9fafb;
+    /* Gray-50 */
+}

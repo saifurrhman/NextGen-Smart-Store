@@ -1,16 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    /* Brand Colors - Ocean Green */
+/* UI/UX Design System - Color Palette & Tokens */
+:root {
+    /* Brand Colors - Ocean Green Scheme */
     --color-brand: #4EA674;
     --color-brand-dark: #023337;
     --color-brand-light: #C1E6BA;
     --color-brand-accent: #EAF8E7;
 
-    /* Action Colors - Primary CTA (Purple) */
+    /* Action Colors - Primary Call-to-Action */
     --color-action: #6467F2;
     --color-action-hover: #5356D0;
 
@@ -22,11 +18,11 @@
     /* Text Colors */
     --color-text-main: #023337;
     --color-text-sub: #7C7C7C;
-  }
-}
 
-html,
-body {
-  overflow-x: hidden;
-  width: 100%;
+    /* Backgrounds & Borders */
+    --color-bg-page: #F3F4F6;
+    /* Gray-100 equivalent for page background */
+    --color-bg-card: #FFFFFF;
+    --color-border: #E5E7EB;
+    /* Gray-200 */
 }

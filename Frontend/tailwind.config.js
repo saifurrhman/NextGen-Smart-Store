@@ -42,12 +42,18 @@ export default {
                 'body-large': ['22px', { lineHeight: '1.4', fontWeight: '500' }],                           // Title/Body Large
                 'body': ['16px', { lineHeight: '1.4', fontWeight: '500' }],                                 // Body
                 'btn': ['16px', { lineHeight: '1', fontWeight: '700', letterSpacing: '0' }],                // Button Text
+                'caption': ['14px', { lineHeight: '1.4', fontWeight: '500' }],                              // Helper/Caption
             },
             boxShadow: {
                 // Effect Specs (Ambient Shadows)
-                'effect-1': '0px 2px 4px rgba(0, 0, 0, 0.08)',   // 1 Ambient
-                'effect-3': '0px 4px 12px rgba(0, 0, 0, 0.12)',  // 3 Ambient
-                'effect-6': '0px 8px 24px rgba(0, 0, 0, 0.16)',  // 6 Ambient
+                'effect-1': '0px 2px 4px rgba(0, 0, 0, 0.08)',    // 1 Ambient
+                'effect-3': '0px 4px 12px rgba(0, 0, 0, 0.12)',   // 3 Ambient
+                'effect-6': '0px 8px 24px rgba(0, 0, 0, 0.16)',   // 6 Ambient
+            },
+            borderRadius: {
+                'card': '12px',      // Standard card radius
+                'btn': '8px',        // Standard button radius
+                'input': '100px',    // Pill shape for inputs
             }
         },
     },
