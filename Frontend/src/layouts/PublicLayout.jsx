@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { ShoppingCart, User, Search, Heart, Store, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
-const MainLayout = () => {
+const PublicLayout = () => {
     return (
         <div className="flex flex-col min-h-screen font-sans">
             {/* Header */}
@@ -145,4 +145,4 @@ const MainLayout = () => {
     );
 };
 
-export default MainLayout;
+export default PublicLayout;

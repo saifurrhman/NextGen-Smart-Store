@@ -13,7 +13,7 @@ const StatCard = ({ icon: Icon, label, value, colorClass }) => (
     </div>
 );
 
-const AdminDashboard = () => {
+const Dashboard = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -78,4 +78,4 @@ const AdminDashboard = () => {
     );
 };
 
-export default AdminDashboard;
+export default Dashboard;

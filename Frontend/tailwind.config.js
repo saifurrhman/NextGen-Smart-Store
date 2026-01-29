@@ -9,26 +9,26 @@ export default {
             colors: {
                 // Brand Colors
                 brand: {
-                    DEFAULT: '#4EA674', // Ocean Green
-                    dark: '#023337',    // Cyprus
-                    light: '#C1E6BA',   // Surf Crest
-                    accent: '#EAF8E7',  // Aqua Spring
+                    DEFAULT: 'var(--color-brand)',       // Ocean Green
+                    dark: 'var(--color-brand-dark)',     // Cyprus
+                    light: 'var(--color-brand-light)',   // Surf Crest
+                    accent: 'var(--color-brand-accent)', // Aqua Spring
                 },
                 // Action / Primary CTA
                 action: {
-                    DEFAULT: '#6467F2', // Primary (Purple)
-                    hover: '#5356D0',
+                    DEFAULT: 'var(--color-action)',       // Primary (Purple)
+                    hover: 'var(--color-action-hover)',
                 },
                 // Functional Colors
                 functional: {
-                    success: '#21C45D',
-                    pending: '#F0D411',
-                    error: '#EF4343',
+                    success: 'var(--color-success)',
+                    pending: 'var(--color-pending)',
+                    error: 'var(--color-error)',
                 },
                 // Text Colors
                 text: {
-                    main: '#023337', // Cyprus
-                    sub: '#7C7C7C',  // Grey
+                    main: 'var(--color-text-main)', // Cyprus
+                    sub: 'var(--color-text-sub)',   // Grey
                 }
             },
             fontFamily: {
