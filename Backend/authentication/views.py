@@ -1,9 +1,32 @@
 from rest_framework import generics, status, views
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import login, logout
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
+from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, AdminUserCreateSerializer
+
+class AdminUserCreateView(generics.CreateAPIView):
+    # Only Admin users can access this
+    permission_classes = [IsAdminUser] 
+    serializer_class = AdminUserCreateSerializer
+
+class AdminRegisterView(generics.CreateAPIView):
+    # Publicly accessible for now (Authentication commented out)
+    permission_classes = [AllowAny]
+    serializer_class = AdminUserCreateSerializer
+
+    def perform_create(self, serializer):
+        # Force the role to SUPER_ADMIN for this specific endpoint
+        serializer.save(role='SUPER_ADMIN')
+
+class VendorRegisterView(generics.CreateAPIView):
+    # Publicly accessible for now
+    permission_classes = [AllowAny]
+    serializer_class = AdminUserCreateSerializer # Reusing generalized serializer
+
+    def perform_create(self, serializer):
+        # Force the role to VENDOR
+        serializer.save(role='VENDOR')
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer

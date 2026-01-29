@@ -1,8 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Camera, ArrowRight, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const Home = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                // Fetching from Public Product List Endpoint
+                const response = await axios.get('http://127.0.0.1:8000/api/store/public/products/?limit=4'); // Assuming limit/pagination or just slice later
+                setProducts(response.data.results || response.data);
+            } catch (error) {
+                console.error("Error fetching trending products:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
     return (
         <div className="bg-gray-50">
             {/* Hero Section - Light & Fresh */}
@@ -91,31 +111,44 @@ const Home = () => {
                         </Link>
                     </div>
 
-                    {/* Placeholder Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="bg-white rounded-2xl p-4 hover:shadow-xl transition-all group">
-                                <div className="relative bg-gray-100 rounded-xl h-64 overflow-hidden mb-4">
-                                    <img
-                                        src={`https://images.unsplash.com/photo-${i === 1 ? '1542291026-7eec264c27ff' : i === 2 ? '1523275335684-37898b6baf30' : i === 3 ? '1505740420926-0d192f6fa3rb' : '1526170375885-4d6c47b59473'}?w=500&q=80`}
-                                        alt="Product"
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                    />
-                                    <button className="absolute bottom-4 right-4 bg-white p-3 rounded-full shadow-lg text-brand-dark hover:text-brand hover:scale-110 transition-all opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
-                                        <Camera size={20} />
-                                    </button>
-                                </div>
-                                <div className="space-y-2">
-                                    <h3 className="font-bold text-brand-dark text-lg">Modern Product {i}</h3>
-                                    <p className="text-text-sub text-sm">Category Name</p>
-                                    <div className="flex justify-between items-center pt-2">
-                                        <span className="text-xl font-bold text-brand">$1{i}9.99</span>
-                                        <button className="text-sm font-bold text-brand hover:underline">Add to Cart</button>
+                    {/* Dynamic Product Grid */}
+                    {loading ? (
+                        <div className="flex justify-center items-center h-64">
+                            <p className="text-brand text-lg animate-pulse">Loading Trending Products...</p>
+                        </div>
+                    ) : products.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {products.slice(0, 4).map((product) => (
+                                <div key={product.id} className="bg-white rounded-2xl p-4 hover:shadow-xl transition-all group">
+                                    <div className="relative bg-gray-100 rounded-xl h-64 overflow-hidden mb-4">
+                                        <img
+                                            src={product.images?.[0]?.image || 'https://via.placeholder.com/500'}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                        <button className="absolute bottom-4 right-4 bg-white p-3 rounded-full shadow-lg text-brand-dark hover:text-brand hover:scale-110 transition-all opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
+                                            <Camera size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-dark text-lg truncate">{product.name}</h3>
+                                        <p className="text-text-sub text-sm">{product.category_name || 'Fashion'}</p>
+                                        <div className="flex justify-between items-center pt-2">
+                                            <span className="text-xl font-bold text-brand">${product.price}</span>
+                                            <button className="text-sm font-bold text-brand hover:underline">Add to Cart</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+                            <p className="text-text-sub">No products found. Be the first to add one!</p>
+                            <Link to="/login" className="mt-4 inline-block text-brand font-bold hover:underline">
+                                Login as Vendor to Add Products
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </section>
         </div>

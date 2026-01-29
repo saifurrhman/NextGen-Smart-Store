@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Default styles removed to allow Tailwind to control the design system. */
 /* See src/styles/main.scss for Tailwind imports. */
 

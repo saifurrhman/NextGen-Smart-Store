@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Store, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { Store, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 
-const Login = () => {
+const VendorLogin = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [loading, setLoading] = useState(false);
@@ -11,7 +11,7 @@ const Login = () => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setError(null); // Clear error on typing
+        setError(null);
     };
 
     const handleSubmit = async (e) => {
@@ -20,79 +20,71 @@ const Login = () => {
         setError(null);
 
         try {
-            // Using the centralized auth endpoint
             const response = await axios.post('http://127.0.0.1:8000/api/auth/login/', formData);
-
             const { token, role, user } = response.data;
 
-            // Store Auth Data
+            // Strict Role Check for Vendor Login
+            if (role !== 'VENDOR') {
+                setError("Access Denied. This portal is for Sellers/Vendors only.");
+                setLoading(false);
+                return;
+            }
+
             localStorage.setItem('token', token);
             localStorage.setItem('role', role);
             localStorage.setItem('user', JSON.stringify(user));
 
-            // Role-Based Redirection
-            switch (role) {
-                case 'SUPER_ADMIN':
-                case 'SUB_ADMIN':
-                    navigate('/admin/dashboard');
-                    break;
-                case 'VENDOR':
-                    navigate('/vendor/dashboard');
-                    break;
-                case 'CUSTOMER':
-                    // If they were trying to checkout, send them there? For now, Home.
-                    navigate('/');
-                    break;
-                default:
-                    navigate('/');
-            }
+            navigate('/vendor/dashboard');
 
         } catch (err) {
-            console.error("Login Error:", err);
-            setError(err.response?.data?.non_field_errors?.[0] || "Invalid credentials. Please try again.");
+            console.error("Vendor Login Error Full Details:", err);
+            if (err.response) {
+                console.error("Data:", err.response.data);
+                console.error("Status:", err.response.status);
+            }
+            setError(typeof err.response?.data === 'string' ? err.response.data :
+                err.response?.data?.non_field_errors?.[0] ||
+                JSON.stringify(err.response?.data || "Invalid credentials."));
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-text-main">
+        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="flex justify-center">
-                    <div className="h-12 w-12 rounded-xl bg-brand/10 flex items-center justify-center">
-                        <Store className="h-8 w-8 text-brand fill-current" />
+                    <div className="h-16 w-16 rounded-full bg-brand/10 flex items-center justify-center">
+                        <Store className="h-8 w-8 text-brand" />
                     </div>
                 </div>
-                <h2 className="mt-6 text-center text-h2 font-bold text-brand-dark tracking-tight">
-                    Sign in to your account
+                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
+                    Seller Central
                 </h2>
-                <p className="mt-2 text-center text-sm text-text-sub">
-                    Or{' '}
-                    <Link to="/register" className="font-medium text-brand hover:text-brand-dark transition-colors">
-                        create a new customer account
-                    </Link>
+                <p className="mt-2 text-center text-sm text-gray-600">
+                    Manage your store, products, and orders
                 </p>
             </div>
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow-effect-3 sm:rounded-lg sm:px-10 border border-gray-100">
+                <div className="bg-white py-8 px-4 shadow-xl rounded-2xl sm:px-10 border border-gray-100">
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         {error && (
-                            <div className="rounded-md bg-functional-error/10 p-4">
+                            <div className="rounded-lg bg-red-50 p-4 border border-red-200">
                                 <div className="flex">
                                     <div className="flex-shrink-0">
-                                        <AlertCircle className="h-5 w-5 text-functional-error" aria-hidden="true" />
+                                        <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
                                     </div>
                                     <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-functional-error">{error}</h3>
+                                        <h3 className="text-sm font-medium text-red-800">{error}</h3>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-brand-dark">
-                                Username
+                            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                                Username or Email
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -105,14 +97,14 @@ const Login = () => {
                                     required
                                     value={formData.username}
                                     onChange={handleChange}
-                                    className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5"
-                                    placeholder="Enter your username"
+                                    className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-3"
+                                    placeholder="seller@example.com"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-brand-dark">
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                                 Password
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
@@ -126,7 +118,7 @@ const Login = () => {
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5"
+                                    className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-3"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -140,14 +132,14 @@ const Login = () => {
                                     type="checkbox"
                                     className="h-4 w-4 text-brand focus:ring-brand border-gray-300 rounded"
                                 />
-                                <label htmlFor="remember-me" className="ml-2 block text-sm text-text-sub">
+                                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                                     Remember me
                                 </label>
                             </div>
 
                             <div className="text-sm">
                                 <a href="#" className="font-medium text-brand hover:text-brand-dark">
-                                    Forgot your password?
+                                    Forgot password?
                                 </a>
                             </div>
                         </div>
@@ -156,48 +148,43 @@ const Login = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-action hover:bg-action-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-action transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-brand hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition-all items-center gap-2"
                             >
-                                {loading ? 'Signing in...' : 'Sign in'}
+                                {loading ? 'Logging in...' : 'Login to Seller Central'}
+                                {!loading && <ArrowRight size={18} />}
                             </button>
                         </div>
                     </form>
 
-                    <div className="mt-6">
+                    <div className="mt-8">
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-300" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white text-text-sub">
-                                    Or verify as
+                                <span className="px-2 bg-white text-gray-500">
+                                    New to NextGen Store?
                                 </span>
                             </div>
                         </div>
 
-                        <div className="mt-6 grid grid-cols-2 gap-3">
-                            <div>
-                                <Link
-                                    to="/vendor/register"
-                                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-text-sub hover:bg-gray-50"
-                                >
-                                    <span className="sr-only">Sign up as </span>Vendor
-                                </Link>
-                            </div>
-                            <div>
-                                <a
-                                    href="#"
-                                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-text-sub hover:bg-gray-50"
-                                >
-                                    <span className="sr-only">Sign in as </span>Delivery
-                                </a>
-                            </div>
+                        <div className="mt-6">
+                            <Link
+                                to="/vendor/register"
+                                className="w-full flex justify-center py-3 px-4 border-2 border-brand/20 rounded-lg shadow-sm text-sm font-bold text-brand bg-white hover:bg-gray-50 transition-all"
+                            >
+                                Register as a Seller
+                            </Link>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <p className="mt-8 text-center text-xs text-gray-500">
+                &copy; 2026 NextGen Smart Store. All rights reserved.
+            </p>
         </div>
     );
 };
 
-export default Login;
+export default VendorLogin;

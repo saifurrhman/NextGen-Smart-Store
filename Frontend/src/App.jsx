@@ -11,7 +11,11 @@ import NotFound from './pages/public/NotFound';
 import About from './pages/public/About';
 import Contact from './pages/public/Contact';
 import Login from './pages/auth/Login';
-import Signup from './pages/auth/Signup';
+import Register from './pages/auth/Register';
+import AdminLogin from './pages/auth/AdminLogin';
+import AdminRegister from './pages/auth/AdminRegister';
+import VendorLogin from './pages/auth/VendorLogin';
+import VendorRegister from './pages/auth/VendorRegister';
 import DashboardLayout from './layouts/DashboardLayout';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -36,8 +40,17 @@ function App() {
         </Route>
 
         {/* Auth Routes */}
+        {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/register" element={<AdminRegister />} />
+
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/register" element={<AdminRegister />} />
+        <Route path="/admin/register" element={<AdminRegister />} />
+        <Route path="/vendor/login" element={<VendorLogin />} />
+        <Route path="/vendor/register" element={<VendorRegister />} />
 
         {/* Dashboard Routes (Protected) */}
         <Route path="/vendor" element={<DashboardLayout />}>
