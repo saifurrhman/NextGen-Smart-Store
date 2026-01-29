@@ -29,6 +29,14 @@ export default {
                 text: {
                     main: 'var(--color-text-main)', // Cyprus
                     sub: 'var(--color-text-sub)',   // Grey
+                },
+                // Background & Border Colors
+                bg: {
+                    page: 'var(--color-bg-page)',
+                    card: 'var(--color-bg-card)',
+                },
+                border: {
+                    DEFAULT: 'var(--color-border)',
                 }
             },
             fontFamily: {

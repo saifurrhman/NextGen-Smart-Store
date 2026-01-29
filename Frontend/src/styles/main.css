@@ -1,14 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Import Theme Files */
+/* Import Theme Files FIRST */
 @import './theme.css';
 @import './admin.css';
 @import './public.css';
 
-@layer base {
+/* Then Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+@layer base {
     html,
     body {
         overflow-x: hidden;
@@ -42,7 +42,6 @@
 }
 
 @layer components {
-
     /* --- Cards --- */
     .card {
         @apply bg-white rounded-card border border-border shadow-effect-1 p-6 transition-all duration-300;
@@ -57,22 +56,18 @@
         @apply px-6 py-2.5 rounded-btn text-btn font-bold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
     }
 
-    /* Primary: Ocean Green Solid */
     .btn-primary {
         @apply btn bg-brand text-white hover:bg-brand-dark shadow-effect-1 hover:shadow-effect-3 active:scale-95;
     }
 
-    /* Secondary: Surf Crest (Light Green) */
     .btn-secondary {
         @apply btn bg-brand-light text-brand-dark hover:bg-opacity-80 active:scale-95;
     }
 
-    /* Accent: Outline / Ghost */
     .btn-accent {
         @apply btn bg-transparent border border-gray-300 text-text-main hover:border-brand hover:text-brand hover:bg-brand-accent/10;
     }
 
-    /* Gradient: Purple based */
     .btn-gradient {
         @apply btn bg-gradient-to-r from-action to-[#9D59EB] text-white hover:opacity-90 shadow-effect-1 hover:shadow-effect-3 active:scale-95;
     }
@@ -82,12 +77,10 @@
         @apply block text-sm font-medium text-text-main mb-1.5 ml-1;
     }
 
-    /* Pill Shape Input (Search style) */
     .input-pill {
         @apply w-full bg-brand-accent/20 border-transparent rounded-input px-6 py-3 text-body text-text-main placeholder-gray-400 focus:ring-2 focus:ring-brand focus:bg-white focus:outline-none transition-all;
     }
 
-    /* Standard Form Input (Rectangular with slight radius) */
     .input-field {
         @apply w-full bg-white border border-gray-200 rounded-btn px-4 py-2.5 text-body text-text-main placeholder-gray-400 focus:ring-2 focus:ring-brand focus:border-transparent outline-none transition-all;
     }
