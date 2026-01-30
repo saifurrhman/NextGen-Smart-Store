@@ -209,9 +209,8 @@ LOGGING = {
     },
     'handlers': {
         'console': {'level': 'INFO', 'class': 'logging.StreamHandler', 'formatter': 'verbose'},
-        'file': {'level': 'INFO', 'class': 'logging.FileHandler', 'filename': BASE_DIR / 'logs' / 'django.log', 'formatter': 'verbose'},
     },
-    'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
+    'root': {'handlers': ['console'], 'level': 'INFO'},
 }
 
 # Security
