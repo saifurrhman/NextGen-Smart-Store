@@ -1,10 +1,7 @@
-from http.server import BaseHTTPRequestHandler
- 
-class handler(BaseHTTPRequestHandler):
- 
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type','text/plain')
-        self.end_headers()
-        self.wfile.write('Hello, World! Vercel Python Root Config Working!'.encode('utf-8'))
-        return
+def app(environ, start_response):
+    data = b"Hello World! Vercel Zero Config is WORKING!"
+    start_response("200 OK", [
+        ("Content-Type", "text/plain"),
+        ("Content-Length", str(len(data)))
+    ])
+    return [data]
