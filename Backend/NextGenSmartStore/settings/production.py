@@ -37,6 +37,17 @@ DATABASES = {
     }
 }
 
+# STARTUP FIX: Override Caches to avoid 'django_redis' error
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
+# Disable Celery/Redis
+CELERY_BROKER_URL = ''
+CELERY_RESULT_BACKEND = ''
+
 # Logging
 LOGGING = {
     'version': 1,
