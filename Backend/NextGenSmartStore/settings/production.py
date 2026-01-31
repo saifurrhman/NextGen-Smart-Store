@@ -23,17 +23,17 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Static files with WhiteNoise
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'  # Relaxed storage (no manifest required)
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True  # For testing only
 
-# Database - SQLite (Minimal for Fresh Start)
+# Database - SQLite In-Memory (Prevent Read-Only Errors)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': ':memory:',
     }
 }
 
