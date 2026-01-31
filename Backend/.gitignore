@@ -39,14 +39,9 @@ db.sqlite3-journal
 .coverage
 htmlcov/
 .pytest_cache/
-.tox/
 
-# Celery
-celerybeat-schedule
+# Vercel
+.vercel
 
 # Logs
 logs/*.log
-
-# Backup
-*.bak
-*.tmp
