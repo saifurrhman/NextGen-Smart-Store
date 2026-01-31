@@ -1,26 +1,14 @@
 {
-    "version": 2,
     "builds": [
         {
-            "src": "Backend/NextGenSmartStore/wsgi.py",
-            "use": "@vercel/python",
-            "config": {
-                "maxLambdaSize": "15mb",
-                "runtime": "python3.9"
-            }
+            "src": "Backend/wsgi.py",
+            "use": "@vercel/python"
         }
     ],
     "routes": [
         {
-            "src": "/static/(.*)",
-            "dest": "/Backend/staticfiles/$1"
-        },
-        {
             "src": "/(.*)",
-            "dest": "Backend/NextGenSmartStore/wsgi.py"
+            "dest": "Backend/wsgi.py"
         }
-    ],
-    "env": {
-        "DJANGO_SETTINGS_MODULE": "NextGenSmartStore.settings.production"
-    }
+    ]
 }

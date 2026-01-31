@@ -9,8 +9,6 @@ DEBUG = False
 # Vercel domains
 ALLOWED_HOSTS = [
     '.vercel.app',
-    'nextgensmartstore-backend.vercel.app',
-    'nextgensmartstore-backend-git-main-saifriaz34-8874s-projects.vercel.app',
     'localhost',
     '127.0.0.1',
 ]
@@ -28,24 +26,14 @@ MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# CORS - Update with your frontend URL later
-CORS_ALLOWED_ORIGINS = [
-    'https://your-frontend.vercel.app',  # Update this later
-    'http://localhost:5173',
-    'http://localhost:3000',
-]
+# CORS
+CORS_ALLOW_ALL_ORIGINS = True  # For testing only
 
-CORS_ALLOW_ALL_ORIGINS = True  # For testing only, remove in production
-
-# Database - MongoDB Atlas
+# Database - SQLite (Minimal for Fresh Start)
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
-        'NAME': os.getenv('MONGO_DB_NAME', 'nextgen_smart_store'),
-        'ENFORCE_SCHEMA': False,
-        'CLIENT': {
-            'host': os.getenv('MONGO_URI', 'mongodb://localhost:27017/'),
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

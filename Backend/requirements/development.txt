@@ -1,6 +1,0 @@
--r base.txt
-
-# Development tools
-django-extensions==3.2.3
-django-debug-toolbar==4.2.0
-ipython==8.17.2
