@@ -4,7 +4,7 @@ Production settings for Vercel deployment
 from .base import *
 import os
 
-DEBUG = False
+DEBUG = True  # ENABLED temporarily to see the crash reason!
 
 # Vercel domains
 ALLOWED_HOSTS = [
