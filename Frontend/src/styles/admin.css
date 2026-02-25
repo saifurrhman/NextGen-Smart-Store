@@ -5,3 +5,18 @@
     background-color: var(--color-brand-dark);
     color: white;
 }
+
+/* Thin scrollbar for sidebar */
+.sidebar-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}

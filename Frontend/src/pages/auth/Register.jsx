@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Store, Mail, Lock, User, Phone, MapPin, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { authAPI } from '../../services/api';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -25,7 +25,12 @@ const Register = () => {
         e.preventDefault();
 
         if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match");
+            setError('Passwords do not match');
+            return;
+        }
+
+        if (formData.password.length < 8) {
+            setError('Password must be at least 8 characters.');
             return;
         }
 
@@ -33,27 +38,34 @@ const Register = () => {
         setError(null);
 
         try {
-            await axios.post('http://127.0.0.1:8000/api/auth/register/', {
-                username: formData.username,
-                email: formData.email,
-                password: formData.password,
-                phone: formData.phone,
-                address: formData.address
+            // Step 1: Send OTP — account is created only after verification
+            await authAPI.sendOTP({
+                email: formData.email.trim().toLowerCase(),
+                purpose: 'register',
             });
-
-            // On success, redirect to login
-            navigate('/login', { state: { message: 'Account created successfully! Please login.' } });
-
+            navigate('/verify-otp', {
+                state: {
+                    email: formData.email.trim().toLowerCase(),
+                    purpose: 'register',
+                    role: 'customer',
+                    formData: {
+                        username: formData.username,
+                        email: formData.email.trim().toLowerCase(),
+                        password: formData.password,
+                        phone: formData.phone,
+                        address: formData.address,
+                    },
+                }
+            });
         } catch (err) {
-            console.error("Registration Error:", err);
-            setError(JSON.stringify(err.response?.data) || "Registration failed.");
+            setError(err.response?.data?.error || err.response?.data?.detail || 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-text-main">
+        <>
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="flex justify-center">
                     <div className="h-12 w-12 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -166,7 +178,7 @@ const Register = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

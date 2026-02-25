@@ -1,202 +1,164 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Store, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
-import axios from 'axios';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Lock, UserCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
+import { authAPI } from '../../services/api';
 
 const Login = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ username: '', password: '' });
+    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
+
+    const welcomeText = 'Sign in to your NextGen account';
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setError(null); // Clear error on typing
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
         setLoading(true);
-        setError(null);
-
         try {
-            // Using the centralized auth endpoint
-            const response = await axios.post('http://127.0.0.1:8000/api/auth/login/', formData);
-
-            const { token, role, user } = response.data;
-
-            // Store Auth Data
-            localStorage.setItem('token', token);
-            localStorage.setItem('role', role);
-            localStorage.setItem('user', JSON.stringify(user));
-
-            // Role-Based Redirection
-            switch (role) {
-                case 'SUPER_ADMIN':
-                case 'SUB_ADMIN':
-                    navigate('/admin/dashboard');
-                    break;
-                case 'VENDOR':
-                    navigate('/vendor/dashboard');
-                    break;
-                case 'CUSTOMER':
-                    // If they were trying to checkout, send them there? For now, Home.
-                    navigate('/');
-                    break;
-                default:
-                    navigate('/');
-            }
-
+            const response = await authAPI.login({ username: formData.username, password: formData.password });
+            const { access, refresh, user } = response.data;
+            localStorage.setItem('access_token', access);
+            localStorage.setItem('refresh_token', refresh);
+            if (user) localStorage.setItem('user', JSON.stringify(user));
+            // Redirect based on role
+            const role = user?.role?.toUpperCase();
+            if (role === 'ADMIN' || role === 'SUPERADMIN') navigate('/admin/dashboard');
+            else if (role === 'VENDOR' || role === 'SELLER') navigate('/vendor/dashboard');
+            else navigate('/');
         } catch (err) {
-            console.error("Login Error:", err);
-            setError(err.response?.data?.non_field_errors?.[0] || "Invalid credentials. Please try again.");
+            setError(err.response?.data?.detail || 'Invalid credentials. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-text-main">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="flex justify-center">
-                    <div className="h-12 w-12 rounded-xl bg-brand/10 flex items-center justify-center">
-                        <Store className="h-8 w-8 text-brand fill-current" />
-                    </div>
+        <>
+            {/* Header */}
+            <div className="text-center mb-8">
+                <div className="flex justify-center mb-6">
+                    <img src={logoDark} alt="NextGen Logo" className="h-20 w-auto object-contain" />
                 </div>
-                <h2 className="mt-6 text-center text-h2 font-bold text-brand-dark tracking-tight">
-                    Sign in to your account
+                <h2 className="text-display font-bold text-brand-dark tracking-tight">
+                    Welcome Back
                 </h2>
-                <p className="mt-2 text-center text-sm text-text-sub">
-                    Or{' '}
-                    <Link to="/register" className="font-medium text-brand hover:text-brand-dark transition-colors">
-                        create a new customer account
-                    </Link>
+                <p className="mt-2 text-body text-text-sub font-medium">
+                    {welcomeText}
                 </p>
             </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow-effect-3 sm:rounded-lg sm:px-10 border border-gray-100">
+            {/* Main Card */}
+            <div className="sm:mx-auto sm:w-full sm:max-w-[480px] relative z-10">
+                <div className="bg-white py-10 px-8 shadow-effect-6 rounded-card border border-white/60 backdrop-blur-sm">
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         {error && (
-                            <div className="rounded-md bg-functional-error/10 p-4">
-                                <div className="flex">
-                                    <div className="flex-shrink-0">
-                                        <AlertCircle className="h-5 w-5 text-functional-error" aria-hidden="true" />
-                                    </div>
-                                    <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-functional-error">{error}</h3>
-                                    </div>
-                                </div>
+                            <div className="rounded-lg bg-functional-error/5 p-4 border border-functional-error/10 flex items-center gap-3 animate-pulse">
+                                <AlertCircle className="h-5 w-5 text-functional-error" />
+                                <span className="text-sm font-medium text-functional-error">{error}</span>
                             </div>
                         )}
 
-                        <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-brand-dark">
-                                Username
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <div className="group">
+                            <label className="block text-caption font-bold text-brand-dark mb-1.5 ml-1">Email Address</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <UserCircle2 className="h-5 w-5 text-gray-400 group-focus-within:text-brand transition-colors" />
                                 </div>
                                 <input
                                     id="username"
                                     name="username"
-                                    type="text"
+                                    type="email"
                                     required
                                     value={formData.username}
                                     onChange={handleChange}
-                                    className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5"
-                                    placeholder="Enter your username"
+                                    className="block w-full pl-11 pr-4 py-3.5 bg-bg-page/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-body font-medium placeholder-gray-400"
+                                    placeholder="your@email.com"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-brand-dark">
-                                Password
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <div className="group">
+                            <div className="flex items-center justify-between mb-1.5 ml-1">
+                                <label className="block text-caption font-bold text-brand-dark">Password</label>
+                                <Link to="/forgot-password" state={{ role: 'customer' }} className="text-xs font-medium text-brand hover:text-brand-dark">Forgot password?</Link>
+                            </div>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-brand transition-colors" />
                                 </div>
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5"
+                                    className="block w-full pl-11 pr-11 py-3.5 bg-bg-page/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-body font-medium placeholder-gray-400"
                                     placeholder="••••••••"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-brand transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <input
-                                    id="remember-me"
-                                    name="remember-me"
-                                    type="checkbox"
-                                    className="h-4 w-4 text-brand focus:ring-brand border-gray-300 rounded"
-                                />
-                                <label htmlFor="remember-me" className="ml-2 block text-sm text-text-sub">
-                                    Remember me
-                                </label>
-                            </div>
-
-                            <div className="text-sm">
-                                <a href="#" className="font-medium text-brand hover:text-brand-dark">
-                                    Forgot your password?
-                                </a>
-                            </div>
-                        </div>
-
-                        <div>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-action hover:bg-action-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-action transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {loading ? 'Signing in...' : 'Sign in'}
-                            </button>
-                        </div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-effect-3 text-btn font-bold text-white bg-brand hover:bg-brand-dark focus:outline-none focus:ring-4 focus:ring-brand/20 transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <span className="flex items-center gap-2">
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Signing in...
+                                </span>
+                            ) : (
+                                'Sign In'
+                            )}
+                        </button>
                     </form>
 
-                    <div className="mt-6">
+                    <div className="mt-8">
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-300" />
+                                <div className="w-full border-t border-gray-200" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white text-text-sub">
-                                    Or verify as
-                                </span>
+                                <span className="px-4 bg-white text-text-sub font-medium">New to NextGen?</span>
                             </div>
                         </div>
 
-                        <div className="mt-6 grid grid-cols-2 gap-3">
-                            <div>
-                                <Link
-                                    to="/vendor/register"
-                                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-text-sub hover:bg-gray-50"
-                                >
-                                    <span className="sr-only">Sign up as </span>Vendor
-                                </Link>
-                            </div>
-                            <div>
-                                <a
-                                    href="#"
-                                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-text-sub hover:bg-gray-50"
-                                >
-                                    <span className="sr-only">Sign in as </span>Delivery
-                                </a>
-                            </div>
+                        <div className="mt-6 text-center">
+                            <Link
+                                to="/register"
+                                className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-bold text-text-sub hover:bg-gray-50 hover:text-brand-dark transition-colors"
+                            >
+                                Create Customer Account
+                            </Link>
                         </div>
+
+                        {/* Copyright Inside Card */}
+                        <p className="mt-6 text-center text-xs text-text-sub/40">
+                            © 2026 NextGen Smart Store. Secure Access System.
+                        </p>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

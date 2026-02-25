@@ -11,3 +11,6 @@ gunicorn==21.2.0
 requests==2.31.0
 pytz==2023.3
 setuptools
+django-extensions
+sqlparse==0.2.4
+dnspython

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Lock, Mail, Building2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
 import { authAPI } from '../../services/api';
 
-const AdminRegister = () => {
+const SellerRegister = () => {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
+    const [formData, setFormData] = useState({ storeName: '', email: '', password: '', confirmPassword: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -39,12 +39,12 @@ const AdminRegister = () => {
                 state: {
                     email: formData.email.trim().toLowerCase(),
                     purpose: 'register',
-                    role: 'admin',
+                    role: 'seller',
                     formData: {
-                        username: formData.username,
+                        username: formData.storeName,
                         email: formData.email.trim().toLowerCase(),
                         password: formData.password,
-                        role: 'SUB_ADMIN',
+                        role: 'VENDOR',
                     },
                 }
             });
@@ -68,9 +68,9 @@ const AdminRegister = () => {
 
             <div className="text-center mb-5">
                 <h2 className="text-2xl sm:text-3xl font-bold text-brand-dark tracking-tight">
-                    Create Admin Account
+                    Create Seller Account
                 </h2>
-                <p className="mt-1 text-sm text-text-sub">Setup initial Super Admin access</p>
+                <p className="mt-1 text-sm text-text-sub">Start selling on NextGen Smart Store</p>
             </div>
 
             <div className="bg-white py-6 px-5 sm:px-8 shadow-lg rounded-2xl border border-gray-100">
@@ -83,22 +83,22 @@ const AdminRegister = () => {
                     )}
 
                     <div>
-                        <label className="block text-xs font-bold text-brand-dark mb-1.5">Username</label>
+                        <label className="block text-xs font-bold text-brand-dark mb-1.5">Store / User Name</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <User className="h-4 w-4 text-gray-400" />
+                                <Building2 className="h-4 w-4 text-gray-400" />
                             </div>
                             <input
-                                type="text" name="username" required
-                                value={formData.username} onChange={handleChange}
+                                type="text" name="storeName" required
+                                value={formData.storeName} onChange={handleChange}
                                 className="block w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-sm font-medium placeholder-gray-400"
-                                placeholder="Admin username"
+                                placeholder="Your store or brand name"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-brand-dark mb-1.5">Email</label>
+                        <label className="block text-xs font-bold text-brand-dark mb-1.5">Business Email</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Mail className="h-4 w-4 text-gray-400" />
@@ -107,7 +107,7 @@ const AdminRegister = () => {
                                 type="email" name="email" required
                                 value={formData.email} onChange={handleChange}
                                 className="block w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-sm font-medium placeholder-gray-400"
-                                placeholder="admin@email.com"
+                                placeholder="business@email.com"
                             />
                         </div>
                     </div>
@@ -163,21 +163,22 @@ const AdminRegister = () => {
                                 </svg>
                                 Sending Code...
                             </span>
-                        ) : 'Create Admin Account'}
+                        ) : 'Create Seller Account'}
                     </button>
                 </form>
 
                 <div className="mt-4 pt-4 border-t border-gray-100 text-center">
                     <p className="text-sm text-text-sub">
-                        Already have an admin account?{' '}
-                        <Link to="/admin/login" className="font-semibold text-brand hover:text-brand-dark transition-colors">
-                            Login as Admin
+                        Already have a seller account?{' '}
+                        <Link to="/seller/login" className="font-semibold text-brand hover:text-brand-dark transition-colors">
+                            Login as Seller →
                         </Link>
                     </p>
+                    <p className="mt-2 text-xs text-gray-400">© 2026 NextGen Smart Store. All rights reserved.</p>
                 </div>
             </div>
         </div>
     );
 };
 
-export default AdminRegister;
+export default SellerRegister;

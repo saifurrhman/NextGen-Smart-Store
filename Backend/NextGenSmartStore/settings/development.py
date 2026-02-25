@@ -15,8 +15,8 @@ INSTALLED_APPS += [
 # CORS - Allow all in development
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Email - Console backend for development
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email - Real SMTP for OTP (reads from .env via base.py)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Logging - More verbose in development
 LOGGING['root']['level'] = 'DEBUG'

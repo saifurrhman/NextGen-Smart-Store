@@ -6,9 +6,13 @@ Base settings with MongoDB Atlas configuration.
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Load .env file — must be before any os.getenv() calls
+load_dotenv(BASE_DIR / '.env')
 
 # Security
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-this-in-production-12345')
@@ -95,6 +99,7 @@ DATABASES = {
         'ENFORCE_SCHEMA': False,
         'CLIENT': {
             'host': os.getenv('MONGO_URI', 'mongodb://localhost:27017/'),
+            'tlsAllowInvalidCertificates': True,
         }
     }
 }
@@ -118,7 +123,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.MongoPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -133,12 +138,12 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'USER_ID_FIELD': 'id',
+    'USER_ID_FIELD': 'email',
     'USER_ID_CLAIM': 'user_id',
 }
 

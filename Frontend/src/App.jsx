@@ -7,6 +7,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import CustomerLayout from './layouts/CustomerLayout';
 import AdminLayout from './layouts/AdminLayout';
 import VendorLayout from './layouts/VendorLayout';
+import AuthLayout from './layouts/AuthLayout';
 
 // Public Pages
 import Home from './pages/public/Home';
@@ -41,12 +42,25 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import AdminLogin from './pages/auth/AdminLogin';
 import AdminRegister from './pages/auth/AdminRegister';
-import VendorLogin from './pages/auth/VendorLogin';
-import VendorRegister from './pages/auth/VendorRegister';
+import SellerLogin from './pages/auth/SellerLogin';
+import SellerRegister from './pages/auth/SellerRegister';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import VerifyOTP from './pages/auth/VerifyOTP';
+import ResetPassword from './pages/auth/ResetPassword';
 
 // Dashboard Pages
 import VendorDashboard from './pages/vendor/Dashboard';
 import SuperAdminDashboard from './pages/admin/super_admin/Dashboard';
+import AdminProfile from './pages/admin/super_admin/AdminProfile';
+import ControlAuthority from './pages/admin/super_admin/ControlAuthority';
+import AcceptInvite from './pages/auth/AcceptInvite';
+
+// Department Dashboards
+import ContentDashboard from './pages/admin/content/Dashboard';
+import FinanceDashboard from './pages/admin/finance/Dashboard';
+import MarketingDashboard from './pages/admin/marketing/Dashboard';
+import OperationsDashboard from './pages/admin/operations/Dashboard';
+import SupportDashboard from './pages/admin/support/Dashboard';
 
 function App() {
   return (
@@ -87,13 +101,30 @@ function App() {
           <Route path="settings" element={<AccountSettings />} />
         </Route>
 
-        {/* Auth Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/register" element={<AdminRegister />} />
-        <Route path="/vendor/login" element={<VendorLogin />} />
-        <Route path="/vendor/register" element={<VendorRegister />} />
+        {/* Auth Routes wrapped in AuthLayout */}
+        <Route element={<AuthLayout />}>
+          {/* Customer Auth */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/customer/profile/login" element={<Login />} />
+          <Route path="/customer/profile/signup" element={<Register />} />
+          {/* Admin Auth */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/register" element={<AdminRegister />} />
+          {/* Seller Auth */}
+          <Route path="/seller/login" element={<SellerLogin />} />
+          <Route path="/seller/register" element={<SellerRegister />} />
+          {/* Forgot Password & OTP */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Legacy aliases */}
+          <Route path="/vendor/login" element={<SellerLogin />} />
+          <Route path="/vendor/register" element={<SellerRegister />} />
+        </Route>
+
+        {/* Redirects for common missing routes */}
+        <Route path="/profile" element={<Navigate to="/customer/profile" replace />} />
 
         {/* Vendor Dashboard Routes (Protected) */}
         <Route path="/vendor" element={<VendorLayout />}>
@@ -103,9 +134,21 @@ function App() {
 
         {/* Admin Routes (Protected) */}
         <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<SuperAdminDashboard />} />
-          {/* Add more admin routes here later */}
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="control-authority" element={<ControlAuthority />} />
+
+          {/* Department Routes */}
+          <Route path="content" element={<ContentDashboard />} />
+          <Route path="finance" element={<FinanceDashboard />} />
+          <Route path="marketing" element={<MarketingDashboard />} />
+          <Route path="operations" element={<OperationsDashboard />} />
+          <Route path="support" element={<SupportDashboard />} />
         </Route>
+
+        {/* Accept Invite (public route) */}
+        <Route path="/admin/accept-invite/:token" element={<AcceptInvite />} />
       </Routes>
     </BrowserRouter>
   );

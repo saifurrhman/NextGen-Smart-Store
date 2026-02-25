@@ -48,6 +48,12 @@ export const authAPI = {
   login: (data) => api.post('/auth/login/', data),
   logout: () => api.post('/auth/logout/'),
   refresh: (refresh) => api.post('/auth/refresh/', { refresh }),
+  // OTP flow
+  sendOTP: (data) => api.post('/auth/otp/send/', data),
+  verifyOTP: (data) => api.post('/auth/otp/verify/', data),
+  registerWithOTP: (data) => api.post('/auth/register-otp/', data),
+  forgotPassword: (data) => api.post('/auth/otp/send/', { ...data, purpose: 'password_reset' }),
+  resetPassword: (data) => api.post('/auth/password/reset/confirm/', data),
 };
 
 export const productsAPI = {
@@ -69,4 +75,18 @@ export const ordersAPI = {
   getAll: () => api.get('/orders/'),
   getById: (id) => api.get(`/orders/${id}/`),
   create: (data) => api.post('/orders/', data),
+};
+
+export const profileAPI = {
+  getProfile: () => api.get('/users/profile/'),
+  updateProfile: (data) => api.put('/users/profile/', data),
+  changePassword: (data) => api.post('/users/change-password/', data),
+};
+
+export const invitationsAPI = {
+  send: (data) => api.post('/users/invitations/send/', data),
+  list: () => api.get('/users/invitations/'),
+  accept: (token, data) => api.post(`/users/invitations/accept/${token}/`, data),
+  verify: (token) => api.get(`/users/invitations/accept/${token}/`),
+  remove: (id) => api.delete(`/users/invitations/${id}/`),
 };

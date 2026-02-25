@@ -11,7 +11,7 @@ const PublicLayout = () => {
             try {
                 // Fetch simple category list (id, name, slug)
                 // Note: Ensure your backend has this endpoint exposed publicly
-                const response = await api.get('/store/public/categories/');
+                const response = await api.get('/api/v1/categories/');
                 setCategories(response.data.results || response.data);
             } catch (error) {
                 console.error("Failed to load categories:", error);
