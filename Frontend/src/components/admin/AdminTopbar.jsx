@@ -1,59 +1,68 @@
 import React, { useState } from 'react';
-import { Search, Bell, Sun, Moon, User, Menu } from 'lucide-react';
+import { Search, Bell, Sun, Moon, Menu } from 'lucide-react';
 
-const AdminTopbar = ({ pageTitle = 'Dashboard', user, onToggleSidebar }) => {
+const AdminTopbar = ({ pageTitle = 'Dashboard', onToggleSidebar }) => {
     const [darkMode, setDarkMode] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
     return (
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-20">
+        <header className="h-20 bg-white flex items-center justify-between px-8 sticky top-0 z-20">
             {/* Left — Page Title */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 w-1/4">
                 <button
                     onClick={onToggleSidebar}
-                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-brand-dark transition-colors lg:hidden"
+                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-emerald-600 transition-colors lg:hidden"
                 >
                     <Menu size={20} />
                 </button>
-                <h1 className="text-lg font-bold text-brand-dark">{pageTitle}</h1>
+                <h1 className="text-xl font-bold text-gray-800">{pageTitle}</h1>
             </div>
 
             {/* Center — Search */}
-            <div className="flex-1 max-w-md mx-8 hidden md:block">
+            <div className="flex-1 max-w-[480px] hidden md:block mx-4">
                 <div className="relative">
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search data, users, or reports"
-                        className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand focus:bg-white transition-all"
+                        className="w-full pl-6 pr-12 py-2.5 bg-[#f8f9fa] border border-transparent rounded-full text-[13px] font-medium text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 focus:bg-white transition-all shadow-sm"
                     />
-                    <Search
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                        size={16}
-                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <Search
+                            className="text-gray-400"
+                            size={16}
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* Right — Notification, Theme, Avatar */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-end gap-6 w-1/4">
+
                 {/* Notification bell */}
-                <button className="relative p-2.5 rounded-xl hover:bg-gray-50 text-gray-500 hover:text-brand-dark transition-colors">
-                    <Bell size={20} />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-functional-error rounded-full ring-2 ring-white" />
+                <button className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                    <Bell size={20} strokeWidth={1.5} />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
                 </button>
 
-                {/* Theme toggle */}
+                {/* Theme toggle (Switch Style) */}
                 <button
                     onClick={() => setDarkMode(!darkMode)}
-                    className="p-2.5 rounded-xl hover:bg-gray-50 text-gray-500 hover:text-brand-dark transition-colors"
+                    className={`relative w-14 h-7 rounded-full flex items-center px-1 transition-colors cursor-pointer ${darkMode ? 'bg-gray-700' : 'bg-[#eaf5ed]'}`}
                 >
-                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                    <div className={`w-5 h-5 rounded-full bg-white shadow-sm flex items-center justify-center transition-transform duration-300 ${darkMode ? 'translate-x-7' : 'translate-x-0'}`}>
+                        {darkMode ? <Moon size={12} className="text-gray-700" /> : <Sun size={12} className="text-gray-400" />}
+                    </div>
                 </button>
 
-                {/* User Avatar */}
-                <div className="w-9 h-9 rounded-full bg-brand-dark flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:ring-2 hover:ring-brand/30 transition-all">
-                    {(user?.username || 'A').charAt(0).toUpperCase()}
+                {/* User Avatar Only */}
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-emerald-500/30 transition-all ml-2">
+                    <img
+                        src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=eaf4f0"
+                        alt="User Avatar"
+                        className="w-full h-full object-cover"
+                    />
                 </div>
             </div>
         </header>

@@ -154,7 +154,12 @@ import SuSalesAnalytics from './pages/admin/analytics/SalesAnalytics';
 import SuProductPerformance from './pages/admin/analytics/ProductPerformance';
 import PaymentGateways from './pages/admin/settings/PaymentGateways';
 import TaxConfiguration from './pages/admin/settings/TaxConfiguration';
+import AIAgentSettings from './pages/admin/settings/AIAgentSettings';
 
+// AI & Automation Sub-Pages
+import AIDashboard from './pages/admin/ai/Dashboard';
+import ChatbotSetup from './pages/admin/ai/ChatbotSetup';
+import Integrations from './pages/admin/ai/Integrations';
 
 function App() {
   return (
@@ -282,6 +287,12 @@ function App() {
           <Route path="analytics/products" element={<SuProductPerformance />} />
           <Route path="settings/payment" element={<PaymentGateways />} />
           <Route path="settings/tax" element={<TaxConfiguration />} />
+          <Route path="settings/ai-automation" element={<AIAgentSettings />} />
+
+          {/* AI & Automation Portal Routes */}
+          <Route path="ai/dashboard" element={<AIDashboard />} />
+          <Route path="ai/chatbot" element={<ChatbotSetup />} />
+          <Route path="ai/integrations" element={<Integrations />} />
 
           {/* Operations Department Sub-Routes */}
           <Route path="operations/delivery/daily" element={<DailyOperations />} />
