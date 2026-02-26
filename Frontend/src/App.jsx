@@ -155,6 +155,7 @@ import SuProductPerformance from './pages/admin/analytics/ProductPerformance';
 import PaymentGateways from './pages/admin/settings/PaymentGateways';
 import TaxConfiguration from './pages/admin/settings/TaxConfiguration';
 import AIAgentSettings from './pages/admin/settings/AIAgentSettings';
+import PlatformSettings from './pages/admin/settings/PlatformSettings'; // Added Import
 
 // AI & Automation Sub-Pages
 import AIDashboard from './pages/admin/ai/Dashboard';
@@ -285,6 +286,7 @@ function App() {
           <Route path="vendors/payouts" element={<SuVendorPayouts />} />
           <Route path="analytics/sales" element={<SuSalesAnalytics />} />
           <Route path="analytics/products" element={<SuProductPerformance />} />
+          <Route path="settings" element={<PlatformSettings />} />
           <Route path="settings/payment" element={<PaymentGateways />} />
           <Route path="settings/tax" element={<TaxConfiguration />} />
           <Route path="settings/ai-automation" element={<AIAgentSettings />} />

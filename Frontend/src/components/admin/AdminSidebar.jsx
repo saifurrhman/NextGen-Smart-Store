@@ -85,6 +85,7 @@ const superAdminSubLinks = [
         group: 'Analytics & Settings', icon: BarChart2, items: [
             { path: '/admin/analytics/sales', label: 'Sales Analytics' },
             { path: '/admin/analytics/products', label: 'Product Performance' },
+            { path: '/admin/settings', label: 'Platform Settings' },
             { path: '/admin/settings/payment', label: 'Payment Gateways' },
             { path: '/admin/settings/tax', label: 'Tax Configuration' },
             { path: '/admin/control-authority', label: 'Control Authority' },

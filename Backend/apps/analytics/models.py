@@ -10,6 +10,8 @@ class TrafficLog(models.Model):
     ]
     source = models.CharField(max_length=50, choices=SOURCE_CHOICES, default='direct')
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    country = models.CharField(max_length=100, null=True, blank=True, help_text="Country name (e.g., United States)")
+    state = models.CharField(max_length=100, null=True, blank=True, help_text="State/Region name (e.g., California)")
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

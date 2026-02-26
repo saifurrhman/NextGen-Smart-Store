@@ -1,10 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     MoreVertical, ArrowUp, ArrowDown, Search, Filter,
-    Smartphone, Shirt, Home as HomeIcon, Plus, ChevronRight
+    Smartphone, Shirt, Home as HomeIcon, Plus, ChevronRight,
+    Globe
 } from 'lucide-react';
+import api from '../../utils/api';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const Dashboard = () => {
+    const { formatCurrency } = useCurrency();
+    const [trafficStats, setTrafficStats] = useState({ total_visits: 0, sources: [], countries: [], states: [] });
+    const [locationTab, setLocationTab] = useState('countries'); // 'countries' or 'states'
+
+    useEffect(() => {
+        const fetchTraffic = async () => {
+            try {
+                const response = await api.get('/api/v1/analytics/traffic_stats/');
+                setTrafficStats(response.data);
+            } catch (error) {
+                console.error("Failed to fetch traffic stats:", error);
+            }
+        };
+        fetchTraffic();
+    }, []);
+
     return (
         <div className="space-y-6 max-w-[1400px] mx-auto pb-10">
             {/* Header / Title */}
@@ -22,13 +41,13 @@ const Dashboard = () => {
                     <h3 className="text-sm font-medium text-gray-700 mb-1">Total Sales</h3>
                     <p className="text-xs text-gray-400 mb-4">Last 7 days</p>
                     <div className="flex items-end gap-3 mb-2">
-                        <h2 className="text-3xl font-bold text-gray-800">$350K</h2>
+                        <h2 className="text-3xl font-bold text-gray-800">{formatCurrency(350, 0)}K</h2>
                         <div className="flex items-center gap-1 text-xs font-semibold text-emerald-500 mb-1">
                             <span>Sales</span> <ArrowUp size={12} /> <span>10.4%</span>
                         </div>
                     </div>
                     <p className="text-xs text-gray-500 mb-4">
-                        Previous 7days <span className="font-semibold text-blue-500">($235)</span>
+                        Previous 7days <span className="font-semibold text-blue-500">({formatCurrency(235, 0)})</span>
                     </p>
                     <div className="flex justify-end mt-2">
                         <button className="px-5 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-full hover:bg-blue-50 transition-colors">
@@ -129,7 +148,7 @@ const Dashboard = () => {
                             <p className="text-xs text-gray-400">Out of Stock</p>
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800">250k</h2>
+                            <h2 className="text-xl font-bold text-gray-800">{formatCurrency(250, 0)}k</h2>
                             <p className="text-xs text-gray-400">Revenue</p>
                         </div>
                     </div>
@@ -219,67 +238,79 @@ const Dashboard = () => {
 
                     <div className="border-t border-gray-100"></div>
 
-                    {/* Sales by Country */}
+                    {/* Visits by Location */}
                     <div className="flex-1">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-sm font-semibold text-gray-800">Sales by Country</h3>
-                            <span className="text-xs font-semibold text-gray-500">Sales</span>
+                            <h3 className="text-sm font-semibold text-gray-800">Visits by Location</h3>
                         </div>
 
+                        {/* Tabs */}
+                        <div className="flex gap-4 border-b border-gray-100 mb-4 text-xs font-semibold">
+                            <button
+                                onClick={() => setLocationTab('countries')}
+                                className={`pb-2 border-b-2 transition-colors ${locationTab === 'countries' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>Countries</button>
+                            <button
+                                onClick={() => setLocationTab('states')}
+                                className={`pb-2 border-b-2 transition-colors ${locationTab === 'states' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>States/Regions</button>
+                        </div>
+
+                        {/* Location List */}
                         <div className="space-y-4">
-                            {/* US */}
-                            <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-                                    <div className="absolute w-full h-1/2 top-0 bg-red-500"></div>
-                                    <div className="absolute w-1/2 h-1/2 top-0 left-0 bg-blue-700"></div>
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="font-semibold text-gray-800">30k <span className="font-normal text-gray-400">US</span></span>
-                                        <span className="text-emerald-500 flex items-center text-[10px]"><ArrowUp size={10} /> 25.8%</span>
+                            {trafficStats[locationTab]?.slice(0, 5).map((loc, idx) => (
+                                <div key={idx} className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                                        <Globe size={12} className="text-gray-500" />
                                     </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                        <div className="bg-indigo-500 h-full rounded-full w-3/4"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Brazil */}
-                            <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
-                                    <div className="w-4 h-2 bg-yellow-300 transform rotate-45"></div>
-                                    <div className="absolute w-2 h-2 rounded-full bg-blue-500"></div>
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="font-semibold text-gray-800">30k <span className="font-normal text-gray-400">Brazil</span></span>
-                                        <span className="text-red-500 flex items-center text-[10px]"><ArrowDown size={10} /> 15.8%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                        <div className="bg-indigo-300 h-full rounded-full w-[65%]"></div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="font-semibold text-gray-800">{loc.value} <span className="font-normal text-gray-400">{loc.name}</span></span>
+                                            <span className="text-gray-500 flex items-center text-[10px]">{loc.percentage}%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                            <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${loc.percentage}%` }}></div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Australia */}
-                            <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
-                                    <div className="absolute top-1 left-1 w-2 h-2 text-white">★</div>
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="font-semibold text-gray-800">25k <span className="font-normal text-gray-400">Australia</span></span>
-                                        <span className="text-emerald-500 flex items-center text-[10px]"><ArrowUp size={10} /> 35.6%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                        <div className="bg-indigo-500 h-full rounded-full w-[85%]"></div>
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
+                            {(!trafficStats[locationTab] || trafficStats[locationTab].length === 0) && (
+                                <div className="text-xs text-gray-400 text-center py-2 bg-gray-50 rounded-lg">No location data available</div>
+                            )}
                         </div>
                     </div>
 
-                    <button className="w-full py-2 border border-blue-200 text-blue-600 rounded-full text-xs font-semibold hover:bg-blue-50 transition-colors mt-auto">
+                    <div className="border-t border-gray-100 my-6"></div>
+
+                    {/* Traffic Sources */}
+                    <div className="flex-1">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-sm font-semibold text-gray-800">Traffic Sources</h3>
+                            <span className="text-xs font-semibold text-gray-500">{trafficStats.total_visits} Visits</span>
+                        </div>
+
+                        <div className="space-y-4">
+                            {trafficStats.sources.map((source, idx) => (
+                                <div key={idx} className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                                        <Globe size={12} className="text-gray-500" style={{ color: source.color }} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="font-semibold text-gray-800">{source.value} <span className="font-normal text-gray-400 capitalize">{source.name}</span></span>
+                                            <span className="text-gray-500 flex items-center text-[10px]">{source.percentage}%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                            <div className="h-full rounded-full" style={{ width: `${source.percentage}%`, backgroundColor: source.color || '#10b981' }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {trafficStats.sources.length === 0 && (
+                                <div className="text-xs text-gray-400 text-center py-2 bg-gray-50 rounded-lg">No traffic data available</div>
+                            )}
+                        </div>
+                    </div>
+
+                    <button className="w-full py-2 border border-blue-200 text-blue-600 rounded-full text-xs font-semibold hover:bg-blue-50 transition-colors mt-6">
                         View Insight
                     </button>
                 </div>
@@ -315,7 +346,7 @@ const Dashboard = () => {
                                     <td className="py-4 px-2">
                                         <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Paid</span>
                                     </td>
-                                    <td className="py-4 px-2">$64</td>
+                                    <td className="py-4 px-2">{formatCurrency(64)}</td>
                                 </tr>
                                 <tr className="border-b border-gray-50/50">
                                     <td className="py-4 px-2">2.</td>
@@ -324,7 +355,7 @@ const Dashboard = () => {
                                     <td className="py-4 px-2">
                                         <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>Pending</span>
                                     </td>
-                                    <td className="py-4 px-2">$557</td>
+                                    <td className="py-4 px-2">{formatCurrency(557)}</td>
                                 </tr>
                                 <tr className="border-b border-gray-50/50">
                                     <td className="py-4 px-2">3.</td>
@@ -333,7 +364,7 @@ const Dashboard = () => {
                                     <td className="py-4 px-2">
                                         <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Paid</span>
                                     </td>
-                                    <td className="py-4 px-2">$156</td>
+                                    <td className="py-4 px-2">{formatCurrency(156)}</td>
                                 </tr>
                                 <tr className="border-b border-gray-50/50">
                                     <td className="py-4 px-2">4.</td>
@@ -342,16 +373,7 @@ const Dashboard = () => {
                                     <td className="py-4 px-2">
                                         <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Paid</span>
                                     </td>
-                                    <td className="py-4 px-2">$265</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-4 px-2">5.</td>
-                                    <td className="py-4 px-2">#6462</td>
-                                    <td className="py-4 px-2 text-gray-500">01 Oct | 11:29 am</td>
-                                    <td className="py-4 px-2">
-                                        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Paid</span>
-                                    </td>
-                                    <td className="py-4 px-2">$265</td>
+                                    <td className="py-4 px-2">{formatCurrency(265)}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -389,7 +411,7 @@ const Dashboard = () => {
                                     <p className="text-xs font-semibold text-gray-800 truncate">Apple iPhone 13</p>
                                     <p className="text-[10px] text-gray-400">Item: #FXZ-4567</p>
                                 </div>
-                                <span className="text-xs font-bold text-gray-800 ml-2">$999.00</span>
+                                <span className="text-xs font-bold text-gray-800 ml-2">{formatCurrency(999)}</span>
                             </div>
                         </div>
 
@@ -402,7 +424,7 @@ const Dashboard = () => {
                                     <p className="text-xs font-semibold text-gray-800 truncate">Nike Air Jordan</p>
                                     <p className="text-[10px] text-gray-400">Item: #FXZ-4567</p>
                                 </div>
-                                <span className="text-xs font-bold text-gray-800 ml-2">$72.40</span>
+                                <span className="text-xs font-bold text-gray-800 ml-2">{formatCurrency(72.40)}</span>
                             </div>
                         </div>
 
@@ -415,7 +437,7 @@ const Dashboard = () => {
                                     <p className="text-xs font-semibold text-gray-800 truncate">T-shirt</p>
                                     <p className="text-[10px] text-gray-400">Item: #FXZ-4567</p>
                                 </div>
-                                <span className="text-xs font-bold text-gray-800 ml-2">$35.40</span>
+                                <span className="text-xs font-bold text-gray-800 ml-2">{formatCurrency(35.40)}</span>
                             </div>
                         </div>
 
@@ -428,7 +450,7 @@ const Dashboard = () => {
                                     <p className="text-xs font-semibold text-gray-800 truncate">Assorted Cross Bag</p>
                                     <p className="text-[10px] text-gray-400">Item: #FXZ-4567</p>
                                 </div>
-                                <span className="text-xs font-bold text-gray-800 ml-2">$80.00</span>
+                                <span className="text-xs font-bold text-gray-800 ml-2">{formatCurrency(80)}</span>
                             </div>
                         </div>
                     </div>
@@ -469,7 +491,7 @@ const Dashboard = () => {
                                     <td className="py-4 px-2">
                                         <span className="flex items-center gap-1.5 text-emerald-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Stock</span>
                                     </td>
-                                    <td className="py-4 px-4">$999.00</td>
+                                    <td className="py-4 px-4">{formatCurrency(999)}</td>
                                 </tr>
                                 <tr className="border-b border-gray-50/50">
                                     <td className="py-4 px-4 flex items-center gap-3">
@@ -482,7 +504,7 @@ const Dashboard = () => {
                                     <td className="py-4 px-2">
                                         <span className="flex items-center gap-1.5 text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>Stock out</span>
                                     </td>
-                                    <td className="py-4 px-4">$999.00</td>
+                                    <td className="py-4 px-4">{formatCurrency(999)}</td>
                                 </tr>
                                 <tr className="border-b border-gray-50/50">
                                     <td className="py-4 px-4 flex items-center gap-3">
@@ -493,7 +515,7 @@ const Dashboard = () => {
                                     <td className="py-4 px-2">
                                         <span className="flex items-center gap-1.5 text-emerald-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Stock</span>
                                     </td>
-                                    <td className="py-4 px-4">$999.00</td>
+                                    <td className="py-4 px-4">{formatCurrency(999)}</td>
                                 </tr>
                                 <tr>
                                     <td className="py-4 px-4 flex items-center gap-3">
@@ -504,7 +526,7 @@ const Dashboard = () => {
                                     <td className="py-4 px-2">
                                         <span className="flex items-center gap-1.5 text-emerald-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Stock</span>
                                     </td>
-                                    <td className="py-4 px-4">$999.00</td>
+                                    <td className="py-4 px-4">{formatCurrency(999)}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -571,7 +593,7 @@ const Dashboard = () => {
                                 <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">⌚</div>
                                 <div>
                                     <p className="text-xs font-semibold text-gray-800">Smart Fitness Tracker</p>
-                                    <p className="text-[10px] text-emerald-500 font-bold">$39.99</p>
+                                    <p className="text-[10px] text-emerald-500 font-bold">{formatCurrency(39.99)}</p>
                                 </div>
                             </div>
                             <button className="flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-semibold hover:bg-emerald-600 transition-colors">
@@ -584,7 +606,7 @@ const Dashboard = () => {
                                 <div className="w-8 h-8 rounded bg-amber-800 flex items-center justify-center text-white text-[10px]">👛</div>
                                 <div>
                                     <p className="text-xs font-semibold text-gray-800">Leather Wallet</p>
-                                    <p className="text-[10px] text-emerald-500 font-bold">$19.99</p>
+                                    <p className="text-[10px] text-emerald-500 font-bold">{formatCurrency(19.99)}</p>
                                 </div>
                             </div>
                             <button className="flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-semibold hover:bg-emerald-600 transition-colors">
@@ -597,7 +619,7 @@ const Dashboard = () => {
                                 <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">✂️</div>
                                 <div>
                                     <p className="text-xs font-semibold text-gray-800">Electric Hair Trimmer</p>
-                                    <p className="text-[10px] text-emerald-500 font-bold">$34.99</p>
+                                    <p className="text-[10px] text-emerald-500 font-bold">{formatCurrency(34.99)}</p>
                                 </div>
                             </div>
                             <button className="flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-semibold hover:bg-emerald-600 transition-colors">

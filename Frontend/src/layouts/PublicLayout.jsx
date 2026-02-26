@@ -18,7 +18,36 @@ const PublicLayout = () => {
                 // Fallback to empty list, effectively showing only Home and Shop
             }
         };
+
+        const trackTraffic = async () => {
+            if (sessionStorage.getItem('traffic_logged')) return;
+
+            const params = new URLSearchParams(window.location.search);
+            let source = params.get('source');
+
+            if (!source) {
+                const referrer = document.referrer.toLowerCase();
+                if (referrer.includes('google.com') || referrer.includes('bing.com')) {
+                    source = 'google';
+                } else if (referrer.includes('facebook.com') || referrer.includes('instagram.com')) {
+                    source = 'meta';
+                } else if (referrer.includes('tiktok.com')) {
+                    source = 'tiktok';
+                } else {
+                    source = 'direct';
+                }
+            }
+
+            try {
+                await api.post('/api/v1/analytics/track_visit/', { source });
+                sessionStorage.setItem('traffic_logged', 'true');
+            } catch (error) {
+                console.error("Failed to log traffic:", error);
+            }
+        };
+
         fetchCategories();
+        trackTraffic();
     }, []);
 
     return (
