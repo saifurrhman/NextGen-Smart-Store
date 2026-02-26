@@ -4,78 +4,92 @@ import {
     LayoutDashboard,
     Shield, Settings, LogOut, Store, ChevronLeft, ChevronRight, ExternalLink,
     FileText, DollarSign, Megaphone, Boxes, HeadphonesIcon,
-    ChevronDown, Image, BookOpen, FolderOpen, Navigation, Search
+    ChevronDown, Image, BookOpen, FolderOpen, Navigation, Search,
+    TrendingUp, CreditCard, Wallet, Map, Flag, Ticket, Users, BarChart2, Truck
 } from 'lucide-react';
 
-/* ─── Content sub-sections ─── */
-const contentSubLinks = [
+
+/* ─── Super Admin sub-sections ─── */
+const superAdminSubLinks = [
     {
-        group: 'Banners', icon: Image,
-        items: [
-            { path: '/admin/content/banners/hero-sliders', label: 'Hero Sliders' },
-            { path: '/admin/content/banners/promotional', label: 'Promotional' },
-            { path: '/admin/content/banners/category', label: 'Category Banners' },
-            { path: '/admin/content/banners/create', label: 'Create Banner' },
-        ],
+        group: 'Orders', icon: Ticket, items: [
+            { path: '/admin/orders/all', label: 'All Orders' },
+            { path: '/admin/orders/details', label: 'Order Details' },
+            { path: '/admin/orders/reports', label: 'Order Reports' },
+            { path: '/admin/orders/refunds', label: 'Refunds & Returns' },
+        ]
     },
     {
-        group: 'Blog', icon: BookOpen,
-        items: [
-            { path: '/admin/content/blog/posts', label: 'All Posts' },
-            { path: '/admin/content/blog/create', label: 'Create Post' },
-            { path: '/admin/content/blog/categories', label: 'Categories' },
-            { path: '/admin/content/blog/comments', label: 'Comments' },
-        ],
+        group: 'Products', icon: Store, items: [
+            { path: '/admin/products/all', label: 'All Products' },
+            { path: '/admin/products/add', label: 'Add Product' },
+            { path: '/admin/products/categories', label: 'Categories' },
+            { path: '/admin/products/attributes', label: 'Attributes' },
+            { path: '/admin/products/import', label: 'Bulk Import' },
+        ]
     },
     {
-        group: 'Media', icon: FolderOpen,
-        items: [
-            { path: '/admin/content/media/library', label: 'Media Library' },
-            { path: '/admin/content/media/upload', label: 'Upload Media' },
-            { path: '/admin/content/media/images', label: 'Image Manager' },
-            { path: '/admin/content/media/videos', label: 'Video Manager' },
-        ],
+        group: 'Users & Vendors', icon: Users, items: [
+            { path: '/admin/users/all', label: 'All Users' },
+            { path: '/admin/users/customers', label: 'Customers' },
+            { path: '/admin/vendors/all', label: 'All Vendors' },
+            { path: '/admin/vendors/approval', label: 'Vendor Approval' },
+            { path: '/admin/vendors/payouts', label: 'Vendor Payouts' },
+        ]
     },
     {
-        group: 'Pages', icon: FileText,
-        items: [
-            { path: '/admin/content/pages/homepage', label: 'Homepage' },
-            { path: '/admin/content/pages/about', label: 'About Us' },
-            { path: '/admin/content/pages/contact', label: 'Contact Us' },
-            { path: '/admin/content/pages/faq', label: 'FAQ' },
-            { path: '/admin/content/pages/privacy', label: 'Privacy Policy' },
-            { path: '/admin/content/pages/terms', label: 'Terms & Conditions' },
-            { path: '/admin/content/pages/returns', label: 'Return Policy' },
-        ],
+        group: 'Content', path: '/admin/content', icon: BookOpen, items: [
+            { path: '/admin/content/banners/hero-sliders', label: 'Banners' },
+            { path: '/admin/content/blog/posts', label: 'Blog' },
+            { path: '/admin/content/media/library', label: 'Media' },
+            { path: '/admin/content/pages/homepage', label: 'Pages' },
+        ]
     },
     {
-        group: 'Navigation', icon: Navigation,
-        items: [
-            { path: '/admin/content/navigation/header', label: 'Header Menu' },
-            { path: '/admin/content/navigation/footer', label: 'Footer Menu' },
-            { path: '/admin/content/navigation/mobile', label: 'Mobile Menu' },
-        ],
+        group: 'Finance', path: '/admin/finance', icon: DollarSign, items: [
+            { path: '/admin/finance/revenue', label: 'Revenue' },
+            { path: '/admin/finance/reports', label: 'Reports' },
+            { path: '/admin/finance/transactions', label: 'Transactions' },
+            { path: '/admin/finance/tax', label: 'Tax' },
+        ]
     },
     {
-        group: 'SEO', icon: Search,
-        items: [
-            { path: '/admin/content/seo/meta-tags', label: 'Meta Tags' },
-            { path: '/admin/content/seo/sitemap', label: 'Sitemap' },
-            { path: '/admin/content/seo/urls', label: 'URL Manager' },
-        ],
+        group: 'Marketing', path: '/admin/marketing', icon: Megaphone, items: [
+            { path: '/admin/marketing/campaigns', label: 'Campaigns' },
+            { path: '/admin/marketing/promotions', label: 'Promotions' },
+            { path: '/admin/marketing/coupons', label: 'Coupons' },
+            { path: '/admin/marketing/ads', label: 'Ads' },
+        ]
     },
+    {
+        group: 'Operations', path: '/admin/operations', icon: Boxes, items: [
+            { path: '/admin/operations/delivery/daily', label: 'Delivery' },
+            { path: '/admin/operations/analytics/vendors', label: 'Vendor Support' },
+        ]
+    },
+    {
+        group: 'Support', path: '/admin/support', icon: HeadphonesIcon, items: [
+            { path: '/admin/support/tickets/all', label: 'Tickets' },
+            { path: '/admin/support/kb/articles', label: 'Knowledge Base' },
+            { path: '/admin/support/chat/active', label: 'Live Chat' },
+        ]
+    },
+    {
+        group: 'Analytics & Settings', icon: BarChart2, items: [
+            { path: '/admin/analytics/sales', label: 'Sales Analytics' },
+            { path: '/admin/analytics/products', label: 'Product Performance' },
+            { path: '/admin/settings/payment', label: 'Payment Gateways' },
+            { path: '/admin/settings/tax', label: 'Tax Configuration' },
+            { path: '/admin/control-authority', label: 'Control Authority' },
+        ]
+    }
 ];
 
 const topLinks = [
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
 ];
 
-const deptLinks = [
-    { path: '/admin/finance', icon: DollarSign, label: 'Finance' },
-    { path: '/admin/marketing', icon: Megaphone, label: 'Marketing' },
-    { path: '/admin/operations', icon: Boxes, label: 'Operations' },
-    { path: '/admin/support', icon: HeadphonesIcon, label: 'Support' },
-];
+const deptLinks = [];
 
 const adminLinks = [
     { path: '/admin/profile', icon: Shield, label: 'Admin role' },
@@ -85,7 +99,9 @@ const adminLinks = [
 const AdminSidebar = ({ collapsed, onToggle, user }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [contentOpen, setContentOpen] = useState(location.pathname.startsWith('/admin/content'));
+
+    // Super Admin state removed as all links are now top-level departments
+
     const [openGroup, setOpenGroup] = useState('');
 
     const handleLogout = () => {
@@ -96,12 +112,12 @@ const AdminSidebar = ({ collapsed, onToggle, user }) => {
         navigate('/admin/login');
     };
 
-    const isContentActive = location.pathname.startsWith('/admin/content');
 
     const renderLink = (link) => {
         const isActive =
             location.pathname === link.path ||
             (link.path !== '/admin/dashboard' && location.pathname.startsWith(link.path));
+
         return (
             <li key={link.path}>
                 <NavLink
@@ -121,6 +137,8 @@ const AdminSidebar = ({ collapsed, onToggle, user }) => {
             </li>
         );
     };
+
+
 
     return (
         <aside
@@ -164,97 +182,63 @@ const AdminSidebar = ({ collapsed, onToggle, user }) => {
                 {collapsed && <div className="border-t border-gray-100 mx-2 mb-2" />}
 
                 <ul className="space-y-0.5">
-                    {/* Content — expandable */}
-                    <li>
-                        <button
-                            onClick={() => {
-                                if (collapsed) {
-                                    navigate('/admin/content');
-                                } else {
-                                    setContentOpen(!contentOpen);
-                                }
-                            }}
-                            title={collapsed ? 'Content' : ''}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${isContentActive
-                                ? 'bg-brand text-white shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-brand-dark'
-                                }`}
-                        >
-                            <FileText
-                                size={20}
-                                className={isContentActive ? 'text-white' : 'text-gray-400 group-hover:text-brand'}
-                            />
-                            {!collapsed && (
-                                <>
-                                    <span className="flex-1 text-left">Content</span>
-                                    <ChevronDown
-                                        size={14}
-                                        className={`transition-transform duration-200 ${contentOpen ? 'rotate-180' : ''} ${isContentActive ? 'text-white/70' : 'text-gray-400'}`}
-                                    />
-                                </>
-                            )}
-                        </button>
+                    {superAdminSubLinks.map((group) => {
+                        const Icon = group.icon;
+                        const isGroupOpen = openGroup === group.group || (!openGroup && group.items.some(i => location.pathname === i.path)) || location.pathname === group.path;
+                        const groupActive = group.items.some(i => location.pathname === i.path) || location.pathname === group.path;
 
-                        {/* Content sub-groups */}
-                        {!collapsed && contentOpen && (
-                            <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-gray-100 pl-3">
-                                {contentSubLinks.map((group) => {
-                                    const Icon = group.icon;
-                                    const isGroupOpen = openGroup === group.group;
-                                    const groupActive = group.items.some(i => location.pathname === i.path);
+                        return (
+                            <li key={group.group}>
+                                <button
+                                    onClick={() => {
+                                        if (group.path && location.pathname !== group.path) {
+                                            navigate(group.path);
+                                            setOpenGroup(group.group);
+                                        } else {
+                                            setOpenGroup(isGroupOpen ? '' : group.group);
+                                        }
+                                    }}
+                                    title={collapsed ? group.group : ''}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group-btn ${groupActive
+                                        ? 'bg-brand text-white shadow-sm'
+                                        : 'text-gray-600 hover:bg-gray-50 hover:text-brand-dark'
+                                        }`}
+                                >
+                                    <Icon size={20} className={groupActive ? 'text-white' : 'text-gray-400 group-hover:text-brand'} />
+                                    {!collapsed && (
+                                        <>
+                                            <span className="flex-1 text-left">{group.group}</span>
+                                            <ChevronDown
+                                                size={14}
+                                                className={`transition-transform duration-200 ${isGroupOpen ? 'rotate-180' : ''} ${groupActive ? 'text-white/70' : 'text-gray-400'}`}
+                                            />
+                                        </>
+                                    )}
+                                </button>
 
-                                    return (
-                                        <div key={group.group}>
-                                            <button
-                                                onClick={() => setOpenGroup(isGroupOpen ? '' : group.group)}
-                                                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors ${groupActive ? 'text-brand' : 'text-gray-500 hover:text-brand-dark hover:bg-gray-50'
-                                                    }`}
-                                            >
-                                                <Icon size={15} className={groupActive ? 'text-brand' : 'text-gray-400'} />
-                                                <span className="flex-1 text-left">{group.group}</span>
-                                                <ChevronDown
-                                                    size={12}
-                                                    className={`transition-transform duration-200 ${isGroupOpen ? 'rotate-180' : ''} text-gray-400`}
-                                                />
-                                            </button>
-                                            {isGroupOpen && (
-                                                <ul className="ml-5 mt-0.5 space-y-0.5">
-                                                    {group.items.map((item) => {
-                                                        const active = location.pathname === item.path;
-                                                        return (
-                                                            <li key={item.path}>
-                                                                <NavLink
-                                                                    to={item.path}
-                                                                    className={`block px-2.5 py-1.5 rounded-md text-[12.5px] transition-colors ${active
-                                                                        ? 'text-brand font-semibold bg-brand/5'
-                                                                        : 'text-gray-500 hover:text-brand-dark hover:bg-gray-50'
-                                                                        }`}
-                                                                >
-                                                                    {item.label}
-                                                                </NavLink>
-                                                            </li>
-                                                        );
-                                                    })}
-                                                </ul>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </li>
-
-                    {/* Other departments */}
-                    {deptLinks.map(renderLink)}
-                </ul>
-
-                {/* Admin */}
-                {!collapsed && (
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 px-3 mb-1 mt-4">Admin</p>
-                )}
-                {collapsed && <div className="border-t border-gray-100 mx-2 mb-2" />}
-                <ul className="space-y-0.5">
-                    {adminLinks.map(renderLink)}
+                                {!collapsed && isGroupOpen && (
+                                    <ul className="ml-4 mt-1 space-y-0.5 border-l-2 border-gray-100 pl-3">
+                                        {group.items.map((item) => {
+                                            const active = location.pathname === item.path;
+                                            return (
+                                                <li key={item.path}>
+                                                    <NavLink
+                                                        to={item.path}
+                                                        className={`block px-2.5 py-1.5 rounded-md text-[13px] transition-colors ${active
+                                                            ? 'text-brand font-semibold bg-brand/5'
+                                                            : 'text-gray-500 hover:text-brand-dark hover:bg-gray-50'
+                                                            }`}
+                                                    >
+                                                        {item.label}
+                                                    </NavLink>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </li>
+                        );
+                    })}
                 </ul>
             </nav>
 

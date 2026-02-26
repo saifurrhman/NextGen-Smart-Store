@@ -1,105 +1,137 @@
 import React from 'react';
-import { Megaphone, Tag, Mail, BarChart3, Gift, Users, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { Megaphone, Users, DollarSign, Target, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 
-const stats = [
-    { label: 'Active Campaigns', value: '4', icon: Megaphone, change: '2 running' },
-    { label: 'Coupons Active', value: '12', icon: Tag, change: '248 used' },
-    { label: 'Email Subscribers', value: '3,450', icon: Mail, change: '+120 this week' },
-    { label: 'Conversion Rate', value: '4.8%', icon: BarChart3, change: '+0.5% vs last month' },
+const data = [
+    { name: 'Jan', revenue: 4000, reach: 2400 },
+    { name: 'Feb', revenue: 3000, reach: 1398 },
+    { name: 'Mar', revenue: 2000, reach: 9800 },
+    { name: 'Apr', revenue: 2780, reach: 3908 },
+    { name: 'May', revenue: 1890, reach: 4800 },
+    { name: 'Jun', revenue: 2390, reach: 3800 },
+    { name: 'Jul', revenue: 3490, reach: 4300 },
 ];
 
-const campaigns = [
-    { name: 'Summer Sale 2026', status: 'Active', reach: '12,400', conversions: '342', revenue: 'PKR 85,000' },
-    { name: 'New Arrivals Promo', status: 'Active', reach: '8,200', conversions: '189', revenue: 'PKR 45,600' },
-    { name: 'Flash Friday', status: 'Scheduled', reach: '—', conversions: '—', revenue: '—' },
-    { name: 'Eid Collection', status: 'Draft', reach: '—', conversions: '—', revenue: '—' },
-];
+const StatCard = ({ title, value, change, trend, icon: Icon }) => (
+    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-brand/5 rounded-full flex items-center justify-center">
+                <Icon className="text-brand" size={24} />
+            </div>
+            <div className={`flex items-center gap-1 text-sm font-medium ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                {trend === 'up' ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                {change}
+            </div>
+        </div>
+        <div>
+            <h3 className="text-gray-500 text-sm font-medium mb-1">{title}</h3>
+            <p className="text-2xl font-bold text-brand-dark">{value}</p>
+        </div>
+    </div>
+);
 
-const MarketingDashboard = () => {
+const Dashboard = () => {
     return (
         <div className="space-y-6">
+            {/* Header */}
             <div>
-                <h2 className="text-xl font-semibold text-brand-dark flex items-center gap-2">
-                    <Megaphone size={22} className="text-brand" />
+                <h2 className="text-2xl font-bold text-brand-dark flex items-center gap-2">
+                    <Megaphone className="text-brand" size={28} />
                     Marketing Dashboard
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">Campaigns, coupons & promotions</p>
+                <p className="text-gray-500 mt-1">Overview of your marketing campaigns and performance</p>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {stats.map((stat) => {
-                    const Icon = stat.icon;
-                    return (
-                        <div key={stat.label} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center mb-3">
-                                <Icon size={20} className="text-brand" />
-                            </div>
-                            <p className="text-2xl font-bold text-brand-dark">{stat.value}</p>
-                            <p className="text-sm text-gray-500">{stat.label}</p>
-                            <p className="text-xs text-brand mt-1">{stat.change}</p>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                    title="Total Reach"
+                    value="2.4M"
+                    change="+12.5%"
+                    trend="up"
+                    icon={Users}
+                />
+                <StatCard
+                    title="Ad Spend"
+                    value="$12,450"
+                    change="-2.4%"
+                    trend="down"
+                    icon={DollarSign}
+                />
+                <StatCard
+                    title="Conversion Rate"
+                    value="4.8%"
+                    change="+1.2%"
+                    trend="up"
+                    icon={Target}
+                />
+                <StatCard
+                    title="ROI"
+                    value="285%"
+                    change="+14.6%"
+                    trend="up"
+                    icon={TrendingUp}
+                />
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <h3 className="text-lg font-semibold text-brand-dark mb-4">Performance Overview</h3>
+                    <div className="h-80 flex flex-col justify-end pt-4">
+                        {/* Simple CSS-based Bar Chart */}
+                        <div className="flex items-end justify-between h-full w-full space-x-2">
+                            {data.map((item, index) => {
+                                // Calculate a relative height percentage (max 100%)
+                                // Max revenue is 4000
+                                const hPercent = Math.max(10, (item.revenue / 4000) * 100);
+                                return (
+                                    <div key={index} className="flex flex-col items-center flex-1 h-full justify-end group cursor-pointer relative">
+                                        <div className="relative w-full px-1 sm:px-2 flex flex-col justify-end h-full">
+                                            {/* Tooltip on hover */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                                                ${item.revenue.toLocaleString()}
+                                            </div>
+                                            <div
+                                                className="w-full bg-brand/80 hover:bg-brand transition-all rounded-t-md"
+                                                style={{ height: `${hPercent}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-2 font-medium">{item.name}</div>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    );
-                })}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                    { label: 'Create Coupon', desc: 'New discount code', icon: Tag },
-                    { label: 'Email Campaign', desc: 'Send to subscribers', icon: Mail },
-                    { label: 'New Promotion', desc: 'Set up a deal', icon: Gift },
-                ].map((action) => {
-                    const Icon = action.icon;
-                    return (
-                        <button key={action.label} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand/30 transition-all text-left group">
-                            <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center group-hover:bg-brand transition-colors">
-                                <Icon size={20} className="text-brand group-hover:text-white" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-brand-dark">{action.label}</p>
-                                <p className="text-xs text-gray-400">{action.desc}</p>
-                            </div>
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Campaigns Table */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="text-sm font-semibold text-brand-dark">Campaigns</h3>
+                    </div>
                 </div>
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-gray-50/50">
-                            <th className="text-left px-5 py-2.5 font-semibold text-gray-500">Campaign</th>
-                            <th className="text-left px-5 py-2.5 font-semibold text-gray-500">Status</th>
-                            <th className="text-left px-5 py-2.5 font-semibold text-gray-500">Reach</th>
-                            <th className="text-left px-5 py-2.5 font-semibold text-gray-500">Conversions</th>
-                            <th className="text-right px-5 py-2.5 font-semibold text-gray-500">Revenue</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {campaigns.map((c) => (
-                            <tr key={c.name} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                <td className="px-5 py-3 font-medium text-gray-700">{c.name}</td>
-                                <td className="px-5 py-3">
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${c.status === 'Active' ? 'bg-green-50 text-green-600' :
-                                            c.status === 'Scheduled' ? 'bg-blue-50 text-blue-600' :
-                                                'bg-gray-100 text-gray-500'
-                                        }`}>{c.status}</span>
-                                </td>
-                                <td className="px-5 py-3 text-gray-600">{c.reach}</td>
-                                <td className="px-5 py-3 text-gray-600">{c.conversions}</td>
-                                <td className="px-5 py-3 text-right font-semibold text-brand-dark">{c.revenue}</td>
-                            </tr>
+
+                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <h3 className="text-lg font-semibold text-brand-dark mb-4">Active Campaigns</h3>
+                    <div className="space-y-4">
+                        {[
+                            { name: 'Summer Sale 2026', status: 'Active', reach: '45K', spend: '$1,200' },
+                            { name: 'Retargeting Flow', status: 'Active', reach: '12K', spend: '$450' },
+                            { name: 'Welcome Series', status: 'Active', reach: '8K', spend: '$0' },
+                            { name: 'Abandoned Cart', status: 'Active', reach: '3K', spend: '$0' },
+                        ].map((campaign, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100">
+                                <div>
+                                    <h4 className="font-medium text-brand-dark text-sm">{campaign.name}</h4>
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700 mt-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                        {campaign.status}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-semibold text-brand-dark text-sm">{campaign.reach}</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">{campaign.spend}</p>
+                                </div>
+                            </div>
                         ))}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
         </div>
     );
 };
 
-export default MarketingDashboard;
+export default Dashboard;
