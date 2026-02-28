@@ -7,6 +7,7 @@ const AdminLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [user, setUser] = useState({ username: 'Admin', email: '', role: 'ADMIN' });
 
     useEffect(() => {
@@ -32,6 +33,8 @@ const AdminLayout = () => {
         } catch (e) {
             // ignore parse errors
         }
+        // Close mobile sidebar on navigation
+        setIsMobileOpen(false);
     }, [location, navigate]);
 
     // Get current page title from path
@@ -61,21 +64,33 @@ const AdminLayout = () => {
 
     return (
         <div className="flex min-h-screen bg-bg-page">
+            {/* Sidebar Overlay for Mobile */}
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <AdminSidebar
                 collapsed={sidebarCollapsed}
                 onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+                isMobileOpen={isMobileOpen}
+                onMobileClose={() => setIsMobileOpen(false)}
                 user={user}
             />
 
             {/* Main Content */}
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+            <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'
+                } ml-0`}>
                 <AdminTopbar
                     pageTitle={getPageTitle()}
                     user={user}
                     onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    onMobileToggle={() => setIsMobileOpen(!isMobileOpen)}
                 />
-                <main className="flex-1 p-8 overflow-y-auto">
+                <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                     <Outlet />
                 </main>
             </div>

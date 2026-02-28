@@ -135,6 +135,11 @@ import ChatHistory from './pages/admin/support/chat/ChatHistory';
 import AgentPerformance from './pages/admin/support/analytics/AgentPerformance';
 import CustomerSatisfaction from './pages/admin/support/analytics/CustomerSatisfaction';
 
+// Import Operations Delivery Sub-Pages
+import DeliveryTracking from './pages/admin/operations/delivery/DeliveryTracking';
+import DeliveryTeam from './pages/admin/operations/delivery/DeliveryTeam';
+import AssignDelivery from './pages/admin/operations/delivery/AssignDelivery';
+
 // Import Old Super Admin Sub-Pages (now at Admin root)
 import AllOrders from './pages/admin/orders/AllOrders';
 import OrderDetails from './pages/admin/orders/OrderDetails';
@@ -298,6 +303,9 @@ function App() {
 
           {/* Operations Department Sub-Routes */}
           <Route path="operations/delivery/daily" element={<DailyOperations />} />
+          <Route path="operations/delivery/tracking" element={<DeliveryTracking />} />
+          <Route path="operations/delivery/team" element={<DeliveryTeam />} />
+          <Route path="operations/delivery/assign" element={<AssignDelivery />} />
           <Route path="operations/delivery/processing" element={<OrderProcessing />} />
           <Route path="operations/delivery/inventory" element={<InventoryAlerts />} />
           <Route path="operations/analytics/vendors" element={<VendorSupport />} />

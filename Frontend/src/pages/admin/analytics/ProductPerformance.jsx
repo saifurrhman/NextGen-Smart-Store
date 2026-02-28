@@ -1,130 +1,179 @@
-import React from 'react';
-import { Box, Search, Filter, Download, Plus, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+    Package, Star, ShoppingBag, Eye,
+    ArrowUpRight, Download, Search, Filter
+} from 'lucide-react';
+import api from '../../../utils/api';
 
-const ProductPerformanceStats = () => {
+const ProductPerformance = () => {
+    const [loading, setLoading] = useState(true);
+    const [topProducts, setTopProducts] = useState([]);
+    const [topCategories, setTopCategories] = useState([]);
+    const [stats, setStats] = useState({
+        totalProducts: 0,
+        bestSeller: 'None',
+        avgRating: 0.0,
+        lowStock: 0
+    });
+
+    useEffect(() => {
+        const fetchProductData = async () => {
+            try {
+                const response = await api.get('/api/v1/analytics/dashboard/');
+                const data = response.data;
+
+                setTopProducts(data.topProducts || []);
+
+                // Aggregate stats
+                const overview = data.overview || {};
+                setTopCategories(data.topCategories || []);
+
+                setStats({
+                    totalProducts: overview.totalProducts || 0,
+                    bestSeller: data.topProducts && data.topProducts.length > 0 ? data.topProducts[0].name : 'None',
+                    avgRating: 0.0,
+                    lowStock: overview.lowStock || 0
+                });
+            } catch (error) {
+                console.error("Error fetching product performance:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProductData();
+    }, []);
+
+    const performanceCards = [
+        { label: 'Total Products', value: stats.totalProducts.toLocaleString(), icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { label: 'Best Seller', value: stats.bestSeller, icon: ShoppingBag, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Avg. Rating', value: `${stats.avgRating}/5.0`, icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { label: 'Low Stock Alerts', value: stats.lowStock, icon: Package, color: 'text-red-600', bg: 'bg-red-50' }
+    ];
+
     return (
         <div className="space-y-6">
-            {/* Header Content */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-brand-dark flex items-center gap-2">
-                        <Box size={22} className="text-brand" />
-                        Product Performance
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage and view your product performance</p>
+                    <h1 className="text-2xl font-bold text-gray-800">Product Performance</h1>
+                    <p className="text-sm text-gray-500 mt-1">Analyze which products are driving revenue and customer interest.</p>
                 </div>
-                {!false && (
-                    <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                            <Download size={16} />
-                            Export
-                        </button>
-                        <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
-                            <Plus size={16} />
-                            Create New
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* Main Content Area */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                
-                {/* Toolbar */}
-                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
-                    <div className="relative flex-1 w-full max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search in Product Performance..." 
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm"
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors w-full sm:w-auto shadow-sm">
-                        <Filter size={16} />
-                        Filters
+                <div className="flex items-center gap-3">
+                    <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                        <Download size={16} />
+                        <span>Export CSV</span>
+                    </button>
+                    <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200">
+                        View Detailed Report
                     </button>
                 </div>
-                
-                {/* Data Table */}
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50/50 text-gray-500 font-medium border-b border-gray-100">
-                            <tr>
-                                
-                                <th className="px-6 py-3">Product Name</th>
-                                
-                                <th className="px-6 py-3">Category</th>
-                                
-                                <th className="px-6 py-3">Units Sold</th>
-                                
-                                <th className="px-6 py-3">Revenue</th>
-                                
-                                <th className="px-6 py-3">Views</th>
-                                
-                                <th className="px-6 py-3">Conversion</th>
-                                
-                                <th className="px-6 py-3 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Wireless Earbuds</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Electronics
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">450</td>
-                                <td className="px-6 py-4 text-gray-600">PKR 1.5M</td>
-                                <td className="px-6 py-4 text-gray-600">12,000</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">
-                                    3.75%
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Organic Face Wash</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Beauty
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">820</td>
-                                <td className="px-6 py-4 text-gray-600">PKR 656K</td>
-                                <td className="px-6 py-4 text-gray-600">15,400</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">
-                                    5.32%
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
-                <div className="p-4 border-t border-gray-100 text-sm text-gray-500 flex items-center justify-between">
-                    <span>Showing 2 entries</span>
-                    <div className="flex gap-1">
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled>Prev</button>
-                        <button className="px-3 py-1 bg-brand text-white rounded">1</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">Next</button>
+            </div>
+
+            {/* Performance Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+                {performanceCards.map((card, index) => (
+                    <div key={index} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+                        <div className={`w-12 h-12 rounded-lg ${card.bg} ${card.color} flex items-center justify-center mb-4`}>
+                            <card.icon size={24} />
+                        </div>
+                        <p className="text-sm text-gray-500 font-medium">{card.label}</p>
+                        <h3 className="text-xl font-bold text-gray-800 mt-1">{loading ? '...' : card.value}</h3>
+                    </div>
+                ))}
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                {/* Best Selling Products Table */}
+                <div className="xl:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                        <h3 className="font-bold text-gray-800">Best Selling Products</h3>
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Search products..."
+                                    className="bg-gray-50 border-none rounded-lg pl-9 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500/20 w-48"
+                                />
+                            </div>
+                            <button className="p-1.5 bg-gray-50 rounded-lg text-gray-500 hover:text-emerald-600">
+                                <Filter size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-100 font-bold text-xs text-gray-500 uppercase">
+                                    <th className="px-6 py-4">Product</th>
+                                    <th className="px-6 py-4">Category</th>
+                                    <th className="px-6 py-4">Sales</th>
+                                    <th className="px-6 py-4">Revenue</th>
+                                    <th className="px-6 py-4">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {loading ? (
+                                    <tr><td colSpan="5" className="p-10 text-center text-gray-400 italic">Loading performance data...</td></tr>
+                                ) : topProducts.length > 0 ? topProducts.map((product, index) => (
+                                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center font-bold text-gray-400 text-xs uppercase">
+                                                    {product.name.substring(0, 2)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-semibold text-gray-800">{product.name}</p>
+                                                    <p className="text-xs text-gray-400">{product.id}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
+                                        <td className="px-6 py-4 font-bold text-gray-800">{product.orders}</td>
+                                        <td className="px-6 py-4 font-bold text-emerald-600">${(product.price * product.orders).toLocaleString()}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${product.stockStatus === 'Stock' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                                                }`}>
+                                                {product.stockStatus}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr><td colSpan="5" className="p-10 text-center text-gray-400 italic">No products Found.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                
+
+                {/* Conversion by Category */}
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                    <h3 className="font-bold text-gray-800 mb-6">Top Categories</h3>
+                    <div className="space-y-6">
+                        {topCategories.map((category, index) => (
+                            <div key={index} className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="font-medium text-gray-700">{category.name}</span>
+                                    <span className="font-bold text-gray-800">{category.count} sales</span>
+                                </div>
+                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-emerald-500 transition-all duration-1000"
+                                        style={{ width: `${category.percentage}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button className="w-full mt-8 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors uppercase tracking-wider">
+                        All Categories
+                    </button>
+                </div>
             </div>
         </div>
     );
 };
 
-export default ProductPerformanceStats;
+export default ProductPerformance;

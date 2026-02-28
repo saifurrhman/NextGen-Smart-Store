@@ -44,6 +44,9 @@ urlpatterns = [
     # Marketing
     path('marketing/', include('apps.marketing.urls')),
     
+    # Operations
+    path('operations/', include('apps.operations.urls')),
+    
     # Support
     path('support/', include('apps.support.urls')),
     
@@ -52,4 +55,10 @@ urlpatterns = [
     
     # Media Library
     path('media/', include('apps.media_library.urls')),
+    
+    # AI Automation
+    path('ai-automation/', include('apps.ai_automation.urls')),
+    
+    # Settings
+    path('settings/', include('apps.settings.urls')),
 ]

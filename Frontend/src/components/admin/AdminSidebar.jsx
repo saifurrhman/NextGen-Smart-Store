@@ -63,7 +63,10 @@ const superAdminSubLinks = [
     },
     {
         group: 'Operations', path: '/admin/operations', icon: Boxes, items: [
-            { path: '/admin/operations/delivery/daily', label: 'Delivery' },
+            { path: '/admin/operations/delivery/daily', label: 'Daily Operations' },
+            { path: '/admin/operations/delivery/tracking', label: 'Shipment Tracking' },
+            { path: '/admin/operations/delivery/team', label: 'Delivery Team' },
+            { path: '/admin/operations/delivery/assign', label: 'Assign Orders' },
             { path: '/admin/operations/analytics/vendors', label: 'Vendor Support' },
         ]
     },
@@ -102,7 +105,7 @@ const adminLinks = [
     { path: '/admin/control-authority', icon: Settings, label: 'Control Authority' },
 ];
 
-const AdminSidebar = ({ collapsed, onToggle, user }) => {
+const AdminSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -143,8 +146,8 @@ const AdminSidebar = ({ collapsed, onToggle, user }) => {
 
     return (
         <aside
-            className={`fixed left-0 top-0 h-screen z-30 flex flex-col bg-white border-r border-gray-100 transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'
-                }`}
+            className={`fixed left-0 top-0 h-screen z-50 flex flex-col bg-white border-r border-gray-100 transition-all duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                } ${collapsed ? 'w-20' : 'w-64'}`}
         >
             {/* ─── Logo ─── */}
             <div className="h-20 flex items-center justify-between px-6 border-b border-transparent shrink-0">

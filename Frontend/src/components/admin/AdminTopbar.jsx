@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { Search, Bell, Sun, Moon, Menu } from 'lucide-react';
+import { Search, Bell, Sun, Moon, AlignLeft } from 'lucide-react';
 
-const AdminTopbar = ({ pageTitle = 'Dashboard', onToggleSidebar }) => {
+const AdminTopbar = ({ pageTitle = 'Dashboard', onToggleSidebar, onMobileToggle }) => {
     const [darkMode, setDarkMode] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
     return (
         <header className="h-20 bg-white flex items-center justify-between px-8 sticky top-0 z-20">
             {/* Left — Page Title */}
-            <div className="flex items-center gap-4 w-1/4">
+            <div className="flex items-center gap-4 lg:w-1/4">
                 <button
-                    onClick={onToggleSidebar}
-                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-emerald-600 transition-colors lg:hidden"
+                    onClick={onMobileToggle}
+                    className="p-2.5 rounded-xl bg-[#f0f9f4] text-emerald-600 border border-emerald-50 hover:bg-emerald-500 hover:text-white transition-all lg:hidden shadow-sm shadow-emerald-100"
                 >
-                    <Menu size={20} />
+                    <AlignLeft size={20} strokeWidth={2.5} />
                 </button>
-                <h1 className="text-xl font-bold text-gray-800">{pageTitle}</h1>
+                <h1 className="text-lg md:text-xl font-bold text-gray-800 truncate">{pageTitle}</h1>
             </div>
 
             {/* Center — Search */}
@@ -38,7 +38,7 @@ const AdminTopbar = ({ pageTitle = 'Dashboard', onToggleSidebar }) => {
             </div>
 
             {/* Right — Notification, Theme, Avatar */}
-            <div className="flex items-center justify-end gap-6 w-1/4">
+            <div className="flex items-center justify-end gap-3 md:gap-6 lg:w-1/4">
 
                 {/* Notification bell */}
                 <button className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors">

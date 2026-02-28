@@ -49,6 +49,8 @@ class User(AbstractUser):
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='CUSTOMER')
 
+
+
     # Use email as the username field
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

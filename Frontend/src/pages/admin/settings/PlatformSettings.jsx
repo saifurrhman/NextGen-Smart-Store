@@ -153,14 +153,57 @@ const PlatformSettings = () => {
                         </div>
                     )}
 
+                    {/* API Configs Tab */}
+                    {activeTab === 'api' && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <Key size={20} className="text-blue-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-800">API Configurations</h2>
+                                    <p className="text-sm text-gray-500 mt-1">Configure external services and integration keys.</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="space-y-3">
+                                    <label className="text-sm font-semibold text-gray-700 block">
+                                        Google Analytics Tracking ID
+                                    </label>
+                                    <p className="text-xs text-gray-500 pb-1">
+                                        Enter your GA4 Measurement ID (e.g., G-XXXXXXXXXX) to enable real-time traffic tracking.
+                                    </p>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="G-XXXXXXXXXX"
+                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
+                                        />
+                                        <Globe size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-gray-100 flex justify-end">
+                                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-200">
+                                        <Save size={16} />
+                                        Save Configurations
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Placeholder for other tabs */}
-                    {activeTab !== 'localization' && (
+                    {activeTab !== 'localization' && activeTab !== 'api' && (
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col items-center justify-center text-center py-20">
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-100">
                                 <Settings size={24} className="text-gray-400" />
                             </div>
                             <h3 className="text-lg font-bold text-gray-800 mb-2">Almost There</h3>
-                            <p className="text-gray-500 max-w-sm">This section is currently under development. Please check the Localization tab.</p>
+                            <p className="text-gray-500 max-w-sm">This section is currently under development. Please check the Localization or API Configs tab.</p>
                         </div>
                     )}
                 </div>

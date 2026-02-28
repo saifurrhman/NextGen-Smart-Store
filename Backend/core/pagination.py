@@ -19,7 +19,7 @@ class MongoPagination(PageNumberPagination):
     Custom pagination for MongoDB/Djongo compatibility.
     """
     django_paginator_class = MongoPaginator
-    page_size = 20
+    page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
 

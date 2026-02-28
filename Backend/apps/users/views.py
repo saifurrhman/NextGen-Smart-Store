@@ -1,5 +1,5 @@
 import logging
-from rest_framework import status, permissions
+from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserSerializer as CustomerSerializer
 from .invitation_models import AdminInvitation
 
 logger = logging.getLogger(__name__)
@@ -304,3 +304,8 @@ class DeleteInvitationView(APIView):
             return Response({'message': 'Invitation deleted.'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomerListView(generics.ListAPIView):
+    queryset = User.objects.filter(role='CUSTOMER').order_by('-date_joined')
+    serializer_class = CustomerSerializer
+    permission_classes = [permissions.IsAuthenticated]

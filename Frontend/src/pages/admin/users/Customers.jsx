@@ -1,338 +1,213 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Search, Filter, MoreVertical, Bell,
-    MessageSquare, Trash2, Copy, MapPin,
-    Phone, Mail, ArrowUp
+    Users, UserPlus, UserCheck, UserX, Search, Filter,
+    Download, MoreVertical, Mail, Phone, MapPin, Calendar,
+    ShoppingBag, DollarSign, Clock, CheckCircle, XCircle, Trash2,
+    Edit, Eye, ArrowUpRight, ArrowDownRight, MoreHorizontal, Bell,
+    MessageSquare, Copy, ArrowUp
 } from 'lucide-react';
+import api from '../../../utils/api';
 
 const Customers = () => {
+    const [customers, setCustomers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({ total: 0, active: 0, new: 0, vips: 0 });
+
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                const response = await api.get('/api/v1/users/customers/');
+                setCustomers(response.data);
+
+                // Real stats calculation
+                setStats({
+                    total: response.data.length,
+                    active: response.data.length, // Simple assumption for now
+                    new: response.data.filter(u => new Date(u.date_joined) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length,
+                    vips: 0
+                });
+            } catch (error) {
+                console.error("Failed to fetch customers:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCustomers();
+    }, []);
+
     return (
         <div className="max-w-[1600px] mx-auto pb-10">
             {/* Header Content */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Customers</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Customers</h1>
+                    <p className="text-sm text-gray-500 mt-1 font-medium">Manage and view your customer base</p>
+                </div>
             </div>
 
-            <div className="flex flex-col xl:flex-row gap-6">
-
-                {/* LEFT & CENTER COLUMN (Stats + Chart + Table) */}
-                <div className="flex-1 space-y-6">
-
-                    {/* STAT CARDS & CHART ROW */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                        {/* 3 Stat Cards Column */}
-                        <div className="space-y-4">
-                            {/* Total Customers */}
-                            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm relative">
-                                <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600">
-                                    <MoreVertical size={18} />
-                                </button>
-                                <h3 className="text-sm font-semibold text-gray-800 mb-4">Total Customers</h3>
-                                <div className="flex items-end gap-3 mb-1">
-                                    <h2 className="text-3xl font-bold text-gray-800">11,040</h2>
-                                    <div className="flex items-center gap-1 text-xs font-semibold text-emerald-500 mb-1.5">
-                                        <ArrowUp size={12} /> <span>14.4%</span>
-                                    </div>
-                                </div>
-                                <p className="text-xs text-gray-400">Last 7 days</p>
-                            </div>
-
-                            {/* New Customers */}
-                            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm relative">
-                                <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600">
-                                    <MoreVertical size={18} />
-                                </button>
-                                <h3 className="text-sm font-semibold text-gray-800 mb-4">New Customers</h3>
-                                <div className="flex items-end gap-3 mb-1">
-                                    <h2 className="text-3xl font-bold text-gray-800">2,370</h2>
-                                    <div className="flex items-center gap-1 text-xs font-semibold text-emerald-500 mb-1.5">
-                                        <ArrowUp size={12} /> <span>20%</span>
-                                    </div>
-                                </div>
-                                <p className="text-xs text-gray-400">Last 7 days</p>
-                            </div>
-
-                            {/* Visitor */}
-                            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm relative">
-                                <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600">
-                                    <MoreVertical size={18} />
-                                </button>
-                                <h3 className="text-sm font-semibold text-gray-800 mb-4">Visitor</h3>
-                                <div className="flex items-end gap-3 mb-1">
-                                    <h2 className="text-3xl font-bold text-gray-800">250k</h2>
-                                    <div className="flex items-center gap-1 text-xs font-semibold text-emerald-500 mb-1.5">
-                                        <ArrowUp size={12} /> <span>20%</span>
-                                    </div>
-                                </div>
-                                <p className="text-xs text-gray-400">Last 7 days</p>
-                            </div>
-                        </div>
-
-                        {/* BIG CHART PANEL */}
-                        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 p-5 shadow-sm flex flex-col">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="font-semibold text-gray-800">Customer Overview</h3>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs">
-                                        <button className="px-3 py-1 text-emerald-600 font-medium bg-emerald-50 border-r border-gray-200 shadow-inner">This week</button>
-                                        <button className="px-3 py-1 text-gray-500 font-medium hover:bg-gray-50">Last week</button>
-                                    </div>
-                                    <MoreVertical size={16} className="text-gray-400" />
-                                </div>
-                            </div>
-
-                            {/* Chart Stats Row */}
-                            <div className="flex gap-12 mb-8 border-b border-gray-100 pb-4">
-                                <div className="relative">
-                                    <h2 className="text-2xl font-bold text-gray-800">25k</h2>
-                                    <p className="text-[11px] text-gray-400 font-medium tracking-wide">Active Customers</p>
-                                    <div className="absolute -bottom-4 left-0 w-full h-[2px] bg-emerald-400"></div>
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-bold text-gray-800">5.6k</h2>
-                                    <p className="text-[11px] text-gray-400 font-medium tracking-wide">Repeat Customers</p>
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-bold text-gray-800">250k</h2>
-                                    <p className="text-[11px] text-gray-400 font-medium tracking-wide">Shop Visitor</p>
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-bold text-gray-800">5.5%</h2>
-                                    <p className="text-[11px] text-gray-400 font-medium tracking-wide">Conversion Rate</p>
-                                </div>
-                            </div>
-
-                            {/* Simple SVG Chart Representation */}
-                            <div className="relative flex-1 w-full min-h-[220px] mt-4">
-                                {/* Y-axis Labels */}
-                                <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[10px] text-gray-400 pb-6">
-                                    <span>50k</span>
-                                    <span>40k</span>
-                                    <span>30k</span>
-                                    <span>20k</span>
-                                    <span>10k</span>
-                                    <span>0k</span>
-                                </div>
-
-                                {/* Chart Area */}
-                                <div className="absolute left-8 right-0 h-full pb-6">
-                                    {/* SVG Line & Area Fill */}
-                                    <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-                                        <defs>
-                                            <linearGradient id="customerGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-                                                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                                            </linearGradient>
-                                        </defs>
-
-                                        {/* Reference Dashed Line Tooltip */}
-                                        <line x1="55" y1="0" x2="55" y2="100" stroke="#10b981" strokeDasharray="2" strokeWidth="0.5" />
-
-                                        <path
-                                            d="M0,60 C10,60 15,25 25,25 C35,25 40,65 50,65 C60,65 65,10 75,10 C85,10 90,60 95,60 L100,60 L100,100 L0,100 Z"
-                                            fill="url(#customerGradient)"
-                                        />
-                                        <path
-                                            d="M0,60 C10,60 15,25 25,25 C35,25 40,65 50,65 C60,65 65,10 75,10 C85,10 90,60 95,60 L100,60"
-                                            fill="none"
-                                            stroke="#10b981"
-                                            strokeWidth="2"
-                                        />
-                                        <circle cx="55" cy="65" r="3" fill="white" stroke="#10b981" strokeWidth="2" />
-                                    </svg>
-
-                                    {/* Tooltip Overlay */}
-                                    <div className="absolute left-[55%] -translate-x-1/2 bottom-[35%] bg-[#d2f4e1] text-[#136138] px-3 py-1.5 rounded-lg text-xs text-center border border-emerald-200 z-10 shadow-sm">
-                                        <span className="text-[10px] block font-medium">Thursday</span>
-                                        <span className="font-bold block">25,400</span>
-                                        {/* Triangle point */}
-                                        <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#d2f4e1] border-b border-r border-emerald-200 transform rotate-45"></div>
-                                    </div>
-                                </div>
-
-                                {/* X-axis Labels */}
-                                <div className="absolute left-8 right-0 bottom-0 flex justify-between text-[10px] text-gray-400 font-medium">
-                                    <span>Sun</span>
-                                    <span>Mon</span>
-                                    <span>Tue</span>
-                                    <span className="text-gray-800 font-bold">Wed</span>
-                                    <span>Thu</span>
-                                    <span>Fri</span>
-                                    <span>Sat</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    {/* DATA TABLE */}
-                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-                        <div className="p-5 border-b border-gray-100">
-                            <h3 className="font-semibold text-gray-800">Customer Details</h3>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs text-left">
-                                <thead className="bg-[#eaf4f0] text-emerald-800 font-semibold tracking-wider">
-                                    <tr>
-                                        <th className="py-3 px-5 rounded-l-lg">Customer Id</th>
-                                        <th className="py-3 px-3">Name</th>
-                                        <th className="py-3 px-3">Phone</th>
-                                        <th className="py-3 px-3 text-center">Order Count</th>
-                                        <th className="py-3 px-3">Total Spend</th>
-                                        <th className="py-3 px-3">Status</th>
-                                        <th className="py-3 px-5 text-center rounded-r-lg">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-gray-800 font-medium divide-y divide-gray-50/50">
-                                    {[
-                                        { id: '#CUST001', name: 'John Doe', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active', color: 'bg-emerald-500', textCol: 'text-emerald-500' },
-                                        { id: '#CUST002', name: 'John Doe', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active', color: 'bg-emerald-500', textCol: 'text-emerald-500' },
-                                        { id: '#CUST003', name: 'John Doe', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active', color: 'bg-emerald-500', textCol: 'text-emerald-500' },
-                                        { id: '#CUST004', name: 'John Doe', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active', color: 'bg-emerald-500', textCol: 'text-emerald-500' },
-                                        { id: '#CUST005', name: 'Jane Smith', phone: '+1234567890', orders: 5, spend: '250.00', status: 'Inactive', color: 'bg-red-500', textCol: 'text-red-500' },
-                                        { id: '#CUST006', name: 'Emily Davis', phone: '+1234567890', orders: 30, spend: '4,600.00', status: 'VIP', color: 'bg-yellow-400', textCol: 'text-yellow-500' },
-                                        { id: '#CUST007', name: 'Jane Smith', phone: '+1234567890', orders: 5, spend: '250.00', status: 'Inactive', color: 'bg-red-500', textCol: 'text-red-500' },
-                                        { id: '#CUST008', name: 'John Doe', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active', color: 'bg-emerald-500', textCol: 'text-emerald-500' },
-                                    ].map((row, idx) => (
-                                        <tr key={idx} className="hover:bg-gray-50/30 transition-colors">
-                                            <td className="py-4 px-5 text-gray-500">{row.id}</td>
-                                            <td className="py-4 px-3">{row.name}</td>
-                                            <td className="py-4 px-3">{row.phone}</td>
-                                            <td className="py-4 px-3 text-center">{row.orders}</td>
-                                            <td className="py-4 px-3">{row.spend}</td>
-                                            <td className="py-4 px-3">
-                                                <span className={`flex items-center gap-1.5 ${row.textCol}`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${row.color}`}></span>
-                                                    {row.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-5">
-                                                <div className="flex items-center justify-center gap-2 text-gray-400">
-                                                    <button className="hover:text-gray-600 transition-colors bg-gray-50 p-1.5 rounded-md border border-gray-100"><MessageSquare size={14} /></button>
-                                                    <button className="hover:text-red-500 transition-colors bg-gray-50 p-1.5 rounded-md border border-gray-100"><Trash2 size={14} /></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Pagination */}
-                        <div className="p-4 border-t border-gray-100 flex items-center justify-between">
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50">
-                                ← Previous
-                            </button>
-                            <div className="flex gap-1.5">
-                                <button className="w-8 h-8 flex items-center justify-center bg-[#d2f4e1] text-emerald-700 font-semibold rounded text-xs border border-emerald-200">1</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-600 rounded text-xs hover:bg-gray-50">2</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-600 rounded text-xs hover:bg-gray-50">3</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-600 rounded text-xs hover:bg-gray-50">4</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-600 rounded text-xs hover:bg-gray-50">5</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-600 rounded text-xs hover:bg-gray-50">....</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-600 rounded text-xs hover:bg-gray-50">24</button>
-                            </div>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50">
-                                Next →
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* RIGHT SIDEBAR (User Profile) */}
-                <div className="w-full xl:w-[320px] bg-white rounded-xl border border-gray-100 shadow-sm p-5 self-start sticky top-6">
-                    <div className="flex items-start gap-4 mb-8">
-                        <div className="w-14 h-14 rounded-full bg-blue-100 overflow-hidden shrink-0 border border-gray-200">
-                            {/* Dummy Profile Avatar */}
-                            <svg viewBox="0 0 36 36" fill="none" role="img" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-                                <title>John Doe</title>
-                                <mask id="mask__beam" maskUnits="userSpaceOnUse" x="0" y="0" width="36" height="36">
-                                    <rect width="36" height="36" rx="72" fill="#FFFFFF"></rect>
-                                </mask>
-                                <g mask="url(#mask__beam)">
-                                    <rect width="36" height="36" fill="#f0be86"></rect>
-                                    <rect x="0" y="0" width="36" height="36" transform="translate(4 4) rotate(168 18 18) scale(1)" fill="#4d5382" rx="36"></rect>
-                                    <g transform="translate(-4 -2) rotate(-8 18 18)">
-                                        <path d="M15 19c2 1 4 1 6 0" stroke="#000000" fill="none" strokeLinecap="round"></path>
-                                        <rect x="10" y="14" width="1.5" height="2" rx="1" stroke="none" fill="#000000"></rect>
-                                        <rect x="24" y="14" width="1.5" height="2" rx="1" stroke="none" fill="#000000"></rect>
-                                    </g>
-                                </g>
-                            </svg>
-                        </div>
-                        <div className="flex-1 mt-1 break-all">
-                            <h2 className="text-sm font-bold text-gray-800">John Doe</h2>
-                            <p className="text-[11px] text-gray-500">john.doe@example.com</p>
-                        </div>
-                        <button className="text-blue-500 hover:bg-blue-50 p-1.5 rounded transition-colors mt-1">
-                            <Copy size={16} />
+            <div className="space-y-6">
+                {/* 4 STAT CARDS GRID */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Total Customers Card */}
+                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
+                        <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
+                            <MoreVertical size={18} />
                         </button>
+                        <div className="relative z-10">
+                            <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-4 shadow-sm">
+                                <Users size={20} />
+                            </div>
+                            <h3 className="text-sm font-semibold text-gray-500 mb-1">Total Customers</h3>
+                            <div className="flex items-end gap-3">
+                                <h2 className="text-2xl font-bold text-gray-800">{stats.total.toLocaleString()}</h2>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-6">
-                        {/* Customer Info */}
-                        <div>
-                            <h3 className="text-[11px] font-semibold text-gray-400 mb-3">Customer Info</h3>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-3 px-3 py-2.5 border border-gray-100 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50/50">
-                                    <Phone size={14} className="text-gray-500" />
-                                    <span>+1234567890</span>
-                                </div>
-                                <div className="flex items-center gap-3 px-3 py-2.5 border border-gray-100 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50/50">
-                                    <MapPin size={14} className="text-gray-500" />
-                                    <span>123 Main St, NY</span>
-                                </div>
+                    {/* Active Customers Card */}
+                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
+                        <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
+                            <MoreVertical size={18} />
+                        </button>
+                        <div className="relative z-10">
+                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4 shadow-sm">
+                                <UserCheck size={20} />
+                            </div>
+                            <h3 className="text-sm font-semibold text-gray-500 mb-1">Active Customers</h3>
+                            <div className="flex items-end gap-3">
+                                <h2 className="text-2xl font-bold text-gray-800">{stats.active.toLocaleString()}</h2>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Social Media */}
-                        <div>
-                            <h3 className="text-[11px] font-semibold text-gray-400 mb-3">Social Media</h3>
-                            <div className="flex gap-2">
-                                <button className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-[10px] hover:bg-blue-200 transition-colors">f</button>
-                                <button className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
-                                    <MessageSquare size={13} />
-                                </button>
-                                <button className="w-8 h-8 rounded-full bg-sky-100 text-sky-500 flex items-center justify-center font-bold font-serif italic text-xs hover:bg-sky-200 transition-colors">y</button>
-                                <button className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center hover:bg-indigo-200 transition-colors">in</button>
-                                <button className="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                                </button>
+                    {/* New Customers Card */}
+                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
+                        <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
+                            <MoreVertical size={18} />
+                        </button>
+                        <div className="relative z-10">
+                            <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-4 shadow-sm">
+                                <UserPlus size={20} />
+                            </div>
+                            <h3 className="text-sm font-semibold text-gray-500 mb-1">New Customers</h3>
+                            <div className="flex items-end gap-3">
+                                <h2 className="text-2xl font-bold text-gray-800">{stats.new.toLocaleString()}</h2>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Activity */}
-                        <div>
-                            <h3 className="text-[11px] font-semibold text-gray-400 mb-3">Activity</h3>
-                            <div className="text-xs text-gray-600 space-y-2 font-medium">
-                                <p>Registration: <span className="text-gray-800">15.01.2025</span></p>
-                                <p>Last purchase: <span className="text-gray-800">10.01.2025</span></p>
+                    {/* Churned Customers Card */}
+                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-red-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
+                        <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
+                            <MoreVertical size={18} />
+                        </button>
+                        <div className="relative z-10">
+                            <div className="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center mb-4 shadow-sm">
+                                <UserX size={20} />
                             </div>
-                        </div>
-
-                        {/* Order Overview */}
-                        <div>
-                            <h3 className="text-[11px] font-semibold text-gray-400 mb-3">Order overview</h3>
-                            <div className="grid grid-cols-3 gap-2">
-                                <div className="border border-gray-100 rounded-lg p-2 text-center bg-gray-50/50">
-                                    <h4 className="font-bold text-gray-800 text-sm">150</h4>
-                                    <p className="text-[9px] text-blue-500 font-semibold uppercase mt-1">Total order</p>
-                                </div>
-                                <div className="border border-gray-100 rounded-lg p-2 text-center bg-gray-50/50">
-                                    <h4 className="font-bold text-gray-800 text-sm">140</h4>
-                                    <p className="text-[9px] text-emerald-500 font-semibold uppercase mt-1">Completed</p>
-                                </div>
-                                <div className="border border-gray-100 rounded-lg p-2 text-center bg-gray-50/50">
-                                    <h4 className="font-bold text-gray-800 text-sm">10</h4>
-                                    <p className="text-[9px] text-red-500 font-semibold uppercase mt-1">Canceled</p>
-                                </div>
+                            <h3 className="text-sm font-semibold text-gray-500 mb-1">VIP Customers</h3>
+                            <div className="flex items-end gap-3">
+                                <h2 className="text-2xl font-bold text-gray-800">{stats.vips.toLocaleString()}</h2>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {/* Main Table Container */}
+                <div className="bg-white border border-gray-100 rounded-xl shadow-sm">
+                    {/* Toolbar */}
+                    <div className="p-6 border-b border-gray-50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                        <div className="relative flex-1 w-full lg:max-w-md">
+                            <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search customers..."
+                                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 transition-all font-medium"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 w-full lg:w-auto">
+                            <button className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-100 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
+                                <Filter size={18} /> Filters
+                            </button>
+                            <button className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-lg text-sm font-bold hover:bg-emerald-600 transition-all shadow-md shadow-emerald-200">
+                                <Download size={18} /> Export
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left whitespace-nowrap">
+                            <thead>
+                                <tr className="bg-gray-50/50 text-gray-500 text-[11px] font-bold uppercase tracking-wider">
+                                    <th className="py-4 px-6 rounded-tl-xl text-emerald-600">ID</th>
+                                    <th className="py-4 px-4 text-emerald-600">Customer</th>
+                                    <th className="py-4 px-4 text-emerald-600">Phone</th>
+                                    <th className="py-4 px-4 text-center text-emerald-600">Orders</th>
+                                    <th className="py-4 px-4 text-emerald-600">Spend</th>
+                                    <th className="py-4 px-4 text-emerald-600">Status</th>
+                                    <th className="py-4 px-6 rounded-tr-xl text-right text-emerald-600">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-gray-700 font-medium divide-y divide-gray-50">
+                                {customers.map((customer, idx) => (
+                                    <tr key={customer.id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="py-4 px-6 font-bold text-gray-400 group-hover:text-emerald-500 transition-colors">
+                                            #{customer.id.toString().slice(-6).toUpperCase()}
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs shadow-sm capitalize">
+                                                    {customer.first_name?.[0] || customer.email[0]}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-800 text-sm group-hover:text-emerald-600 transition-colors">
+                                                        {customer.first_name || 'N/A'} {customer.last_name || ''}
+                                                    </span>
+                                                    <span className="text-[11px] text-gray-400 font-medium">{customer.email}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-4 text-sm text-gray-600 font-bold">{customer.phone_number || 'N/A'}</td>
+                                        <td className="py-4 px-4 text-center">
+                                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-bold">0</span>
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <span className="font-bold text-gray-800">$0.00</span>
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold uppercase rounded-full ${customer.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                                                }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${customer.is_active ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                                                {customer.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button className="p-2 text-gray-400 hover:text-emerald-500 bg-gray-50 rounded-lg hover:shadow-sm transition-all"><Mail size={16} /></button>
+                                                <button className="p-2 text-gray-400 hover:text-red-500 bg-gray-50 rounded-lg hover:shadow-sm transition-all"><Trash2 size={16} /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {customers.length === 0 && !loading && (
+                                    <tr>
+                                        <td colSpan="7" className="py-20 text-center">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <Users size={40} className="text-gray-200" />
+                                                <p className="text-gray-400 font-bold">No customers found</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -1,147 +1,174 @@
-import React from 'react';
-import { Percent, Search, Filter, Download, Plus, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Percent, Globe, BookText, Scale, Plus, Search, Edit2, Trash2, ShieldCheck, AlertCircle } from 'lucide-react';
+import api from '../../../utils/api';
 
 const TaxConfiguration = () => {
+    const [loading, setLoading] = useState(true);
+    const [taxRegions, setTaxRegions] = useState([]);
+
+    useEffect(() => {
+        const fetchTaxRegions = async () => {
+            try {
+                const response = await api.get('/api/v1/settings/tax-regions/');
+                setTaxRegions(response.data.results || response.data);
+            } catch (error) {
+                console.error("Error fetching tax regions:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTaxRegions();
+    }, []);
+
+    const stats = [
+        { label: 'Configured Regions', value: taxRegions.length, icon: Globe, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        {
+            label: 'Standard Rate',
+            value: taxRegions.length > 0
+                ? `${Math.max(...taxRegions.map(r => r.rate))}%`
+                : '0.00%',
+            icon: Percent,
+            color: 'text-blue-600',
+            bg: 'bg-blue-50'
+        },
+        {
+            label: 'Active Rules',
+            value: taxRegions.filter(r => r.status === 'active').length,
+            icon: Scale,
+            color: 'text-amber-600',
+            bg: 'bg-amber-50'
+        },
+        {
+            label: 'Compliance Status',
+            value: taxRegions.length > 0 && taxRegions.every(r => r.status === 'active') ? 'Full' : 'Partial',
+            icon: ShieldCheck,
+            color: 'text-purple-600',
+            bg: 'bg-purple-50'
+        }
+    ];
+
     return (
         <div className="space-y-6">
-            {/* Header Content */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-brand-dark flex items-center gap-2">
-                        <Percent size={22} className="text-brand" />
-                        Tax Configuration
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage and view your tax configuration</p>
+                    <h1 className="text-2xl font-bold text-gray-800">Tax Configuration</h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage tax rules, classes and regional tax settings for automation.</p>
                 </div>
-                {!false && (
-                    <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                            <Download size={16} />
-                            Export
-                        </button>
-                        <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
-                            <Plus size={16} />
-                            Create New
-                        </button>
-                    </div>
-                )}
+                <button className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200">
+                    <Plus size={16} />
+                    <span>Add Tax Rule</span>
+                </button>
             </div>
 
-            {/* Main Content Area */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                
-                {/* Toolbar */}
-                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
-                    <div className="relative flex-1 w-full max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search in Tax Configuration..." 
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm"
-                        />
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats.map((stat, index) => (
+                    <div key={index} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-lg ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
+                                <stat.icon size={24} />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
+                                <h3 className="text-xl font-bold text-gray-800 mt-1">{loading ? '...' : stat.value}</h3>
+                            </div>
+                        </div>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors w-full sm:w-auto shadow-sm">
-                        <Filter size={16} />
-                        Filters
-                    </button>
+                ))}
+            </div>
+
+            {/* Main Content */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <h3 className="font-bold text-gray-800">Tax Regions & Rules</h3>
+                    <div className="flex items-center gap-2">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search regions..."
+                                className="bg-gray-50 border-none rounded-lg pl-9 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500/20 w-48"
+                            />
+                        </div>
+                    </div>
                 </div>
-                
-                {/* Data Table */}
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50/50 text-gray-500 font-medium border-b border-gray-100">
-                            <tr>
-                                
-                                <th className="px-6 py-3">Tax Region</th>
-                                
-                                <th className="px-6 py-3">Tax Class</th>
-                                
-                                <th className="px-6 py-3">Rate (%)</th>
-                                
-                                <th className="px-6 py-3">Compound</th>
-                                
-                                <th className="px-6 py-3">Status</th>
-                                
-                                <th className="px-6 py-3">Action</th>
-                                
-                                <th className="px-6 py-3 text-right">Actions</th>
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100 font-bold text-xs text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-4">Tax Region</th>
+                                <th className="px-6 py-4">Tax Class</th>
+                                <th className="px-6 py-4 text-center">Tax Rate (%)</th>
+                                <th className="px-6 py-4 text-center">Type</th>
+                                <th className="px-6 py-4 text-center">Status</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Pakistan (Default)</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Standard GST
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">18%</td>
-                                <td className="px-6 py-4 text-gray-600">No</td>
-                                <td className="px-6 py-4 text-gray-600">Active</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">
-                                    Edit
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Punjab</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Provincial Tax
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">16%</td>
-                                <td className="px-6 py-4 text-gray-600">Yes</td>
-                                <td className="px-6 py-4 text-gray-600">Active</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">
-                                    Edit
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Sindh</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Provincial Tax
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">13%</td>
-                                <td className="px-6 py-4 text-gray-600">Yes</td>
-                                <td className="px-6 py-4 text-gray-600">Active</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">
-                                    Edit
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
+                            {loading ? (
+                                <tr><td colSpan="6" className="p-10 text-center text-gray-400 italic">Calculating local tax rules...</td></tr>
+                            ) : taxRegions.length > 0 ? taxRegions.map((tax, index) => (
+                                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-gray-400">
+                                                <Globe size={18} />
+                                            </div>
+                                            <span className="text-sm font-semibold text-gray-800">{tax.region}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <BookText size={14} className="text-gray-400" />
+                                            {tax.tax_class}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className="text-sm font-bold text-emerald-600">{tax.rate}%</span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${tax.is_compound ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
+                                            }`}>
+                                            {tax.is_compound ? 'Compound' : 'Standard'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${tax.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                                            }`}>
+                                            {tax.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button className="p-1.5 text-gray-400 hover:text-emerald-600 transition-colors">
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button className="p-1.5 text-gray-400 hover:text-rose-500 transition-colors">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr><td colSpan="6" className="p-10 text-center text-gray-400 italic">No tax rules found.</td></tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
-                <div className="p-4 border-t border-gray-100 text-sm text-gray-500 flex items-center justify-between">
-                    <span>Showing 3 entries</span>
-                    <div className="flex gap-1">
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled>Prev</button>
-                        <button className="px-3 py-1 bg-brand text-white rounded">1</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">Next</button>
-                    </div>
+            </div>
+
+            <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-4">
+                <div className="p-2 bg-amber-100 rounded-lg text-amber-700">
+                    <AlertCircle size={20} />
                 </div>
-                
+                <div>
+                    <h4 className="text-sm font-bold text-amber-900">Compliance Warning</h4>
+                    <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                        Automatic tax calculations for Punjab and Sindh have been updated based on the latest regional guidelines.
+                        Please ensure all <span className="font-bold">NTN/GST</span> numbers are valid for proper invoicing.
+                    </p>
+                </div>
             </div>
         </div>
     );

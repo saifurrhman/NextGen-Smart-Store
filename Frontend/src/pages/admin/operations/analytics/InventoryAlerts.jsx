@@ -1,147 +1,80 @@
-import React from 'react';
-import { AlertTriangle, Search, Filter, Download, Plus, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, Search, Filter, Download as ExportIcon } from 'lucide-react';
+import api from '../../../../utils/api';
 
 const InventoryAlerts = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchLowStock();
+    }, []);
+
+    const fetchLowStock = async () => {
+        setLoading(true);
+        try {
+            // Fetch products and filter for low stock (e.g., < 10)
+            const response = await api.get('/api/v1/products/');
+            const allProducts = response.data.results || response.data;
+            setProducts(allProducts.filter(p => p.stock < 10));
+        } catch (error) {
+            console.error("Failed to fetch inventory alerts:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
-            {/* Header Content */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-semibold text-brand-dark flex items-center gap-2">
-                        <AlertTriangle size={22} className="text-brand" />
+                        <AlertTriangle size={22} className="text-red-500" />
                         Inventory Alerts
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage and view your inventory alerts</p>
+                    <p className="text-sm text-gray-500 mt-1">Products running low on stock</p>
                 </div>
-                {!false && (
-                    <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                            <Download size={16} />
-                            Export
-                        </button>
-                        <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
-                            <Plus size={16} />
-                            Create New
-                        </button>
-                    </div>
-                )}
             </div>
 
-            {/* Main Content Area */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                
-                {/* Toolbar */}
-                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
-                    <div className="relative flex-1 w-full max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search in Inventory Alerts..." 
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm"
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors w-full sm:w-auto shadow-sm">
-                        <Filter size={16} />
-                        Filters
-                    </button>
-                </div>
-                
-                {/* Data Table */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto min-h-[400px]">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50/50 text-gray-500 font-medium border-b border-gray-100">
+                        <thead className="text-gray-400 font-bold bg-white border-b border-gray-50">
                             <tr>
-                                
-                                <th className="px-6 py-3">SKU</th>
-                                
-                                <th className="px-6 py-3">Product Name</th>
-                                
-                                <th className="px-6 py-3">Current Stock</th>
-                                
-                                <th className="px-6 py-3">Threshold</th>
-                                
-                                <th className="px-6 py-3">Supplier</th>
-                                
-                                <th className="px-6 py-3">Status</th>
-                                
-                                <th className="px-6 py-3 text-right">Actions</th>
+                                <th className="px-6 py-4">Product Name</th>
+                                <th className="px-6 py-4 text-center">Current Stock</th>
+                                <th className="px-6 py-4">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">SKU-ELEC-002</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Smart Watch Pro V2
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">4 units</td>
-                                <td className="px-6 py-4 text-gray-600">20 units</td>
-                                <td className="px-6 py-4 text-gray-600">TechTronics</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700"><span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>Critical</span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">SKU-HOME-491</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Ceramic Vase Set
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">12 units</td>
-                                <td className="px-6 py-4 text-gray-600">15 units</td>
-                                <td className="px-6 py-4 text-gray-600">HomeDecor Inc.</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Low Stock</span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">SKU-BEAU-882</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Organic Face Serum
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">0 units</td>
-                                <td className="px-6 py-4 text-gray-600">50 units</td>
-                                <td className="px-6 py-4 text-gray-600">NatureGlow</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700"><span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>Out of Stock</span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
+                            {loading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td colSpan="3" className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-full"></div></td>
+                                    </tr>
+                                ))
+                            ) : products.length > 0 ? (
+                                products.map((product) => (
+                                    <tr key={product.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-gray-900">{product.title}</td>
+                                        <td className="px-6 py-4 text-center text-red-600 font-bold">{product.stock}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="bg-red-50 text-red-600 px-2.5 py-1 rounded-full text-xs font-semibold">
+                                                Low Stock
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="3" className="py-20 text-center text-gray-400 font-bold italic">
+                                        No inventory alerts. All items are well-stocked.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
-                <div className="p-4 border-t border-gray-100 text-sm text-gray-500 flex items-center justify-between">
-                    <span>Showing 3 entries</span>
-                    <div className="flex gap-1">
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled>Prev</button>
-                        <button className="px-3 py-1 bg-brand text-white rounded">1</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">Next</button>
-                    </div>
-                </div>
-                
             </div>
         </div>
     );

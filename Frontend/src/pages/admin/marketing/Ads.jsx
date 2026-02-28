@@ -1,7 +1,36 @@
-import React from 'react';
-import { Target, Search, Filter, Download, Plus, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Target, Search, Filter, Download as ExportIcon, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import api from '../../../utils/api';
 
 const Ads = () => {
+    const [ads, setAds] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({ count: 0, next: null, previous: null });
+
+    useEffect(() => {
+        const fetchAds = async () => {
+            setLoading(true);
+            try {
+                const response = await api.get(`/api/v1/marketing/ads/?page=${page}&search=${searchTerm}`);
+                setAds(response.data.results);
+                setPagination({
+                    count: response.data.count,
+                    next: response.data.next,
+                    previous: response.data.previous
+                });
+            } catch (error) {
+                console.error("Failed to fetch ads:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAds();
+    }, [page, searchTerm]);
+
+    const totalPages = Math.ceil(pagination.count / 10);
+
     return (
         <div className="space-y-6">
             {/* Header Content */}
@@ -13,30 +42,30 @@ const Ads = () => {
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Manage and view your ad tracker</p>
                 </div>
-                {!false && (
-                    <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                            <Download size={16} />
-                            Export
-                        </button>
-                        <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
-                            <Plus size={16} />
-                            Create New
-                        </button>
-                    </div>
-                )}
+                <div className="flex items-center gap-2">
+                    <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
+                        <ExportIcon size={16} />
+                        Export
+                    </button>
+                    <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
+                        <Plus size={16} />
+                        Create New
+                    </button>
+                </div>
             </div>
 
             {/* Main Content Area */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                
+
                 {/* Toolbar */}
                 <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
                     <div className="relative flex-1 w-full max-w-md">
                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search in Ad Tracker..." 
+                        <input
+                            type="text"
+                            placeholder="Search in Ad Tracker..."
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                             className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm"
                         />
                     </div>
@@ -45,97 +74,94 @@ const Ads = () => {
                         Filters
                     </button>
                 </div>
-                
+
                 {/* Data Table */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto min-h-[400px]">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50/50 text-gray-500 font-medium border-b border-gray-100">
+                        <thead className="bg-[#eaf4f0] text-emerald-800 font-bold tracking-wider">
                             <tr>
-                                
                                 <th className="px-6 py-3">Campaign / Ad Set</th>
-                                
                                 <th className="px-6 py-3">Platform</th>
-                                
-                                <th className="px-6 py-3">Spend</th>
-                                
-                                <th className="px-6 py-3">Impressions</th>
-                                
-                                <th className="px-6 py-3">Clicks</th>
-                                
-                                <th className="px-6 py-3">ROAS</th>
-                                
+                                <th className="px-6 py-3 font-semibold text-center">Spend</th>
+                                <th className="px-6 py-3 font-semibold text-center">Impressions</th>
+                                <th className="px-6 py-3 font-semibold text-center">Clicks</th>
+                                <th className="px-6 py-3 font-semibold text-center">ROAS</th>
                                 <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Retargeting - Product Views</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Meta Ads
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">$450.00</td>
-                                <td className="px-6 py-4 text-gray-600">124,500</td>
-                                <td className="px-6 py-4 text-gray-600">3,420</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">4.2x</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Search - "Smart Home"</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Google Ads
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">$890.00</td>
-                                <td className="px-6 py-4 text-gray-600">14,200</td>
-                                <td className="px-6 py-4 text-gray-600">1,150</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">2.8x</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Lookalike - Top Spenders</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    Meta Ads
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">$1,200.00</td>
-                                <td className="px-6 py-4 text-gray-600">345,000</td>
-                                <td className="px-6 py-4 text-gray-600">8,900</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">3.5x</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
+                            {loading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td colSpan="7" className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-full"></div></td>
+                                    </tr>
+                                ))
+                            ) : ads.length > 0 ? (
+                                ads.map((ad) => (
+                                    <tr key={ad.id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="px-6 py-4 font-bold text-gray-900">{ad.campaign_name}</td>
+                                        <td className="px-6 py-4 text-gray-600 font-medium">
+                                            <span className="px-2 py-0.5 rounded-md bg-gray-100 text-[10px] font-bold uppercase text-gray-500 border border-gray-200">{ad.platform}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center text-emerald-600 font-bold">PKR {Number(ad.spend).toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-center text-gray-500 font-mono text-xs">{Number(ad.impressions).toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-center text-gray-500 font-mono text-xs">{Number(ad.clicks).toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className="px-2 py-1 rounded-full bg-brand/10 text-brand font-bold text-xs">
+                                                {ad.roas}x
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
+                                                <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                                                <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="7" className="py-20 text-center text-gray-400 font-bold uppercase tracking-widest bg-gray-50/50">
+                                        No active ads found.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
-                <div className="p-4 border-t border-gray-100 text-sm text-gray-500 flex items-center justify-between">
-                    <span>Showing 3 entries</span>
-                    <div className="flex gap-1">
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled>Prev</button>
-                        <button className="px-3 py-1 bg-brand text-white rounded">1</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">Next</button>
+
+                {pagination.count > 10 && (
+                    <div className="p-4 border-t border-gray-100 text-sm text-gray-500 flex items-center justify-between">
+                        <span>Showing {ads.length} entries of {pagination.count}</span>
+                        <div className="flex gap-1">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={!pagination.previous || loading}
+                                className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            {Array.from({ length: totalPages }).map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setPage(i + 1)}
+                                    className={`px-3 py-1 rounded font-bold ${page === i + 1 ? 'bg-brand text-white shadow-sm' : 'border border-gray-200 hover:bg-gray-50'}`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setPage(p => p + 1)}
+                                disabled={!pagination.next || loading}
+                                className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
                     </div>
-                </div>
-                
+                )}
+
             </div>
         </div>
     );
