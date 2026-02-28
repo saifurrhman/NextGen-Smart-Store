@@ -78,8 +78,8 @@ const SalesAnalytics = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Sales Analytics</h1>
-                    <p className="text-sm text-gray-500 mt-1">Detailed breakdown of your store's sales performance.</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">Sales Analytics</h1>
+                    <p className="text-[10px] md:text-sm text-gray-500 mt-1">Detailed breakdown of your store's sales performance.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -105,9 +105,9 @@ const SalesAnalytics = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {stats.map((stat, index) => (
-                    <div key={index} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div key={index} className="bg-white rounded-xl border border-gray-100 p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between mb-4">
                             <div className={`w-12 h-12 rounded-lg ${stat.bg} ${stat.color} flex items-center justify-center`}>
                                 <stat.icon size={24} />
@@ -119,8 +119,8 @@ const SalesAnalytics = () => {
                             </div>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
-                            <h3 className="text-2xl font-bold text-gray-800 mt-1">{loading ? '...' : stat.value}</h3>
+                            <p className="text-xs md:text-sm text-gray-500 font-medium">{stat.label}</p>
+                            <h3 className="text-xl md:text-2xl font-bold text-gray-800 mt-1">{loading ? '...' : stat.value}</h3>
                         </div>
                     </div>
                 ))}

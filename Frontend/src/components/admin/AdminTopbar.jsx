@@ -6,16 +6,16 @@ const AdminTopbar = ({ pageTitle = 'Dashboard', onToggleSidebar, onMobileToggle 
     const [searchQuery, setSearchQuery] = useState('');
 
     return (
-        <header className="h-20 bg-white flex items-center justify-between px-8 sticky top-0 z-20">
+        <header className="h-20 bg-white flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 shadow-sm border-b border-gray-50">
             {/* Left — Page Title */}
-            <div className="flex items-center gap-4 lg:w-1/4">
+            <div className="flex items-center gap-2 md:gap-4 lg:w-1/4">
                 <button
                     onClick={onMobileToggle}
-                    className="p-2.5 rounded-xl bg-[#f0f9f4] text-emerald-600 border border-emerald-50 hover:bg-emerald-500 hover:text-white transition-all lg:hidden shadow-sm shadow-emerald-100"
+                    className="p-2 rounded-xl bg-[#f0f9f4] text-emerald-600 border border-emerald-50 hover:bg-emerald-500 hover:text-white transition-all lg:hidden shadow-sm"
                 >
-                    <AlignLeft size={20} strokeWidth={2.5} />
+                    <AlignLeft size={18} strokeWidth={2.5} />
                 </button>
-                <h1 className="text-lg md:text-xl font-bold text-gray-800 truncate">{pageTitle}</h1>
+                <h1 className="text-base md:text-xl font-bold text-gray-800 truncate">{pageTitle}</h1>
             </div>
 
             {/* Center — Search */}

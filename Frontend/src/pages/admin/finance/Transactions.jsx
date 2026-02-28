@@ -56,7 +56,7 @@ const Transactions = () => {
         <div className="max-w-[1600px] mx-auto pb-10">
             {/* Header Content */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Transaction</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-gray-800">Transaction</h1>
             </div>
 
             {/* TOP STAT CARDS & PAYMENT METHOD ROW */}
@@ -65,56 +65,56 @@ const Transactions = () => {
                 {/* 4 STAT CARDS GRID */}
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {/* Total Revenue Card */}
-                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
                         <button className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
                         </button>
                         <div className="relative z-10">
                             <h3 className="text-sm font-semibold text-gray-500 mb-4">Total Revenue</h3>
                             <div className="flex items-end gap-3 mb-1">
-                                <h2 className="text-2xl font-bold text-gray-800">${stats.revenue.toLocaleString()}</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">${stats.revenue.toLocaleString()}</h2>
                             </div>
                             <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Last 7 days</p>
                         </div>
                     </div>
 
                     {/* Completed Transactions Card */}
-                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
                         <button className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
                         </button>
                         <div className="relative z-10">
                             <h3 className="text-sm font-semibold text-gray-500 mb-4">Completed Transactions</h3>
                             <div className="flex items-end gap-3 mb-1">
-                                <h2 className="text-2xl font-bold text-gray-800">{stats.completed.toLocaleString()}</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{stats.completed.toLocaleString()}</h2>
                             </div>
                             <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Last 7 days</p>
                         </div>
                     </div>
 
                     {/* Pending Transactions Card */}
-                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
                         <button className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
                         </button>
                         <div className="relative z-10">
                             <h3 className="text-sm font-semibold text-gray-500 mb-4">Pending Transactions</h3>
                             <div className="flex items-end gap-3 mb-1">
-                                <h2 className="text-2xl font-bold text-gray-800">{stats.pending.toLocaleString()}</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{stats.pending.toLocaleString()}</h2>
                             </div>
                             <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Last 7 days</p>
                         </div>
                     </div>
 
                     {/* Failed Transactions Card */}
-                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
                         <button className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
                         </button>
                         <div className="relative z-10">
                             <h3 className="text-sm font-semibold text-gray-500 mb-4">Failed Transactions</h3>
                             <div className="flex items-end gap-3 mb-1">
-                                <h2 className="text-2xl font-bold text-gray-800">{stats.failed.toLocaleString()}</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{stats.failed.toLocaleString()}</h2>
                             </div>
                             <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Last 7 days</p>
                         </div>

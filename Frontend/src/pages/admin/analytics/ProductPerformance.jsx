@@ -54,8 +54,8 @@ const ProductPerformance = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Product Performance</h1>
-                    <p className="text-sm text-gray-500 mt-1">Analyze which products are driving revenue and customer interest.</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">Product Performance</h1>
+                    <p className="text-[10px] md:text-sm text-gray-500 mt-1">Analyze which products are driving revenue and customer interest.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
@@ -71,12 +71,12 @@ const ProductPerformance = () => {
             {/* Performance Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
                 {performanceCards.map((card, index) => (
-                    <div key={index} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-                        <div className={`w-12 h-12 rounded-lg ${card.bg} ${card.color} flex items-center justify-center mb-4`}>
-                            <card.icon size={24} />
+                    <div key={index} className="bg-white rounded-xl border border-gray-100 p-4 md:p-6 shadow-sm">
+                        <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg ${card.bg} ${card.color} flex items-center justify-center mb-4`}>
+                            <card.icon size={20} className="md:w-6 md:h-6" />
                         </div>
-                        <p className="text-sm text-gray-500 font-medium">{card.label}</p>
-                        <h3 className="text-xl font-bold text-gray-800 mt-1">{loading ? '...' : card.value}</h3>
+                        <p className="text-xs md:text-sm text-gray-500 font-medium">{card.label}</p>
+                        <h3 className="text-lg md:text-xl font-bold text-gray-800 mt-1">{loading ? '...' : card.value}</h3>
                     </div>
                 ))}
             </div>

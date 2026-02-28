@@ -90,7 +90,7 @@ const AdminLayout = () => {
                     onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
                     onMobileToggle={() => setIsMobileOpen(!isMobileOpen)}
                 />
-                <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+                <main className="flex-1 p-3 md:p-6 lg:p-8 overflow-y-auto">
                     <Outlet />
                 </main>
             </div>

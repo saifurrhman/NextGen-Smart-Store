@@ -157,14 +157,14 @@ const Dashboard = () => {
     return (
         <div className="space-y-6 max-w-[1400px] mx-auto pb-10">
             {/* Header / Title */}
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+            <div className="flex items-center justify-between px-1 md:px-0">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-800">Dashboard</h1>
             </div>
 
             {/* 1. TOP CARDS ROW */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Total Sales */}
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm relative">
+                <div className="bg-white rounded-xl border border-gray-100 p-4 md:p-5 shadow-sm relative">
                     <button
                         onClick={() => setShowSalesMenu(!showSalesMenu)}
                         className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 p-1 rounded-full">
@@ -201,7 +201,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Total Orders */}
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm relative">
+                <div className="bg-white rounded-xl border border-gray-100 p-4 md:p-5 shadow-sm relative">
                     <button
                         onClick={() => setShowOrdersMenu(!showOrdersMenu)}
                         className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 p-1 rounded-full">
@@ -238,7 +238,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Pending & Canceled */}
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm relative">
+                <div className="bg-white rounded-xl border border-gray-100 p-4 md:p-5 shadow-sm relative">
                     <button
                         onClick={() => setShowPendingMenu(!showPendingMenu)}
                         className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 p-1 rounded-full">
@@ -350,7 +350,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* Simple SVG Chart Representation */}
-                    <div className="relative h-48 w-full mt-8">
+                    <div className="relative h-32 md:h-48 w-full mt-8">
                         {/* Y-axis Labels */}
                         <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[10px] text-gray-400 pb-6 pointer-events-none">
                             <span>{Math.round(maxReportSales * 1.2 / 1000)}k</span>
@@ -426,7 +426,7 @@ const Dashboard = () => {
                             <h3 className="text-xs font-semibold text-blue-600">Users in last 30 minutes</h3>
                             <MoreVertical size={14} className="text-gray-400" />
                         </div>
-                        <h2 className="text-3xl font-bold text-gray-800 mb-1">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">
                             {livingActiveUsers.total >= 1000
                                 ? `${(livingActiveUsers.total / 1000).toFixed(1)}K`
                                 : (livingActiveUsers.total || 0)}

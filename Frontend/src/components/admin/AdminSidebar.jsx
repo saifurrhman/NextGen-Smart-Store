@@ -6,7 +6,7 @@ import {
     FileText, DollarSign, Megaphone, Boxes, HeadphonesIcon,
     ChevronDown, Image, BookOpen, FolderOpen, Navigation, Search,
     TrendingUp, CreditCard, Wallet, Map, Flag, Ticket, Users, BarChart2, Truck,
-    Home, Bot
+    Home, Bot, AlignLeft, X
 } from 'lucide-react';
 
 /* ─── Super Admin sub-sections ─── */
@@ -151,19 +151,28 @@ const AdminSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user }
         >
             {/* ─── Logo ─── */}
             <div className="h-20 flex items-center justify-between px-6 border-b border-transparent shrink-0">
-                {!collapsed && (
-                    <div className="flex items-center gap-2 font-black text-xl tracking-tight">
-                        <span className="text-emerald-500 flex items-center gap-1.5"><Store size={22} className="text-emerald-500" /> NEXTGEN</span>
-                        <span className="text-gray-800">STORE</span>
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold">
+                        N
                     </div>
-                )}
-                {collapsed && <div className="mx-auto font-black text-emerald-500 text-xl flex items-center"><Store size={22} /></div>}
+                    {!collapsed && (
+                        <span className="text-xl font-bold text-gray-800 tracking-tight">NextGen</span>
+                    )}
+                </div>
+
+                {/* Mobile Close Button */}
+                <button
+                    onClick={onMobileClose}
+                    className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+                >
+                    <X size={20} />
+                </button>
 
                 <button
                     onClick={onToggle}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-800 transition-colors hidden lg:block"
+                    className="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:bg-emerald-500 hover:text-white transition-all hidden lg:flex shadow-sm"
                 >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-180"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    {collapsed ? <ChevronRight size={18} /> : <AlignLeft size={18} />}
                 </button>
             </div>
 

@@ -40,16 +40,16 @@ const Customers = () => {
             {/* Header Content */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Customers</h1>
-                    <p className="text-sm text-gray-500 mt-1 font-medium">Manage and view your customer base</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">Customers</h1>
+                    <p className="text-[10px] md:text-sm text-gray-500 mt-1 font-medium">Manage and view your customer base</p>
                 </div>
             </div>
 
             <div className="space-y-6">
                 {/* 4 STAT CARDS GRID */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     {/* Total Customers Card */}
-                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
                         <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
@@ -60,13 +60,13 @@ const Customers = () => {
                             </div>
                             <h3 className="text-sm font-semibold text-gray-500 mb-1">Total Customers</h3>
                             <div className="flex items-end gap-3">
-                                <h2 className="text-2xl font-bold text-gray-800">{stats.total.toLocaleString()}</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{stats.total.toLocaleString()}</h2>
                             </div>
                         </div>
                     </div>
 
                     {/* Active Customers Card */}
-                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
                         <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
@@ -77,13 +77,13 @@ const Customers = () => {
                             </div>
                             <h3 className="text-sm font-semibold text-gray-500 mb-1">Active Customers</h3>
                             <div className="flex items-end gap-3">
-                                <h2 className="text-2xl font-bold text-gray-800">{stats.active.toLocaleString()}</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{stats.active.toLocaleString()}</h2>
                             </div>
                         </div>
                     </div>
 
                     {/* New Customers Card */}
-                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-20 h-20 bg-amber-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
                         <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
@@ -94,13 +94,13 @@ const Customers = () => {
                             </div>
                             <h3 className="text-sm font-semibold text-gray-500 mb-1">New Customers</h3>
                             <div className="flex items-end gap-3">
-                                <h2 className="text-2xl font-bold text-gray-800">{stats.new.toLocaleString()}</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{stats.new.toLocaleString()}</h2>
                             </div>
                         </div>
                     </div>
 
                     {/* Churned Customers Card */}
-                    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm relative overflow-hidden group">
+                    <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-20 h-20 bg-red-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
                         <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
@@ -111,7 +111,7 @@ const Customers = () => {
                             </div>
                             <h3 className="text-sm font-semibold text-gray-500 mb-1">VIP Customers</h3>
                             <div className="flex items-end gap-3">
-                                <h2 className="text-2xl font-bold text-gray-800">{stats.vips.toLocaleString()}</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-gray-800">{stats.vips.toLocaleString()}</h2>
                             </div>
                         </div>
                     </div>
