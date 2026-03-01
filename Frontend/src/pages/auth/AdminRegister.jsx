@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, User, AlertCircle, Eye, EyeOff, ShieldPlus, Terminal } from 'lucide-react';
+import { Lock, Mail, User, AlertCircle, Eye, EyeOff, ShieldPlus, Terminal, BarChart3, Rocket } from 'lucide-react';
 import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
 import { authAPI } from '../../services/api';
 
@@ -59,122 +59,76 @@ const AdminRegister = () => {
         }
     };
 
-    return (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-2 bg-emerald-600/5 px-4 py-1.5 rounded-full border border-emerald-600/10 mb-4">
-                    <ShieldPlus size={14} className="text-emerald-600" />
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Enforcement Protocol</span>
+    const Field = ({ label, name, type = 'text', placeholder, icon: Icon, required = false, passwordToggle, showPw, onToggle }) => (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">{label}</label>
+            <div className="relative group/input">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Icon className="h-4 w-4 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
                 </div>
-                <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">Security Enrollment</h2>
-                <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Elevate your operational authority</p>
+                <input name={name} type={passwordToggle ? (showPw ? 'text' : 'password') : type} required={required}
+                    value={formData[name]} onChange={handleChange}
+                    className="block w-full pl-11 pr-9 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500/30 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm font-semibold placeholder-gray-300 text-gray-800"
+                    placeholder={placeholder} />
+                {passwordToggle && (
+                    <button type="button" onClick={onToggle} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-300 hover:text-emerald-600 transition-colors">
+                        {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-5">
+                <div className="inline-flex items-center gap-2 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100 mb-3">
+                    <ShieldPlus size={12} className="text-emerald-600" />
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Enforcement Protocol</span>
+                </div>
+                <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase">Admin Security Enrollment</h2>
+                <p className="mt-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Elevate your operational authority</p>
             </div>
 
-            {/* Main Card */}
-            <div className="bg-white/80 backdrop-blur-xl py-7 px-8 sm:px-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] rounded-[2rem] border border-white/20 relative overflow-hidden group">
-
-                <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
+            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-7">
+                <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                     {error && (
-                        <div className="rounded-3xl bg-rose-50 p-5 border border-rose-100 flex items-center gap-4 animate-in shake duration-500">
-                            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
-                            <span className="text-xs font-black text-rose-600 uppercase tracking-tight leading-relaxed">{error}</span>
+                        <div className="rounded-2xl bg-rose-50 border border-rose-100 flex items-center gap-3 p-3.5">
+                            <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                            <span className="text-xs font-bold text-rose-600 uppercase tracking-tight">{error}</span>
                         </div>
                     )}
-
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Internal Username</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <User className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input
-                                type="text" name="username" required
-                                value={formData.username} onChange={handleChange}
-                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
-                                placeholder="ADMIN_ALIAS"
-                            />
-                        </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="Terminal Username" name="username" placeholder="ADMIN_ALIAS" icon={User} required />
+                        <Field label="Corporate Email" name="email" type="email" placeholder="OFFICIAL@EMAIL.COM" icon={Mail} required />
                     </div>
-
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Corporate Email</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <Mail className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input
-                                type="email" name="email" required
-                                value={formData.email} onChange={handleChange}
-                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
-                                placeholder="OFFICIAL@NEXTGEN.COM"
-                            />
-                        </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="Secure Key" name="password" placeholder="8+ CHARS" icon={Lock} required
+                            passwordToggle showPw={showPassword} onToggle={() => setShowPassword(!showPassword)} />
+                        <Field label="Verify Key" name="confirmPassword" placeholder="REPEAT" icon={Lock} required
+                            passwordToggle showPw={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
                     </div>
-
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Secure Key</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <Lock className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input
-                                type={showPassword ? 'text' : 'password'} name="password" required
-                                value={formData.password} onChange={handleChange}
-                                className="block w-full pl-14 pr-14 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
-                                placeholder="8+ CHARS"
-                            />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-300 hover:text-emerald-600 transition-colors">
-                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verify Key</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <Lock className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input
-                                type={showConfirm ? 'text' : 'password'} name="confirmPassword" required
-                                value={formData.confirmPassword} onChange={handleChange}
-                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
-                                placeholder="REPEAT KEY"
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] text-sm font-black text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest relative overflow-hidden group/btn"
-                    >
-                        {loading ? 'INITIALIZING PROTOCOL...' : 'SUBMIT AUTHORIZATION'}
+                    <button type="submit" disabled={loading}
+                        className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black uppercase tracking-widest shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50">
+                        {loading ? 'INITIALIZING...' : 'SUBMIT AUTHORIZATION'}
                     </button>
                 </form>
 
-                <div className="mt-8 space-y-6 relative z-10">
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-100" />
-                        </div>
-                        <div className="relative flex justify-center text-[10px]">
-                            <span className="px-5 bg-white text-gray-400 font-black uppercase tracking-[0.2em]">Already Decrypted?</span>
-                        </div>
+                <div className="mt-5 flex flex-col gap-3">
+                    <div className="relative flex items-center">
+                        <div className="flex-1 border-t border-gray-100" />
+                        <span className="px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Already Decrypted?</span>
+                        <div className="flex-1 border-t border-gray-100" />
                     </div>
-
-                    <div className="text-center">
-                        <Link to="/admin/login" className="w-full inline-flex justify-center items-center gap-3 py-4.5 px-6 border border-gray-100 rounded-[2rem] bg-white text-[10px] font-black text-gray-900 hover:bg-gray-50 transition-all uppercase tracking-widest group/reg">
-                            <Terminal size={14} className="group-hover:translate-x-1 transition-transform" />
-                            Authorized Terminal Login
-                        </Link>
+                    <Link to="/admin/login" className="w-full flex justify-center items-center gap-2 py-3 border border-gray-100 rounded-2xl bg-gray-50 hover:bg-gray-100 text-xs font-black text-gray-700 uppercase tracking-widest transition-all group">
+                        <Terminal size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                        Authorized Terminal Login
+                    </Link>
+                    <div className="flex justify-center gap-6">
+                        <div className="flex items-center gap-1.5 opacity-30"><BarChart3 size={11} /><span className="text-[9px] font-black uppercase tracking-tight">Global Outreach</span></div>
+                        <div className="flex items-center gap-1.5 opacity-30"><Rocket size={11} /><span className="text-[9px] font-black uppercase tracking-tight">Instant Scale</span></div>
                     </div>
-
-                    <p className="text-center text-[8px] text-gray-300 font-black uppercase tracking-[0.3em] font-mono mt-8">
-                        Vulnerability Scanned | TLS 1.3
-                    </p>
+                    <p className="text-center text-[9px] text-gray-300 font-bold uppercase tracking-widest">Vulnerability Scanned | TLS 1.3</p>
                 </div>
             </div>
         </div>

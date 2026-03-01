@@ -96,7 +96,7 @@ const ForgotPassword = () => {
                     </div>
 
                     <div className="text-center">
-                        <Link to={loginLink} className="w-full inline-flex justify-center items-center gap-3 py-4.5 px-6 border border-gray-100 rounded-[2rem] bg-white text-[10px] font-black text-gray-900 hover:bg-gray-50 transition-all uppercase tracking-widest group/reg">
+                        <Link to={loginLink} className="w-full inline-flex justify-center items-center gap-3 py-3.5 px-6 border border-gray-100 rounded-[2rem] bg-white text-[10px] font-black text-gray-900 hover:bg-gray-50 transition-all uppercase tracking-widest group/reg">
                             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
                             Return to Secure Login
                         </Link>

@@ -50,18 +50,17 @@ const AuthLayout = () => {
         };
     };
 
-    const { headline, sub, bg, badges, color } = getTheme();
+    const { headline, sub, badges, color } = getTheme();
 
     return (
-        /* h-screen + overflow-hidden on outer = both panels locked to viewport, no outer scroll */
-        <div className="h-screen bg-bg-page flex font-sans text-text-main relative overflow-hidden">
+        <div className="h-[100dvh] bg-bg-page flex font-sans text-text-main relative overflow-hidden">
 
             {/* Background Decorations */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand/5 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-action/5 rounded-full blur-[80px] pointer-events-none" />
 
-            {/* Left Side — fixed dark panel, full height */}
-            <div className={`hidden lg:flex w-1/2 h-full relative flex-col justify-between p-24 overflow-hidden ${color} shrink-0 transition-colors duration-1000 after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.05),transparent)]`}>
+            {/* Left Side */}
+            <div className={`hidden lg:flex w-[45%] h-full relative flex-col justify-between p-24 overflow-hidden ${color} shrink-0 transition-colors duration-1000 after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.05),transparent)]`}>
                 <div className="relative z-10 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 font-black text-xl shadow-2xl">
                         N
@@ -87,14 +86,14 @@ const AuthLayout = () => {
                 </div>
             </div>
 
-            {/* Right Side — scrolls internally, fills full height, no gap at bottom */}
-            <div className="w-full lg:w-1/2 h-full flex flex-col items-center overflow-y-auto bg-bg-page">
-                <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-10 lg:p-12 relative overflow-y-auto scrollbar-hide">
-                    <div className="w-full max-w-lg">
-                        <Outlet />
-                    </div>
+            {/* ✅ FIXED: Removed inner nested div + duplicate overflow-y-auto
+                Only ONE overflow-y-auto here, no scrollbar-hide needed */}
+            <div className="flex-1 h-full flex items-center justify-center overflow-y-auto bg-bg-page px-6">
+                <div className="w-full max-w-2xl py-12">
+                    <Outlet />
                 </div>
             </div>
+
         </div>
     );
 };
