@@ -147,7 +147,7 @@ const AdminSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user }
     return (
         <aside
             className={`fixed left-0 top-0 h-screen z-50 flex flex-col bg-white border-r border-gray-100 transition-all duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-                } ${collapsed ? 'w-20' : 'w-64'}`}
+                } ${collapsed ? 'w-[90px]' : 'w-[266px]'}`}
         >
             {/* ─── Logo ─── */}
             <div className="h-20 flex items-center justify-between px-6 border-b border-transparent shrink-0">
@@ -168,12 +168,6 @@ const AdminSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user }
                     <X size={20} />
                 </button>
 
-                <button
-                    onClick={onToggle}
-                    className="p-2.5 rounded-xl bg-gray-50 text-gray-500 hover:bg-emerald-500 hover:text-white transition-all hidden lg:flex shadow-sm"
-                >
-                    {collapsed ? <ChevronRight size={18} /> : <AlignLeft size={18} />}
-                </button>
             </div>
 
             {/* ─── Nav ─── */}
@@ -309,7 +303,7 @@ const AdminSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user }
                     </a>
                 )}
             </div>
-        </aside>
+        </aside >
     );
 };
 

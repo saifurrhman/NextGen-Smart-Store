@@ -1,29 +1,56 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { ShieldCheck, Star } from 'lucide-react';
+import { ShieldCheck, Star, Store, TrendingUp, Package, Truck, LayoutDashboard, Lock, UserCheck } from 'lucide-react';
 import logoWhite from '../assets/Next Gen Smart Store (White).png';
 
 const AuthLayout = () => {
     const location = useLocation();
+    const isDelivery = location.pathname.includes('delivery');
     const isSeller = location.pathname.includes('seller') || location.pathname.includes('vendor');
     const isAdmin = location.pathname.includes('admin');
 
-    const getMarketing = () => {
-        if (isAdmin) return {
-            headline: 'Manage your store with full control.',
-            sub: 'Access analytics, user management, product oversight, and more from the NextGen Admin Portal.',
+    const getTheme = () => {
+        const themes = {
+            admin: {
+                headline: 'Command & Control.',
+                sub: 'NextGen administrative interface for platform orchestration and governance.',
+                badges: [{ icon: Lock, text: 'Authorized Only' }, { icon: ShieldCheck, text: 'Secure Access' }]
+            },
+            vendor: {
+                headline: 'Enterprise Portal.',
+                sub: 'Scale your logistics and supply chain with industrial-grade precision.',
+                badges: [{ icon: Store, text: 'Verified Partner' }, { icon: LayoutDashboard, text: 'Enterprise Suite' }]
+            },
+            seller: {
+                headline: 'Merchant Growth.',
+                sub: 'Launch your brand to millions of users and accelerate your commerce growth.',
+                badges: [{ icon: TrendingUp, text: 'Growth System' }, { icon: Star, text: 'Premium Merchant' }]
+            },
+            delivery: {
+                headline: 'Last-Mile Unit.',
+                sub: 'Operational interface for field personnel and logistics optimization.',
+                badges: [{ icon: Truck, text: 'Active Dispatch' }, { icon: Package, text: 'Precision Transit' }]
+            },
+            default: {
+                headline: 'The Next Generation.',
+                sub: 'Experience the future of shopping with AR trials and AI-curated quality.',
+                badges: [{ icon: ShieldCheck, text: 'Buyer Protection' }, { icon: Star, text: 'Top Rated' }]
+            }
         };
-        if (isSeller) return {
-            headline: 'Scale your business with AI-powered tools.',
-            sub: "Join our network of premium vendors and reach millions of customers with NextGen's advanced analytics and marketing platform.",
-        };
+
+        const role = isAdmin ? 'admin' :
+            location.pathname.includes('vendor') ? 'vendor' :
+                location.pathname.includes('seller') ? 'seller' :
+                    isDelivery ? 'delivery' : 'default';
+
+        const config = themes[role];
         return {
-            headline: 'Experience the future of shopping.',
-            sub: 'Step into the next generation. Try items in AR, get AI-curated picks, and enjoy instant delivery.',
+            ...config,
+            color: 'bg-emerald-600'
         };
     };
 
-    const { headline, sub } = getMarketing();
+    const { headline, sub, bg, badges, color } = getTheme();
 
     return (
         /* h-screen + overflow-hidden on outer = both panels locked to viewport, no outer scroll */
@@ -34,35 +61,24 @@ const AuthLayout = () => {
             <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-action/5 rounded-full blur-[80px] pointer-events-none" />
 
             {/* Left Side — fixed dark panel, full height */}
-            <div className="hidden lg:flex w-1/2 h-full relative flex-col justify-between p-12 overflow-hidden bg-brand-dark shrink-0">
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src="https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?q=80&w=2564&auto=format&fit=crop"
-                        alt="Background"
-                        className="w-full h-full object-cover opacity-60"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/50 to-transparent" />
-                </div>
-
-                <div className="relative z-10">
-                    <Link to="/" className="flex items-center gap-4 group">
-                        <img src={logoWhite} alt="NextGen Logo" className="h-24 w-auto object-contain group-hover:scale-105 transition-transform" />
-                        <span className="text-3xl font-bold text-white tracking-tight leading-tight">NextGen<br />Smart Store</span>
-                    </Link>
+            <div className={`hidden lg:flex w-1/2 h-full relative flex-col justify-between p-24 overflow-hidden ${color} shrink-0 transition-colors duration-1000 after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.05),transparent)]`}>
+                <div className="relative z-10 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 font-black text-xl shadow-2xl">
+                        N
+                    </div>
+                    <span className="text-xl font-black text-white tracking-tighter uppercase self-center mt-0.5">NextGen</span>
                 </div>
 
                 <div className="relative z-10 max-w-lg">
-                    <h1 className="text-4xl font-bold text-white mb-6 leading-tight">{headline}</h1>
-                    <p className="text-lg text-white/80 mb-8 font-light">{sub}</p>
+                    <h1 className="text-5xl font-black text-white mb-6 leading-[1.1] tracking-tighter uppercase">{headline}</h1>
+                    <p className="text-lg text-white/60 mb-10 font-medium tracking-tight">{sub}</p>
                     <div className="flex gap-4 flex-wrap">
-                        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/20">
-                            <ShieldCheck className="h-5 w-5 text-brand-light" />
-                            <span className="text-sm font-medium text-white">Secure Platform</span>
-                        </div>
-                        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/20">
-                            <Star className="h-5 w-5 text-brand-light" />
-                            <span className="text-sm font-medium text-white">Top Rated</span>
-                        </div>
+                        {badges.map((badge, idx) => (
+                            <div key={idx} className="flex items-center gap-3 bg-white/5 backdrop-blur-2xl px-6 py-4 rounded-[1.5rem] border border-white/10 shadow-2xl">
+                                <badge.icon className="h-5 w-5 text-white/70" />
+                                <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{badge.text}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -73,14 +89,10 @@ const AuthLayout = () => {
 
             {/* Right Side — scrolls internally, fills full height, no gap at bottom */}
             <div className="w-full lg:w-1/2 h-full flex flex-col items-center overflow-y-auto bg-bg-page">
-                {/* Mobile Header */}
-                <div className="lg:hidden w-full px-6 pt-6 pb-2 flex items-center gap-3 border-b border-gray-100 shrink-0">
-                    <Link to="/" className="text-xl font-bold text-brand-dark">NextGen Smart Store</Link>
-                </div>
-
-                {/* Form centered vertically when content is short */}
-                <div className="w-full max-w-xl px-5 sm:px-8 py-8 flex flex-col justify-center min-h-full">
-                    <Outlet />
+                <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-10 lg:p-12 relative overflow-y-auto scrollbar-hide">
+                    <div className="w-full max-w-lg">
+                        <Outlet />
+                    </div>
                 </div>
             </div>
         </div>

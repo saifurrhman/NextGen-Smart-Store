@@ -11,9 +11,15 @@ class UserViewSet(viewsets.ModelViewSet):
     Can be filtered by role using query params.
     """
     queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
     pagination_class = MongoPagination
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        role = self.request.query_params.get('role')
+        if role == 'DELIVERY':
+            from .serializers import DeliveryBoySerializer
+            return DeliveryBoySerializer
+        return UserSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()

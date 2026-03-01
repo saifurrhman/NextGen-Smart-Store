@@ -82,15 +82,15 @@ const AdminLayout = () => {
             />
 
             {/* Main Content */}
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'
-                } ml-0`}>
+            <div className={`flex-1 flex flex-col h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-[90px]' : 'lg:ml-[266px]'
+                } ml-0 overflow-y-auto`}>
                 <AdminTopbar
                     pageTitle={getPageTitle()}
                     user={user}
                     onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
                     onMobileToggle={() => setIsMobileOpen(!isMobileOpen)}
                 />
-                <main className="flex-1 p-3 md:p-6 lg:p-8 overflow-y-auto">
+                <main className="flex-1 p-3 md:p-6 lg:p-8">
                     <Outlet />
                 </main>
             </div>

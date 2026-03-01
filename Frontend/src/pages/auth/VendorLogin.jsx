@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Store, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
-import axios from 'axios';
+import { Store, Lock, Mail, AlertCircle, ArrowRight, Eye, EyeOff, Building2 } from 'lucide-react';
+import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
+import { authAPI } from '../../services/api';
 
 const VendorLogin = () => {
     const navigate = useNavigate();
@@ -14,175 +15,123 @@ const VendorLogin = () => {
         setError(null);
     };
 
+    const [showPassword, setShowPassword] = useState(false);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api/auth/login/', formData);
-            const { token, role, user } = response.data;
+            const response = await authAPI.login(formData);
+            const { access, refresh, user } = response.data;
+            const role = user?.role?.toUpperCase();
 
-            // Strict Role Check for Vendor Login
-            if (role !== 'VENDOR') {
-                setError("Access Denied. This portal is for Sellers/Vendors only.");
+            if (role !== 'VENDOR' && role !== 'SELLER') {
+                setError("Access Denied. This portal is for Vendors/Sellers only.");
                 setLoading(false);
                 return;
             }
 
-            localStorage.setItem('token', token);
-            localStorage.setItem('role', role);
+            localStorage.setItem('access_token', access);
+            localStorage.setItem('refresh_token', refresh);
             localStorage.setItem('user', JSON.stringify(user));
 
             navigate('/vendor/dashboard');
-
         } catch (err) {
-            console.error("Vendor Login Error Full Details:", err);
-            if (err.response) {
-                console.error("Data:", err.response.data);
-                console.error("Status:", err.response.status);
-            }
-            setError(typeof err.response?.data === 'string' ? err.response.data :
-                err.response?.data?.non_field_errors?.[0] ||
-                JSON.stringify(err.response?.data || "Invalid credentials."));
+            setError(err.response?.data?.detail || "Invalid credentials.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="flex justify-center">
-                    <div className="h-16 w-16 rounded-full bg-brand/10 flex items-center justify-center">
-                        <Store className="h-8 w-8 text-brand" />
-                    </div>
-                </div>
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
-                    Seller Central
-                </h2>
-                <p className="mt-2 text-center text-sm text-gray-600">
-                    Manage your store, products, and orders
-                </p>
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Header */}
+            <div className="text-center mb-6">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">Vendor Terminal</h2>
+                <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Connect to your enterprise dashboard</p>
             </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow-xl rounded-2xl sm:px-10 border border-gray-100">
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        {error && (
-                            <div className="rounded-lg bg-red-50 p-4 border border-red-200">
-                                <div className="flex">
-                                    <div className="flex-shrink-0">
-                                        <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
-                                    </div>
-                                    <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+            {/* Main Card */}
+            <div className="bg-white/80 backdrop-blur-xl py-7 px-8 sm:px-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] rounded-[2rem] border border-white/20 relative overflow-hidden group">
 
-                        <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                                Username or Email
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                </div>
-                                <input
-                                    id="username"
-                                    name="username"
-                                    type="text"
-                                    required
-                                    value={formData.username}
-                                    onChange={handleChange}
-                                    className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-3"
-                                    placeholder="seller@example.com"
-                                />
-                            </div>
+                <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
+                    {error && (
+                        <div className="rounded-3xl bg-rose-50 p-5 border border-rose-100 flex items-center gap-4 animate-in shake duration-500">
+                            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+                            <span className="text-xs font-black text-rose-600 uppercase tracking-tight leading-relaxed">{error}</span>
                         </div>
+                    )}
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                Password
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                </div>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-3"
-                                    placeholder="••••••••"
-                                />
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Business Identifier</label>
+                        <div className="relative group/input">
+                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <Mail className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
                             </div>
+                            <input
+                                name="username" type="text" required
+                                value={formData.username} onChange={handleChange}
+                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
+                                placeholder="USERNAME OR EMAIL"
+                            />
                         </div>
+                    </div>
 
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <input
-                                    id="remember-me"
-                                    name="remember-me"
-                                    type="checkbox"
-                                    className="h-4 w-4 text-brand focus:ring-brand border-gray-300 rounded"
-                                />
-                                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                                    Remember me
-                                </label>
-                            </div>
-
-                            <div className="text-sm">
-                                <a href="#" className="font-medium text-brand hover:text-brand-dark">
-                                    Forgot password?
-                                </a>
-                            </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between ml-2">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Access Key</label>
+                            <Link to="/forgot-password" state={{ role: 'vendor' }} className="text-[10px] font-black text-emerald-600 hover:opacity-70 uppercase tracking-widest">Lost Access?</Link>
                         </div>
-
-                        <div>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-brand hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition-all items-center gap-2"
-                            >
-                                {loading ? 'Logging in...' : 'Login to Seller Central'}
-                                {!loading && <ArrowRight size={18} />}
+                        <div className="relative group/input">
+                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <Lock className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
+                            </div>
+                            <input
+                                name="password" type={showPassword ? 'text' : 'password'} required
+                                value={formData.password} onChange={handleChange}
+                                className="block w-full pl-14 pr-14 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
+                                placeholder="••••••••"
+                            />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-300 hover:text-emerald-600 transition-colors">
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
-                    </form>
+                    </div>
 
-                    <div className="mt-8">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-300" />
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white text-gray-500">
-                                    New to NextGen Store?
-                                </span>
-                            </div>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] text-sm font-black text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest relative overflow-hidden group/btn"
+                    >
+                        {loading ? 'SYNCHRONIZING...' : 'RESTORE SESSION'}
+                    </button>
+                </form>
+
+                <div className="mt-8 space-y-6 relative z-10">
+                    <div className="relative mb-8">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-100" />
                         </div>
-
-                        <div className="mt-6">
-                            <Link
-                                to="/vendor/register"
-                                className="w-full flex justify-center py-3 px-4 border-2 border-brand/20 rounded-lg shadow-sm text-sm font-bold text-brand bg-white hover:bg-gray-50 transition-all"
-                            >
-                                Register as a Seller
-                            </Link>
+                        <div className="relative flex justify-center text-[10px]">
+                            <span className="px-5 bg-white text-gray-400 font-black uppercase tracking-[0.2em]">New Partner?</span>
                         </div>
                     </div>
+
+                    <div className="text-center">
+                        <Link to="/vendor/register" className="w-full inline-flex justify-center items-center gap-3 py-4.5 px-6 border border-gray-100 rounded-[2rem] bg-white text-[10px] font-black text-gray-900 hover:bg-gray-50 transition-all uppercase tracking-widest group/reg">
+                            <Store size={14} className="group-hover:translate-x-1 transition-transform" />
+                            Request Partner Account
+                        </Link>
+                    </div>
+
+                    <p className="text-center text-[8px] text-gray-300 font-black uppercase tracking-[0.3em] font-mono mt-8">
+                        Enterprise Grade Security | 4096-bit RSA
+                    </p>
                 </div>
             </div>
-
-            <p className="mt-8 text-center text-xs text-gray-500">
-                &copy; 2026 NextGen Smart Store. All rights reserved.
-            </p>
         </div>
     );
 };

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Store, Mail, Lock, User, Phone, MapPin, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, Phone, MapPin, AlertCircle, Eye, EyeOff, Sparkles, UserCircle2, ArrowRight } from 'lucide-react';
+import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
 import { authAPI } from '../../services/api';
 
 const Register = () => {
@@ -15,6 +16,8 @@ const Register = () => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,22 +26,21 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(null);
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            setError('Verification failed. Passwords do not match.');
             return;
         }
 
         if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters.');
+            setError('Security warning: Password must be at least 8 characters.');
             return;
         }
 
         setLoading(true);
-        setError(null);
 
         try {
-            // Step 1: Send OTP — account is created only after verification
             await authAPI.sendOTP({
                 email: formData.email.trim().toLowerCase(),
                 purpose: 'register',
@@ -54,131 +56,162 @@ const Register = () => {
                         password: formData.password,
                         phone: formData.phone,
                         address: formData.address,
+                        role: 'CUSTOMER'
                     },
                 }
             });
         } catch (err) {
-            setError(err.response?.data?.error || err.response?.data?.detail || 'Registration failed. Please try again.');
+            setError(err.response?.data?.error || err.response?.data?.detail || 'Initialization failed. Please check connectivity.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <>
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="flex justify-center">
-                    <div className="h-12 w-12 rounded-xl bg-brand/10 flex items-center justify-center">
-                        <Store className="h-8 w-8 text-brand fill-current" />
-                    </div>
-                </div>
-                <h2 className="mt-6 text-center text-h2 font-bold text-brand-dark tracking-tight">
-                    Create your account
-                </h2>
-                <p className="mt-2 text-center text-sm text-text-sub">
-                    Join NextGen Smart Store today
-                </p>
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Header */}
+            <div className="text-center mb-6">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">Create Account</h2>
+                <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Join the next generation of shopping</p>
             </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow-effect-3 sm:rounded-lg sm:px-10 border border-gray-100">
-                    <form className="space-y-4" onSubmit={handleSubmit}>
-                        {error && (
-                            <div className="rounded-md bg-functional-error/10 p-4">
-                                <div className="flex">
-                                    <div className="flex-shrink-0">
-                                        <AlertCircle className="h-5 w-5 text-functional-error" aria-hidden="true" />
-                                    </div>
-                                    <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-functional-error break-all">{error}</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+            {/* Main Card */}
+            <div className="bg-white/80 backdrop-blur-xl py-7 px-8 sm:px-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] rounded-[2rem] border border-white/20 relative overflow-hidden group">
 
-                        <div>
-                            <label className="block text-sm font-medium text-brand-dark">Username</label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <User className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input name="username" type="text" required onChange={handleChange} className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5" placeholder="johndoe" />
-                            </div>
+                <form className="space-y-6 relative z-10" onSubmit={handleSubmit}>
+                    {error && (
+                        <div className="rounded-3xl bg-rose-50 p-5 border border-rose-100 flex items-center gap-4 animate-in shake duration-500">
+                            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+                            <span className="text-xs font-black text-rose-600 uppercase tracking-tight leading-relaxed">{error}</span>
                         </div>
+                    )}
 
-                        <div>
-                            <label className="block text-sm font-medium text-brand-dark">Email</label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input name="email" type="email" required onChange={handleChange} className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5" placeholder="john@example.com" />
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Public Badge (Username)</label>
+                        <div className="relative group/input">
+                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <User className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
                             </div>
+                            <input
+                                name="username" type="text" required
+                                value={formData.username} onChange={handleChange}
+                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
+                                placeholder="JOHNDOE"
+                            />
                         </div>
+                    </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-brand-dark">Phone</label>
-                                <div className="mt-1 relative rounded-md shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Phone className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <input name="phone" type="text" onChange={handleChange} className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5" placeholder="+123..." />
-                                </div>
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Primary Comms (Email)</label>
+                        <div className="relative group/input">
+                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <Mail className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-brand-dark">Address</label>
-                                <div className="mt-1 relative rounded-md shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <MapPin className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <input name="address" type="text" onChange={handleChange} className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5" placeholder="City, Country" />
-                                </div>
-                            </div>
+                            <input
+                                name="email" type="email" required
+                                value={formData.email} onChange={handleChange}
+                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
+                                placeholder="IDENTIFIER@DOMAIN.COM"
+                            />
                         </div>
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-brand-dark">Password</label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input name="password" type="password" required onChange={handleChange} className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5" placeholder="••••••••" />
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Phone Link</label>
+                        <div className="relative group/input">
+                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <Phone className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
                             </div>
+                            <input
+                                name="phone" type="text"
+                                value={formData.phone} onChange={handleChange}
+                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
+                                placeholder="+1-XXX-XXX"
+                            />
                         </div>
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-brand-dark">Confirm Password</label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input name="confirmPassword" type="password" required onChange={handleChange} className="focus:ring-brand focus:border-brand block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-2.5" placeholder="••••••••" />
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">HQ / Address</label>
+                        <div className="relative group/input">
+                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <MapPin className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
                             </div>
+                            <input
+                                name="address" type="text"
+                                value={formData.address} onChange={handleChange}
+                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
+                                placeholder="CITY, COUNTRY"
+                            />
                         </div>
+                    </div>
 
-                        <div className="pt-2">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-brand hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {loading ? 'Creating Account...' : 'Sign Up'}
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Access Key</label>
+                        <div className="relative group/input">
+                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <Lock className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
+                            </div>
+                            <input
+                                name="password" type={showPassword ? 'text' : 'password'} required
+                                value={formData.password} onChange={handleChange}
+                                className="block w-full pl-14 pr-12 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-xs font-black placeholder-gray-300"
+                                placeholder="8+ CHARS"
+                            />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-300 hover:text-emerald-600 transition-colors">
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
-                    </form>
-
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-text-sub">
-                            Already have an account?{' '}
-                            <Link to="/login" className="font-medium text-brand hover:text-brand-dark">
-                                Sign in
-                            </Link>
-                        </p>
                     </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verify Key</label>
+                        <div className="relative group/input">
+                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <Lock className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
+                            </div>
+                            <input
+                                name="confirmPassword" type={showConfirm ? 'text' : 'password'} required
+                                value={formData.confirmPassword} onChange={handleChange}
+                                className="block w-full pl-14 pr-12 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-xs font-black placeholder-gray-300"
+                                placeholder="REPEAT KEY"
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] text-sm font-black text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest relative overflow-hidden group/btn"
+                    >
+                        {loading ? 'INITIALIZING...' : 'AUTHORIZE REGISTRATION'}
+                    </button>
+                </form>
+
+                <div className="mt-8 space-y-6 relative z-10">
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-100" />
+                        </div>
+                        <div className="relative flex justify-center text-[10px]">
+                            <span className="px-5 bg-white text-gray-400 font-black uppercase tracking-[0.2em]">Already A Member?</span>
+                        </div>
+                    </div>
+
+                    <div className="text-center">
+                        <Link to="/login" className="w-full inline-flex justify-center items-center gap-3 py-4.5 px-6 border border-gray-100 rounded-[2rem] bg-white text-[10px] font-black text-gray-900 hover:bg-gray-50 transition-all uppercase tracking-widest group/reg">
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                            Return to Portal Login
+                        </Link>
+                    </div>
+
+                    <p className="text-center text-[8px] text-gray-300 font-black uppercase tracking-[0.3em] font-mono mt-8">
+                        Identity Verification Required | SSL v3.0
+                    </p>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

@@ -9,4 +9,4 @@ class DeliverySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Delivery
-        fields = '__all__'
+        fields = ['id', 'order', 'order_id', 'delivery_boy', 'delivery_boy_details', 'status', 'tracking_id', 'latitude', 'longitude', 'estimated_delivery', 'actual_delivery', 'created_at', 'updated_at']

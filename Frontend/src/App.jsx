@@ -44,6 +44,10 @@ import AdminLogin from './pages/auth/AdminLogin';
 import AdminRegister from './pages/auth/AdminRegister';
 import SellerLogin from './pages/auth/SellerLogin';
 import SellerRegister from './pages/auth/SellerRegister';
+import DeliveryLogin from './pages/auth/DeliveryLogin';
+import DeliveryRegister from './pages/auth/DeliveryRegister';
+import VendorLogin from './pages/auth/VendorLogin';
+import VendorRegister from './pages/auth/VendorRegister';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import VerifyOTP from './pages/auth/VerifyOTP';
 import ResetPassword from './pages/auth/ResetPassword';
@@ -139,6 +143,12 @@ import CustomerSatisfaction from './pages/admin/support/analytics/CustomerSatisf
 import DeliveryTracking from './pages/admin/operations/delivery/DeliveryTracking';
 import DeliveryTeam from './pages/admin/operations/delivery/DeliveryTeam';
 import AssignDelivery from './pages/admin/operations/delivery/AssignDelivery';
+// Import Delivery Portal Pages
+import DeliveryLayout from './layouts/DeliveryLayout';
+import DeliveryDashboard from './pages/delivery/Dashboard';
+import DeliveryTasks from './pages/delivery/Tasks';
+import DeliveryHistory from './pages/delivery/History';
+import DeliveryProfile from './pages/delivery/Profile';
 
 // Import Old Super Admin Sub-Pages (now at Admin root)
 import AllOrders from './pages/admin/orders/AllOrders';
@@ -219,13 +229,15 @@ function App() {
           {/* Seller Auth */}
           <Route path="/seller/login" element={<SellerLogin />} />
           <Route path="/seller/register" element={<SellerRegister />} />
+          <Route path="/delivery/login" element={<DeliveryLogin />} />
+          <Route path="/delivery/register" element={<DeliveryRegister />} />
+          {/* Vendor Auth */}
+          <Route path="/vendor/login" element={<VendorLogin />} />
+          <Route path="/vendor/register" element={<VendorRegister />} />
           {/* Forgot Password & OTP */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          {/* Legacy aliases */}
-          <Route path="/vendor/login" element={<SellerLogin />} />
-          <Route path="/vendor/register" element={<SellerRegister />} />
         </Route>
 
         {/* Redirects for common missing routes */}
@@ -235,6 +247,15 @@ function App() {
         <Route path="/vendor" element={<VendorLayout />}>
           <Route path="dashboard" element={<VendorDashboard />} />
           {/* Add more vendor routes here later */}
+        </Route>
+
+        {/* Delivery Portal Routes */}
+        <Route path="/delivery" element={<DeliveryLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DeliveryDashboard />} />
+          <Route path="tasks" element={<DeliveryTasks />} />
+          <Route path="history" element={<DeliveryHistory />} />
+          <Route path="profile" element={<DeliveryProfile />} />
         </Route>
 
         {/* Admin Routes (Protected) */}
