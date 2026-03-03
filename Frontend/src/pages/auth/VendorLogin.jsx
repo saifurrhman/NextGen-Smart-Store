@@ -36,6 +36,7 @@ const VendorLogin = () => {
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
             localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('role', role);
 
             navigate('/vendor/dashboard');
         } catch (err) {

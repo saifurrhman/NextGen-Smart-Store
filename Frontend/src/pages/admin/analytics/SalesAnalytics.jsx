@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
     TrendingUp, TrendingDown, DollarSign, ShoppingCart,
-    Users, CreditCard, ChevronDown, Download, Filter
+    Users, CreditCard, ChevronDown, Download, Search
 } from 'lucide-react';
 import api from '../../../utils/api';
+import FilterDropdown from '../../../components/admin/common/FilterDropdown';
 
 const SalesAnalytics = () => {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({ status: '' });
     const [timeFilter, setTimeFilter] = useState('this_week');
 
     useEffect(() => {
@@ -24,6 +27,33 @@ const SalesAnalytics = () => {
         };
         fetchSalesData();
     }, [timeFilter]);
+
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    };
+
+    const clearFilters = () => {
+        setFilters({ status: '' });
+    };
+
+    const filterOptions = [
+        {
+            key: 'status',
+            label: 'Status',
+            options: [
+                { label: 'All Status', value: '' },
+                { label: 'Success', value: 'Success' },
+                { label: 'Pending', value: 'Pending' },
+                { label: 'Refunded', value: 'Refunded' },
+            ]
+        }
+    ];
+
+    const filteredTransactions = (data?.transactions || []).filter(txn => {
+        const matchesSearch = !searchTerm || txn.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = !filters.status || txn.status === filters.status;
+        return matchesSearch && matchesStatus;
+    });
 
     if (loading && !data) {
         return (
@@ -129,9 +159,27 @@ const SalesAnalytics = () => {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* Sales by Category Table */}
                 <div className="xl:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
                         <h3 className="font-bold text-gray-800">Recent Transactions</h3>
-                        <button className="text-sm text-emerald-600 font-medium hover:underline">View All</button>
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Search order id..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500/20 w-48 text-gray-700 font-bold"
+                                />
+                            </div>
+                            <FilterDropdown
+                                options={filterOptions}
+                                activeFilters={filters}
+                                onFilterChange={handleFilterChange}
+                                onClear={clearFilters}
+                            />
+                            <button className="text-sm text-emerald-600 font-bold hover:underline ml-2">View All</button>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -144,24 +192,28 @@ const SalesAnalytics = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {data?.transactions?.map((order, index) => (
+                                {filteredTransactions.length > 0 ? filteredTransactions.map((order, index) => (
                                     <tr key={index} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4">
-                                            <span className="text-sm font-semibold text-gray-800">{order.id}</span>
+                                            <span className="text-sm font-bold text-gray-800">{order.id}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{order.date}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600 font-bold">{order.date}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase ${order.status === 'Success' ? 'bg-emerald-50 text-emerald-600' :
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${order.status === 'Success' ? 'bg-emerald-50 text-emerald-600' :
                                                 order.status === 'Pending' ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'
                                                 }`}>
                                                 {order.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <span className="text-sm font-bold text-gray-800">${order.amount.toLocaleString()}</span>
+                                            <span className="text-sm font-black text-gray-800">${order.amount.toLocaleString()}</span>
                                         </td>
                                     </tr>
-                                ))}
+                                )) : (
+                                    <tr>
+                                        <td colSpan="4" className="py-20 text-center text-gray-400 italic font-bold">No transactions found matching your criteria.</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

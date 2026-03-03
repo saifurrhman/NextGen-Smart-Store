@@ -10,10 +10,11 @@ try:
     import django
     import sys
 
-    # Get absolute path to backend
+    # Use absolute path to backend
     backend_path = os.path.abspath(".")
     sys.path.append(backend_path)
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'core.settings'
+    # The correct settings path based on project structure
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'NextGenSmartStore.settings.development'
     django.setup()
 
     from django.contrib.auth import get_user_model
@@ -24,7 +25,9 @@ try:
     if not users:
         print("No users found in database.")
     for u in users:
-        print(f"ID: {u.id} | Username: {u.username} | Email: {u.email} | Role: {u.role}")
+        is_delivery = u.role == 'DELIVERY'
+        marker = ">>> " if is_delivery else "    "
+        print(f"{marker}ID: {u.id} | Email: {u.email} | Role: {u.role}")
     print("-------------------------")
 
 except Exception as e:

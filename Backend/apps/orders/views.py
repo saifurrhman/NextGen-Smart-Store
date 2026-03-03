@@ -7,6 +7,11 @@ class OrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+class OrderCreateView(generics.CreateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
 class RefundListView(generics.ListAPIView):
     queryset = Refund.objects.all().order_by('-created_at')
     serializer_class = RefundSerializer

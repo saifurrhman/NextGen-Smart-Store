@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Ticket as TicketIcon, Search, Filter, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 import api from '../../../utils/api';
+import useRowSelection from '../../../hooks/useRowSelection';
+import BulkActionBar from '../../../components/admin/common/BulkActionBar';
+import { exportToExcel, exportToPDF, exportToCSV } from '../../../utils/exportUtils';
 
 const Tickets = () => {
     const [tickets, setTickets] = useState([]);
@@ -8,6 +11,9 @@ const Tickets = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({ count: 0, next: null, previous: null });
+    const [msg, setMsg] = useState({ type: '', text: '' });
+
+    const { selectedIds, toggleAll, toggleOne, isAllSelected, clearSelection } = useRowSelection('id');
 
     useEffect(() => {
         fetchTickets();
@@ -28,6 +34,45 @@ const Tickets = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDeleteTicket = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this ticket?')) return;
+        try {
+            await api.delete(`/api/v1/support/tickets/${id}/`);
+            setTickets(prev => prev.filter(t => t.id !== id));
+        } catch (error) {
+            console.error("Failed to delete ticket:", error);
+            alert("Failed to delete ticket.");
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} selected tickets?`)) return;
+        try {
+            await Promise.all(selectedIds.map(id => api.delete(`/api/v1/support/tickets/${id}/`)));
+            setTickets(prev => prev.filter(t => !selectedIds.includes(t.id)));
+            setMsg({ type: 'success', text: `${selectedIds.length} tickets deleted successfully!` });
+            clearSelection();
+            setTimeout(() => setMsg({ type: '', text: '' }), 3000);
+        } catch (error) {
+            console.error("Failed to delete tickets:", error);
+            alert('Failed to delete some tickets.');
+        }
+    };
+
+    const handleBulkExportExcel = () => {
+        const selectedData = tickets.filter(t => selectedIds.includes(t.id));
+        const dataToExport = selectedData.map(t => ({
+            "Ticket ID": `TK-${t.id}`,
+            "Subject": t.subject,
+            "User": t.user_details?.username,
+            "Email": t.user_details?.email,
+            "Status": t.status,
+            "Priority": t.priority,
+            "Created": new Date(t.created_at).toLocaleDateString()
+        }));
+        exportToExcel(dataToExport, `Selected_Tickets_${selectedIds.length}`);
     };
 
     const totalPages = Math.ceil(pagination.count / 20);
@@ -74,11 +119,19 @@ const Tickets = () => {
                     <table className="w-full text-sm text-left">
                         <thead className="bg-[#eaf4f0] text-emerald-800 font-bold tracking-wider">
                             <tr>
+                                <th className="px-6 py-3 w-10">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                        checked={isAllSelected(tickets)}
+                                        onChange={() => toggleAll(tickets)}
+                                    />
+                                </th>
                                 <th className="px-6 py-3">Ticket ID</th>
                                 <th className="px-6 py-3">Subject</th>
                                 <th className="px-6 py-3">User</th>
-                                <th className="px-6 py-3">Status</th>
-                                <th className="px-6 py-3">Priority</th>
+                                <th className="px-6 py-3 text-center">Status</th>
+                                <th className="px-6 py-3 text-center">Priority</th>
                                 <th className="px-6 py-3">Created</th>
                                 <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
@@ -87,12 +140,20 @@ const Tickets = () => {
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan="7" className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-full"></div></td>
+                                        <td colSpan="8" className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-full"></div></td>
                                     </tr>
                                 ))
                             ) : tickets.length > 0 ? (
                                 tickets.map((ticket) => (
-                                    <tr key={ticket.id} className="hover:bg-gray-50/50 transition-colors group">
+                                    <tr key={ticket.id} className={`hover:bg-gray-50/50 transition-colors group ${selectedIds.includes(ticket.id) ? 'bg-emerald-50/50' : ''}`}>
+                                        <td className="px-6 py-4">
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                                checked={selectedIds.includes(ticket.id)}
+                                                onChange={() => toggleOne(ticket.id)}
+                                            />
+                                        </td>
                                         <td className="px-6 py-4 font-mono font-bold text-gray-400">#TK-{ticket.id}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
@@ -106,20 +167,20 @@ const Tickets = () => {
                                                 <span className="text-gray-400">{ticket.user_details?.email}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${ticket.status === 'open' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                                                    ticket.status === 'in_progress' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' :
-                                                        ticket.status === 'resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                                                            'bg-gray-50 text-gray-700 border border-gray-100'
+                                                ticket.status === 'in_progress' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' :
+                                                    ticket.status === 'resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                                        'bg-gray-50 text-gray-700 border border-gray-100'
                                                 }`}>
                                                 {ticket.status.replace('_', ' ')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 text-center">
                                             <span className={`text-[10px] font-bold uppercase ${ticket.priority === 'urgent' ? 'text-red-600' :
-                                                    ticket.priority === 'high' ? 'text-orange-500' :
-                                                        ticket.priority === 'medium' ? 'text-blue-500' :
-                                                            'text-gray-400'
+                                                ticket.priority === 'high' ? 'text-orange-500' :
+                                                    ticket.priority === 'medium' ? 'text-blue-500' :
+                                                        'text-gray-400'
                                                 }`}>
                                                 {ticket.priority}
                                             </span>
@@ -129,16 +190,31 @@ const Tickets = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2 text-gray-400">
-                                                <button className="p-1.5 hover:bg-gray-100 rounded hover:text-brand transition-colors"><MessageSquare size={16} /></button>
-                                                <button className="p-1.5 hover:bg-gray-100 rounded hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                                <button className="p-1.5 hover:bg-gray-100 rounded hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
+                                                <button
+                                                    onClick={() => window.location.href = `/admin/support/tickets/detail/${ticket.id}`}
+                                                    className="p-1.5 hover:bg-gray-100 rounded hover:text-brand transition-colors"
+                                                >
+                                                    <MessageSquare size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => alert(`Edit ticket #${ticket.id}`)}
+                                                    className="p-1.5 hover:bg-gray-100 rounded hover:text-brand transition-colors"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteTicket(ticket.id)}
+                                                    className="p-1.5 hover:bg-gray-100 rounded hover:text-red-600 transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="7" className="py-20 text-center text-gray-400 font-bold uppercase tracking-widest bg-gray-50/50">
+                                    <td colSpan="8" className="py-20 text-center text-gray-400 font-bold uppercase tracking-widest bg-gray-50/50">
                                         No tickets found.
                                     </td>
                                 </tr>
@@ -146,6 +222,31 @@ const Tickets = () => {
                         </tbody>
                     </table>
                 </div>
+
+                <BulkActionBar
+                    selectedIds={selectedIds}
+                    onClear={clearSelection}
+                    label={{ singular: "ticket", plural: "tickets" }}
+                    onExportExcel={handleBulkExportExcel}
+                    onExportCSV={() => {
+                        const selectedData = tickets.filter(t => selectedIds.includes(t.id));
+                        exportToCSV(selectedData, `Selected_Tickets_${selectedIds.length}`);
+                    }}
+                    onExportPDF={() => {
+                        const selectedData = tickets.filter(t => selectedIds.includes(t.id));
+                        const columns = ["ID", "Subject", "User", "Status", "Priority", "Created"];
+                        const dataToExport = selectedData.map(t => [
+                            `#TK-${t.id}`,
+                            t.subject,
+                            t.user_details?.username,
+                            t.status,
+                            t.priority,
+                            new Date(t.created_at).toLocaleDateString()
+                        ]);
+                        exportToPDF(dataToExport, columns, `Selected_Tickets_${selectedIds.length}`);
+                    }}
+                    onDelete={handleBulkDelete}
+                />
 
                 {pagination.count > 20 && (
                     <div className="p-4 border-t border-gray-100 text-sm text-gray-500 flex items-center justify-between">

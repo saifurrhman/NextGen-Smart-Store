@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-    MoreVertical, ArrowUp, ArrowDown, Search, Filter,
+    MoreVertical, ArrowUp, ArrowDown, Search,
     Smartphone, Shirt, Home as HomeIcon, Plus, ChevronRight,
     Globe, Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import { useCurrency } from '../../context/CurrencyContext';
+import FilterDropdown from '../../components/admin/common/FilterDropdown';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -24,7 +25,12 @@ const Dashboard = () => {
     const [showPendingMenu, setShowPendingMenu] = useState(false);
 
     // Table filter states
+    const [txnSearch, setTxnSearch] = useState('');
+    const [txnFilters, setTxnFilters] = useState({ status: '' });
     const [txnFilter, setTxnFilter] = useState('this_week');
+
+    const [productSearch, setProductSearch] = useState('');
+    const [productFilters, setProductFilters] = useState({ stockStatus: '' });
     const [bestSellingFilter, setBestSellingFilter] = useState('this_week');
 
     useEffect(() => {
@@ -126,6 +132,61 @@ const Dashboard = () => {
             window.print();
         }
     };
+
+    const handleTxnFilterChange = (key, value) => {
+        setTxnFilters(prev => ({ ...prev, [key]: value }));
+    };
+
+    const clearTxnFilters = () => {
+        setTxnFilters({ status: '' });
+    };
+
+    const handleProductFilterChange = (key, value) => {
+        setProductFilters(prev => ({ ...prev, [key]: value }));
+    };
+
+    const clearProductFilters = () => {
+        setProductFilters({ stockStatus: '' });
+    };
+
+    const statusFilterOptions = [
+        {
+            key: 'status',
+            label: 'Status',
+            options: [
+                { label: 'All Status', value: '' },
+                { label: 'Pending', value: 'Pending' },
+                { label: 'Completed', value: 'Completed' },
+                { label: 'Refunded', value: 'Refunded' },
+            ]
+        }
+    ];
+
+    const stockFilterOptions = [
+        {
+            key: 'stockStatus',
+            label: 'Stock Status',
+            options: [
+                { label: 'All Status', value: '' },
+                { label: 'In Stock', value: 'Stock' },
+                { label: 'Out of Stock', value: 'Out of Stock' },
+            ]
+        }
+    ];
+
+    const filteredTransactions = (dashboardStats?.transactions || []).filter(txn => {
+        const matchesSearch = !txnSearch ||
+            txn.id.toLowerCase().includes(txnSearch.toLowerCase()) ||
+            txn.customer_name?.toLowerCase().includes(txnSearch.toLowerCase());
+        const matchesStatus = !txnFilters.status || txn.status === txnFilters.status;
+        return matchesSearch && matchesStatus;
+    });
+
+    const filteredTopProducts = (dashboardStats?.topProducts || []).filter(product => {
+        const matchesSearch = !productSearch || product.name.toLowerCase().includes(productSearch.toLowerCase());
+        const matchesStock = !productFilters.stockStatus || product.stockStatus === productFilters.stockStatus;
+        return matchesSearch && matchesStock;
+    });
 
     const generatePath = (data, isArea = false) => {
         if (!data || data.length < 2) return "";
@@ -534,6 +595,16 @@ const Dashboard = () => {
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="font-semibold text-gray-800">Transaction</h3>
                         <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search ID..."
+                                    value={txnSearch}
+                                    onChange={(e) => setTxnSearch(e.target.value)}
+                                    className="pl-8 pr-3 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[10px] focus:outline-none focus:ring-1 focus:ring-emerald-500 w-32"
+                                />
+                            </div>
                             <select
                                 value={txnFilter}
                                 onChange={(e) => setTxnFilter(e.target.value)}
@@ -543,9 +614,12 @@ const Dashboard = () => {
                                 <option value="monthly" className="bg-white text-gray-800">Monthly</option>
                                 <option value="yearly" className="bg-white text-gray-800">Yearly</option>
                             </select>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-600 transition-colors uppercase tracking-wider shadow-sm">
-                                Filter <Filter size={10} />
-                            </button>
+                            <FilterDropdown
+                                options={statusFilterOptions}
+                                activeFilters={txnFilters}
+                                onFilterChange={handleTxnFilterChange}
+                                onClear={clearTxnFilters}
+                            />
                         </div>
                     </div>
 
@@ -560,10 +634,10 @@ const Dashboard = () => {
                                     <th className="pb-3 px-2 font-medium">Amount</th>
                                 </tr>
                             </thead>
-                            <tbody className="text-gray-800 font-medium">
-                                {(dashboardStats?.transactions || []).map((txn, idx) => (
+                            <tbody className="text-gray-800 font-medium font-bold">
+                                {filteredTransactions.map((txn, idx) => (
                                     <tr key={idx} className="border-b border-gray-50/50">
-                                        <td className="py-4 px-2">{txn.no}.</td>
+                                        <td className="py-4 px-2">{idx + 1}.</td>
                                         <td className="py-4 px-2">{txn.id}</td>
                                         <td className="py-4 px-2 text-gray-500">{txn.date}</td>
                                         <td className="py-4 px-2">
@@ -575,6 +649,11 @@ const Dashboard = () => {
                                         <td className="py-4 px-2">{formatCurrency(txn.amount)}</td>
                                     </tr>
                                 ))}
+                                {filteredTransactions.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="py-8 text-center text-gray-400 italic font-bold">No matching transactions found</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -599,26 +678,31 @@ const Dashboard = () => {
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search"
-                            className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            placeholder="Search products..."
+                            value={productSearch}
+                            onChange={(e) => setProductSearch(e.target.value)}
+                            className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold"
                         />
                     </div>
 
                     <div className="space-y-4 flex-1">
-                        {(dashboardStats?.topProducts || []).map((product, idx) => (
+                        {filteredTopProducts.map((product, idx) => (
                             <div key={idx} className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                                     <Smartphone size={18} className="text-gray-600" />
                                 </div>
                                 <div className="flex-1 min-w-0 flex justify-between items-center">
                                     <div>
-                                        <p className="text-xs font-semibold text-gray-800 truncate">{product.name}</p>
-                                        <p className="text-[10px] text-gray-400">Item: {product.id}</p>
+                                        <p className="text-xs font-bold text-gray-800 truncate">{product.name}</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Id: {product.id}</p>
                                     </div>
-                                    <span className="text-xs font-bold text-gray-800 ml-2">{formatCurrency(product.price)}</span>
+                                    <span className="text-xs font-black text-emerald-600 ml-2">{formatCurrency(product.price)}</span>
                                 </div>
                             </div>
                         ))}
+                        {filteredTopProducts.length === 0 && (
+                            <div className="py-4 text-center text-gray-400 italic font-bold">No products found</div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -640,9 +724,12 @@ const Dashboard = () => {
                                 <option value="monthly" className="bg-white text-gray-800">Monthly</option>
                                 <option value="yearly" className="bg-white text-gray-800">Yearly</option>
                             </select>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-600 transition-colors uppercase tracking-wider shadow-sm">
-                                Filter <Filter size={10} />
-                            </button>
+                            <FilterDropdown
+                                options={stockFilterOptions}
+                                activeFilters={productFilters}
+                                onFilterChange={handleProductFilterChange}
+                                onClear={clearProductFilters}
+                            />
                         </div>
                     </div>
 
@@ -657,24 +744,29 @@ const Dashboard = () => {
                                 </tr>
                             </thead>
                             <tbody className="text-gray-800 font-medium">
-                                {(dashboardStats?.topProducts || []).map((product, idx) => (
+                                {filteredTopProducts.map((product, idx) => (
                                     <tr key={idx} className="border-b border-gray-50/50">
                                         <td className="py-4 px-4 flex items-center gap-3">
                                             <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">
                                                 <Smartphone size={14} className="text-gray-600" />
                                             </div>
-                                            <span>{product.name}</span>
+                                            <span className="font-bold">{product.name}</span>
                                         </td>
-                                        <td className="py-4 px-2">{product.orders}</td>
+                                        <td className="py-4 px-2 font-black">{product.orders}</td>
                                         <td className="py-4 px-2">
-                                            <span className={`flex items-center gap-1.5 ${product.stockStatus === 'Stock' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                            <span className={`flex items-center gap-1.5 font-bold ${product.stockStatus === 'Stock' ? 'text-emerald-500' : 'text-red-500'}`}>
                                                 <span className={`w-1.5 h-1.5 rounded-full ${product.stockStatus === 'Stock' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
                                                 {product.stockStatus}
                                             </span>
                                         </td>
-                                        <td className="py-4 px-4">{formatCurrency(product.price)}</td>
+                                        <td className="py-4 px-4 font-black">{formatCurrency(product.price)}</td>
                                     </tr>
                                 ))}
+                                {filteredTopProducts.length === 0 && (
+                                    <tr>
+                                        <td colSpan="4" className="py-8 text-center text-gray-400 italic font-bold">No best selling products found</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -703,9 +795,13 @@ const Dashboard = () => {
 
                     <div className="space-y-2 mb-4">
                         {(dashboardStats?.widgetData?.categories || []).map((cat, idx) => (
-                            <button key={idx} className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                            <button
+                                key={idx}
+                                onClick={() => navigate('/admin/products/add', { state: { category: cat.id } })}
+                                className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-100 transition-all active:scale-95 group text-left"
+                            >
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                                         {idx % 3 === 0 ? <Smartphone size={14} className="text-gray-600" /> : idx % 3 === 1 ? <Shirt size={14} className="text-gray-600" /> : <HomeIcon size={14} className="text-gray-600" />}
                                     </div>
                                     <span className="text-xs font-semibold text-gray-800">{cat.name}</span>

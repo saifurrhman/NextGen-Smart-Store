@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, Search, Calendar, Package, ArrowRight, Filter, Zap, ShieldCheck, Box, ChevronRight, Download } from 'lucide-react';
+import { History, Search, Calendar, Package, ArrowRight, Filter, Zap, ShieldCheck, Box, ChevronRight, Download, Database, Target } from 'lucide-react';
 import api from '../../utils/api';
 
 const DeliveryHistory = () => {
@@ -14,7 +14,7 @@ const DeliveryHistory = () => {
     const fetchHistory = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/api/v1/operations/delivery/my-tasks/?include_history=true');
+            const response = await api.get('operations/delivery/my-tasks/?include_history=true');
             setHistory(response.data);
         } catch (error) {
             console.error("History fetch error:", error);
@@ -28,90 +28,111 @@ const DeliveryHistory = () => {
         item.order_id?.toString().includes(searchTerm)
     );
 
+    const stats = {
+        total: history.length,
+        delivered: history.filter(i => i.status === 'delivered').length,
+        efficiency: history.length > 0 ? '98.5%' : '---',
+        avgTime: history.length > 0 ? '24m' : '---'
+    };
+
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                        <History size={12} className="text-emerald-600 fill-emerald-600" />
-                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Service Archive</span>
+        <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-10">
+            {/* Header & Search */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Service Archive</span>
                     </div>
-                    <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none uppercase">Operation Logs</h2>
-                    <p className="text-xs font-bold text-gray-400 max-w-xs">{history.length} verified operations archived in your specialist profile.</p>
+                    <h2 className="text-2xl font-bold text-gray-800 tracking-tight uppercase">Operation Logs</h2>
+                    <p className="text-sm text-gray-500 mt-1">Audit trail of all verified specialist assignments</p>
                 </div>
 
                 <div className="relative group w-full md:w-96">
-                    <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-emerald-500 transition-colors" />
+                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
                     <input
                         type="text"
                         placeholder="Search logs by tracking id..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-[2rem] text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-emerald-200 focus:ring-8 focus:ring-emerald-500/5 transition-all shadow-sm"
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
                     />
                 </div>
             </div>
 
+            {/* Stats Overview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                    { label: 'Archived Logs', val: stats.total, icon: Database, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                    { label: 'Completion Rate', val: stats.efficiency, icon: Target, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { label: 'Total Delivered', val: stats.delivered, icon: Package, color: 'text-amber-600', bg: 'bg-amber-50' },
+                    { label: 'Avg Latency', val: stats.avgTime, icon: Zap, color: 'text-purple-600', bg: 'bg-purple-50' }
+                ].map((s, i) => (
+                    <div key={i} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className={`w-10 h-10 ${s.bg} ${s.color} rounded-xl flex items-center justify-center border border-white shrink-0`}>
+                            <s.icon size={18} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5 leading-none">{s.label}</p>
+                            <p className="text-lg font-bold text-gray-800 tracking-tight">{s.val}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="h-64 bg-white animate-pulse rounded-[3rem] border border-gray-50 shadow-sm"></div>
+                        <div key={i} className="h-64 bg-white animate-pulse rounded-2xl border border-gray-100 shadow-sm"></div>
                     ))}
                 </div>
             ) : filteredHistory.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-8 pb-20 lg:pb-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredHistory.map((item) => (
-                        <div key={item.id} className="group bg-white rounded-[3.5rem] border border-gray-100 p-8 shadow-sm hover:shadow-2xl hover:shadow-gray-200/30 transition-all flex flex-col space-y-6">
+                        <div key={item.id} className="group bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:shadow-gray-200/20 transition-all flex flex-col space-y-5">
                             <div className="flex items-start justify-between">
-                                <div className="space-y-4">
-                                    <div className="w-14 h-14 bg-emerald-50 rounded-[1.8rem] flex items-center justify-center text-emerald-600 border border-emerald-100 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                        <Package size={24} />
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 border border-emerald-100 shrink-0">
+                                        <Package size={20} />
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Record Reference</p>
-                                        <p className="text-2xl font-black text-gray-900 tracking-tighter italic">#{item.order_id}</p>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Record ID</p>
+                                        <p className="text-lg font-bold text-gray-800 tracking-tight italic">#{item.order_id || item.id.substring(0, 8)}</p>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
-                                    <div className="flex items-center gap-1.5 bg-emerald-600 px-3 py-1 rounded-full border border-emerald-500 shadow-lg shadow-emerald-100">
+                                    <div className="flex items-center gap-1.5 bg-emerald-500 px-2.5 py-1 rounded-lg shadow-lg shadow-emerald-100">
                                         <ShieldCheck size={10} className="text-white fill-white" />
-                                        <span className="text-[8px] font-black text-white uppercase tracking-widest">Verified</span>
+                                        <span className="text-[9px] font-bold text-white uppercase tracking-wider">Verified</span>
                                     </div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">{item.status}</p>
+                                    <span className="text-[10px] font-bold text-emerald-600 uppercase bg-emerald-50 px-2 py-0.5 rounded">
+                                        {item.status.replace('_', ' ')}
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="p-5 bg-gray-50/50 rounded-[2.5rem] border border-gray-100 shadow-inner flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <Calendar size={16} className="text-gray-300" />
-                                        <div>
-                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5 leading-none">Finalized Date</p>
-                                            <p className="text-xs font-black text-gray-900 uppercase">
-                                                {new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                            </p>
-                                        </div>
+                            <div className="p-4 bg-gray-50 rounded-xl space-y-4">
+                                <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-2 text-gray-500 font-medium">
+                                        <Calendar size={14} />
+                                        <span>
+                                            {new Date(item.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </span>
                                     </div>
-                                    <div className="h-8 w-[1px] bg-gray-200"></div>
-                                    <div className="text-right">
-                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5 leading-none">Network Latency</p>
-                                        <p className="text-xs font-black text-emerald-600 uppercase">Safe Transit</p>
+                                    <div className="flex items-center gap-1.5 text-emerald-600 font-bold uppercase text-[10px]">
+                                        <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
+                                        Standard Route
                                     </div>
                                 </div>
-
-                                <div className="flex items-center justify-between px-2">
-                                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] font-mono truncate max-w-[180px]">
-                                        {item.tracking_id || 'LOG-SECURED-INTERNAL'}
-                                    </p>
-                                    <button className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-emerald-600 transition-colors group/btn">
-                                        Summary
-                                        <ArrowRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
-                                    </button>
+                                <div className="pt-3 border-t border-gray-200/50 flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest font-mono">
+                                        {item.tracking_id || 'INTERNAL-LOG-SEC'}
+                                    </span>
+                                    <button className="text-[10px] font-bold text-emerald-600 uppercase hover:underline">View Summary</button>
                                 </div>
                             </div>
 
-                            <button className="w-full py-4 bg-gray-50 text-gray-400 rounded-3xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 hover:text-white transition-all active:scale-[0.98] border border-gray-100">
+                            <button className="w-full py-2.5 bg-white text-gray-500 hover:text-emerald-600 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 border border-gray-100 hover:border-emerald-100 hover:bg-emerald-50 transition-all active:scale-[0.98]">
                                 <Download size={14} />
                                 Export Manifest
                             </button>
@@ -119,14 +140,23 @@ const DeliveryHistory = () => {
                     ))}
                 </div>
             ) : (
-                <div className="bg-white rounded-[4rem] p-24 border-4 border-dashed border-gray-100 text-center space-y-6 flex flex-col items-center animate-pulse">
-                    <div className="w-24 h-24 bg-gray-50 rounded-[2.5rem] flex items-center justify-center text-gray-200">
-                        <Box size={48} />
+                <div className="py-20 flex flex-col items-center justify-center space-y-6 text-center">
+                    <div className="relative">
+                        <div className="w-32 h-32 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-200 relative z-10">
+                            <Box size={56} strokeWidth={1.5} />
+                        </div>
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-emerald-600 -mr-4 -mt-4 border border-emerald-50 animate-bounce">
+                            <ShieldCheck size={24} />
+                        </div>
+                        <div className="absolute -inset-4 bg-emerald-500/5 rounded-full blur-2xl -z-0"></div>
                     </div>
                     <div className="space-y-2">
-                        <p className="text-xl font-black text-gray-900 uppercase tracking-tight">Archive Empty</p>
-                        <p className="text-xs font-bold text-gray-400 max-w-xs mx-auto">No records found matching your search parameters. Complete more assignments to build history.</p>
+                        <h3 className="text-xl font-bold text-gray-800 tracking-tight uppercase">Secure Archive Empty</h3>
+                        <p className="text-sm text-gray-400 max-w-sm mx-auto font-medium">Your operational history is currently clear. Complete and verify new assignments to build your service record.</p>
                     </div>
+                    <button onClick={fetchHistory} className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 active:scale-95">
+                        Refresh Database
+                    </button>
                 </div>
             )}
         </div>

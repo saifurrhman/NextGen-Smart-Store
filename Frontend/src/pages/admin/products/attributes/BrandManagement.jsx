@@ -1,12 +1,8 @@
 import React from 'react';
+import AttributeManager from './AttributeManager';
 
 const BrandManagement = () => {
-    return (
-        <div className="p-4">
-            <h2 className="text-xl font-bold">BrandManagement</h2>
-            <p>Admin Page Placeholder</p>
-        </div>
-    );
+    return <AttributeManager type="Brand" title="Brand" placeholder="e.g. Nike, Adidas, Gucci..." />;
 };
 
 export default BrandManagement;

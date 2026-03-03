@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Search, Filter, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight, MapPin, Package } from 'lucide-react';
+import { Truck, Search, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight, MapPin, Package, ChevronDown, Download as ExportIcon, FileText } from 'lucide-react';
 import api from '../../../../utils/api';
+import { exportToExcel, exportToPDF, exportToCSV } from '../../../../utils/exportUtils';
+import { motion, AnimatePresence } from 'framer-motion';
+import FilterDropdown from '../../../../components/admin/common/FilterDropdown';
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -22,18 +25,25 @@ const DeliveryTracking = () => {
     const [deliveries, setDeliveries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({
+        status: ''
+    });
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({ count: 0, next: null, previous: null });
     const [showMap, setShowMap] = useState(false);
+    const [showExportOptions, setShowExportOptions] = useState(false);
 
     useEffect(() => {
         fetchDeliveries();
-    }, [page, searchTerm]);
+    }, [page, searchTerm, filters]);
 
     const fetchDeliveries = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/api/v1/operations/delivery/?page=${page}&search=${searchTerm}`);
+            let url = `/api/v1/operations/delivery/?page=${page}&search=${searchTerm}`;
+            if (filters.status) url += `&status=${filters.status}`;
+
+            const response = await api.get(url);
             setDeliveries(response.data.results);
             setPagination({
                 count: response.data.count,
@@ -47,6 +57,67 @@ const DeliveryTracking = () => {
         }
     };
 
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+        setPage(1);
+    };
+
+    const clearFilters = () => {
+        setFilters({ status: '' });
+        setPage(1);
+    };
+
+    const handleExportExcel = () => {
+        const dataToExport = deliveries.map(d => ({
+            "Tracking ID": d.tracking_id,
+            "Order ID": d.order,
+            "Delivery Specialist": d.delivery_boy_details?.username || 'Unassigned',
+            "Status": d.status,
+            "Estimated Delivery": d.estimated_delivery ? new Date(d.estimated_delivery).toLocaleString() : 'N/A'
+        }));
+        exportToExcel(dataToExport, "Delivery_Tracking_Report");
+        setShowExportOptions(false);
+    };
+
+    const handleExportCSV = () => {
+        const dataToExport = deliveries.map(d => ({
+            "Tracking ID": d.tracking_id,
+            "Order ID": d.order,
+            "Delivery Specialist": d.delivery_boy_details?.username || 'Unassigned',
+            "Status": d.status,
+            "Estimated Delivery": d.estimated_delivery ? new Date(d.estimated_delivery).toLocaleString() : 'N/A'
+        }));
+        exportToCSV(dataToExport, "Delivery_Tracking_Report");
+        setShowExportOptions(false);
+    };
+
+    const handleExportPDF = () => {
+        const columns = ["Tracking ID", "Order", "Specialist", "Status", "Estimated Delivery"];
+        const dataToExport = deliveries.map(d => [
+            d.tracking_id,
+            d.order,
+            d.delivery_boy_details?.username || 'Unassigned',
+            d.status,
+            d.estimated_delivery ? new Date(d.estimated_delivery).toLocaleString() : 'N/A'
+        ]);
+        exportToPDF(dataToExport, columns, "Delivery_Tracking_Report", "Live Delivery Tracking Status Report");
+        setShowExportOptions(false);
+    };
+
+    const filterOptions = [
+        {
+            key: 'status',
+            label: 'Delivery Status',
+            options: [
+                { label: 'All Status', value: '' },
+                { label: 'Pending', value: 'pending' },
+                { label: 'In Transit', value: 'in_transit' },
+                { label: 'Delivered', value: 'delivered' },
+                { label: 'Cancelled', value: 'cancelled' },
+            ]
+        }
+    ];
+
     const mapDeliveries = deliveries.filter(d => d.latitude && d.longitude);
 
     return (
@@ -59,7 +130,64 @@ const DeliveryTracking = () => {
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Real-time status and visual map for all active shipments</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 relative">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowExportOptions(!showExportOptions)}
+                            className="flex items-center gap-2 bg-white border border-emerald-100 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm group"
+                        >
+                            <ExportIcon size={18} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+                            Download Data
+                            <ChevronDown size={14} className={`transition-transform duration-200 ${showExportOptions ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {showExportOptions && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setShowExportOptions(false)}
+                                    ></div>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden"
+                                    >
+                                        <div className="p-1">
+                                            <button
+                                                onClick={handleExportExcel}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors border-none"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                                                    <ExportIcon size={14} className="text-emerald-500" />
+                                                </div>
+                                                Export Excel
+                                            </button>
+                                            <button
+                                                onClick={handleExportCSV}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border-none"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                                                    <ExportIcon size={14} className="text-blue-500" />
+                                                </div>
+                                                Export CSV
+                                            </button>
+                                            <button
+                                                onClick={handleExportPDF}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border-none"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                                                    <FileText size={14} className="text-red-500" />
+                                                </div>
+                                                Export PDF
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </div>
                     <button
                         onClick={() => setShowMap(!showMap)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all border ${showMap ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-emerald-600 border-emerald-100 hover:bg-emerald-50'}`}
@@ -67,8 +195,11 @@ const DeliveryTracking = () => {
                         <MapPin size={16} />
                         {showMap ? 'Close Map' : 'View Live Map'}
                     </button>
-                    <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
-                        <Plus size={16} />
+                    <button
+                        onClick={() => alert("New Shipment Creation Flow coming soon!")}
+                        className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-black hover:bg-emerald-600 transition-all shadow-[0_8px_30px_rgb(16,185,129,0.2)] hover:-translate-y-0.5"
+                    >
+                        <Plus size={20} className="stroke-[3px]" />
                         New Shipment
                     </button>
                 </div>
@@ -105,14 +236,20 @@ const DeliveryTracking = () => {
                             placeholder="Search Tracking ID or Order ID..."
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm"
+                            className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
                         />
                     </div>
+                    <FilterDropdown
+                        options={filterOptions}
+                        activeFilters={filters}
+                        onFilterChange={handleFilterChange}
+                        onClear={clearFilters}
+                    />
                 </div>
 
                 <div className="overflow-x-auto min-h-[400px]">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-[#f0fdf4] text-emerald-800 font-bold tracking-wider">
+                        <thead className="bg-[#eaf4f0] text-emerald-800 font-black text-[10px] uppercase tracking-widest">
                             <tr>
                                 <th className="px-6 py-3">Tracking ID</th>
                                 <th className="px-6 py-3">Order</th>

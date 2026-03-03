@@ -1,12 +1,8 @@
 import React from 'react';
+import AttributeManager from './AttributeManager';
 
 const MaterialManagement = () => {
-    return (
-        <div className="p-4">
-            <h2 className="text-xl font-bold">MaterialManagement</h2>
-            <p>Admin Page Placeholder</p>
-        </div>
-    );
+    return <AttributeManager type="Material" title="Material" placeholder="e.g. Cotton, Leather, Silk..." />;
 };
 
 export default MaterialManagement;

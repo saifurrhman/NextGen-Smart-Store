@@ -54,6 +54,11 @@ import ResetPassword from './pages/auth/ResetPassword';
 
 // Dashboard Pages
 import VendorDashboard from './pages/vendor/Dashboard';
+import MyVendorProducts from './pages/vendor/MyProducts';
+import MyVendorOrders from './pages/vendor/MyOrders';
+import MyVendorEarnings from './pages/vendor/MyEarnings';
+import MyVendorSettings from './pages/vendor/ShopSettings';
+import MyVendorReviews from './pages/vendor/Reviews';
 import SuperAdminDashboard from './pages/admin/Dashboard';
 import AdminProfile from './pages/admin/AdminProfile';
 import ControlAuthority from './pages/admin/ControlAuthority';
@@ -122,15 +127,16 @@ import SitemapGenerator from './pages/admin/content/seo/SitemapGenerator';
 import URLManager from './pages/admin/content/seo/URLManager';
 
 // Import Operations Sub-Pages
-import DailyOperations from './pages/admin/operations/analytics/DailyOperations';
-import OrderProcessing from './pages/admin/operations/analytics/OrderProcessing';
-import InventoryAlerts from './pages/admin/operations/analytics/InventoryAlerts';
-import VendorSupport from './pages/admin/operations/analytics/VendorSupport';
+import DailyOperations from './pages/admin/operations/DailyOperations';
+import OrderProcessing from './pages/admin/operations/OrderProcessing';
+import InventoryAlerts from './pages/admin/operations/InventoryAlerts';
+import VendorSupport from './pages/admin/operations/VendorSupport';
 
 // Import Support Sub-Pages
 import AllTickets from './pages/admin/support/tickets/AllTickets';
 import ActiveTickets from './pages/admin/support/tickets/ActiveTickets';
 import ResolvedTickets from './pages/admin/support/tickets/ResolvedTickets';
+import TicketDetail from './pages/admin/support/TicketDetail';
 import AllArticles from './pages/admin/support/kb/AllArticles';
 import CreateArticle from './pages/admin/support/kb/CreateArticle';
 import KBCategories from './pages/admin/support/kb/Categories';
@@ -152,15 +158,24 @@ import DeliveryProfile from './pages/delivery/Profile';
 
 // Import Old Super Admin Sub-Pages (now at Admin root)
 import AllOrders from './pages/admin/orders/AllOrders';
+import CreateOrder from './pages/admin/orders/CreateOrder';
 import OrderDetails from './pages/admin/orders/OrderDetails';
 import OrderReports from './pages/admin/orders/OrderReports';
 import RefundsReturns from './pages/admin/orders/RefundsReturns';
 import AllProducts from './pages/admin/products/AllProducts';
 import AddProduct from './pages/admin/products/AddProduct';
+import EditProduct from './pages/admin/products/EditProduct';
+import FeaturedProducts from './pages/admin/products/FeaturedProducts';
 import ProductCategories from './pages/admin/products/ProductCategories';
 import ProductAttributes from './pages/admin/products/ProductAttributes';
+import SizeManagement from './pages/admin/products/attributes/SizeManagement';
+import ColorManagement from './pages/admin/products/attributes/ColorManagement';
+import MaterialManagement from './pages/admin/products/attributes/MaterialManagement';
+import BrandManagement from './pages/admin/products/attributes/BrandManagement';
 import BulkImport from './pages/admin/products/BulkImport';
 import AllUsers from './pages/admin/users/AllUsers';
+import AdminUsers from './pages/admin/users/AdminUsers';
+import RolesPermissions from './pages/admin/users/RolesPermissions.jsx';
 import Customers from './pages/admin/users/Customers';
 import AllVendors from './pages/admin/vendors/AllVendors';
 import VendorApproval from './pages/admin/vendors/VendorApproval';
@@ -171,6 +186,8 @@ import PaymentGateways from './pages/admin/settings/PaymentGateways';
 import TaxConfiguration from './pages/admin/settings/TaxConfiguration';
 import AIAgentSettings from './pages/admin/settings/AIAgentSettings';
 import PlatformSettings from './pages/admin/settings/PlatformSettings'; // Added Import
+import ShippingMethods from './pages/admin/settings/ShippingMethods';
+import SystemLogs from './pages/admin/settings/SystemLogs';
 
 // AI & Automation Sub-Pages
 import AIDashboard from './pages/admin/ai/Dashboard';
@@ -245,8 +262,13 @@ function App() {
 
         {/* Vendor Dashboard Routes (Protected) */}
         <Route path="/vendor" element={<VendorLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<VendorDashboard />} />
-          {/* Add more vendor routes here later */}
+          <Route path="products" element={<MyVendorProducts />} />
+          <Route path="orders" element={<MyVendorOrders />} />
+          <Route path="earnings" element={<MyVendorEarnings />} />
+          <Route path="reviews" element={<MyVendorReviews />} />
+          <Route path="settings" element={<MyVendorSettings />} />
         </Route>
 
         {/* Delivery Portal Routes */}
@@ -297,15 +319,24 @@ function App() {
 
           {/* Core Admin Sub-Routes */}
           <Route path="orders/all" element={<AllOrders />} />
+          <Route path="orders/create" element={<CreateOrder />} />
           <Route path="orders/details" element={<OrderDetails />} />
           <Route path="orders/reports" element={<OrderReports />} />
           <Route path="orders/refunds" element={<RefundsReturns />} />
           <Route path="products/all" element={<AllProducts />} />
           <Route path="products/add" element={<AddProduct />} />
+          <Route path="products/edit/:id" element={<EditProduct />} />
+          <Route path="products/featured" element={<FeaturedProducts />} />
           <Route path="products/categories" element={<ProductCategories />} />
           <Route path="products/attributes" element={<ProductAttributes />} />
+          <Route path="products/attributes/size" element={<SizeManagement />} />
+          <Route path="products/attributes/color" element={<ColorManagement />} />
+          <Route path="products/attributes/material" element={<MaterialManagement />} />
+          <Route path="products/attributes/brand" element={<BrandManagement />} />
           <Route path="products/import" element={<BulkImport />} />
           <Route path="users/all" element={<AllUsers />} />
+          <Route path="users/admins" element={<AdminUsers />} />
+          <Route path="users/roles" element={<RolesPermissions />} />
           <Route path="users/customers" element={<Customers />} />
           <Route path="vendors/all" element={<AllVendors />} />
           <Route path="vendors/approval" element={<VendorApproval />} />
@@ -315,6 +346,8 @@ function App() {
           <Route path="settings" element={<PlatformSettings />} />
           <Route path="settings/payment" element={<PaymentGateways />} />
           <Route path="settings/tax" element={<TaxConfiguration />} />
+          <Route path="settings/shipping" element={<ShippingMethods />} />
+          <Route path="settings/logs" element={<SystemLogs />} />
           <Route path="settings/ai-automation" element={<AIAgentSettings />} />
 
           {/* AI & Automation Portal Routes */}
@@ -335,6 +368,7 @@ function App() {
           <Route path="support/tickets/all" element={<AllTickets />} />
           <Route path="support/tickets/active" element={<ActiveTickets />} />
           <Route path="support/tickets/resolved" element={<ResolvedTickets />} />
+          <Route path="support/tickets/detail/:id" element={<TicketDetail />} />
           <Route path="support/kb/articles" element={<AllArticles />} />
           <Route path="support/kb/create" element={<CreateArticle />} />
           <Route path="support/kb/categories" element={<KBCategories />} />

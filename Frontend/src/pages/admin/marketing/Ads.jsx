@@ -1,19 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Search, Filter, Download as ExportIcon, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Target, Search, Download as ExportIcon, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import api from '../../../utils/api';
+import { exportToExcel, exportToPDF, exportToCSV } from '../../../utils/exportUtils';
+import { motion, AnimatePresence } from 'framer-motion';
+import FilterDropdown from '../../../components/admin/common/FilterDropdown';
 
 const Ads = () => {
     const [ads, setAds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({
+        platform: '',
+        status: ''
+    });
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({ count: 0, next: null, previous: null });
+    const [showExportOptions, setShowExportOptions] = useState(false);
 
     useEffect(() => {
         const fetchAds = async () => {
             setLoading(true);
             try {
-                const response = await api.get(`/api/v1/marketing/ads/?page=${page}&search=${searchTerm}`);
+                let url = `/api/v1/marketing/ads/?page=${page}&search=${searchTerm}`;
+                if (filters.platform) url += `&platform=${filters.platform}`;
+                if (filters.status) url += `&status=${filters.status}`;
+
+                const response = await api.get(url);
                 setAds(response.data.results);
                 setPagination({
                     count: response.data.count,
@@ -27,7 +39,81 @@ const Ads = () => {
             }
         };
         fetchAds();
-    }, [page, searchTerm]);
+    }, [page, searchTerm, filters]);
+
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+        setPage(1);
+    };
+
+    const clearFilters = () => {
+        setFilters({ platform: '', status: '' });
+        setPage(1);
+    };
+
+    const handleExportExcel = () => {
+        const dataToExport = ads.map(ad => ({
+            "Campaign Name": ad.campaign_name,
+            "Platform": ad.platform,
+            "Spend": ad.spend,
+            "Impressions": ad.impressions,
+            "Clicks": ad.clicks,
+            "ROAS": ad.roas
+        }));
+        exportToExcel(dataToExport, "Ad_Tracker_Report");
+        setShowExportOptions(false);
+    };
+
+    const handleExportCSV = () => {
+        const dataToExport = ads.map(ad => ({
+            "Campaign Name": ad.campaign_name,
+            "Platform": ad.platform,
+            "Spend": ad.spend,
+            "Impressions": ad.impressions,
+            "Clicks": ad.clicks,
+            "ROAS": ad.roas
+        }));
+        exportToCSV(dataToExport, "Ad_Tracker_Report");
+        setShowExportOptions(false);
+    };
+
+    const handleExportPDF = () => {
+        const columns = ["Campaign Name", "Platform", "Spend", "Impressions", "Clicks", "ROAS"];
+        const dataToExport = ads.map(ad => [
+            ad.campaign_name,
+            ad.platform,
+            `PKR ${Number(ad.spend).toLocaleString()}`,
+            Number(ad.impressions).toLocaleString(),
+            Number(ad.clicks).toLocaleString(),
+            `${ad.roas}x`
+        ]);
+        exportToPDF(dataToExport, columns, "Ad_Tracker_Report", "Ad Performance Tracking Report");
+        setShowExportOptions(false);
+    };
+
+    const filterOptions = [
+        {
+            key: 'platform',
+            label: 'Platform',
+            options: [
+                { label: 'All Platforms', value: '' },
+                { label: 'Facebook', value: 'facebook' },
+                { label: 'Instagram', value: 'instagram' },
+                { label: 'Google', value: 'google' },
+                { label: 'Tiktok', value: 'tiktok' },
+            ]
+        },
+        {
+            key: 'status',
+            label: 'Status',
+            options: [
+                { label: 'All Status', value: '' },
+                { label: 'Active', value: 'active' },
+                { label: 'Paused', value: 'paused' },
+                { label: 'Ended', value: 'ended' },
+            ]
+        }
+    ];
 
     const totalPages = Math.ceil(pagination.count / 10);
 
@@ -42,11 +128,64 @@ const Ads = () => {
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Manage and view your ad tracker</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                        <ExportIcon size={16} />
-                        Export
-                    </button>
+                <div className="flex items-center gap-2 relative">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowExportOptions(!showExportOptions)}
+                            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <ExportIcon size={16} className="text-emerald-500" />
+                            Export
+                            <ChevronDown size={14} className={`transition-transform duration-200 ${showExportOptions ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {showExportOptions && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setShowExportOptions(false)}
+                                    ></div>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden"
+                                    >
+                                        <div className="p-1">
+                                            <button
+                                                onClick={handleExportExcel}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                                                    <ExportIcon size={14} className="text-emerald-500" />
+                                                </div>
+                                                Export Excel
+                                            </button>
+                                            <button
+                                                onClick={handleExportCSV}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                                                    <ExportIcon size={14} className="text-blue-500" />
+                                                </div>
+                                                Export CSV
+                                            </button>
+                                            <button
+                                                onClick={handleExportPDF}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                                                    <FileText size={14} className="text-red-500" />
+                                                </div>
+                                                Export PDF
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </div>
                     <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
                         <Plus size={16} />
                         Create New
@@ -66,13 +205,15 @@ const Ads = () => {
                             placeholder="Search in Ad Tracker..."
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm"
+                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm text-gray-700"
                         />
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors w-full sm:w-auto shadow-sm">
-                        <Filter size={16} />
-                        Filters
-                    </button>
+                    <FilterDropdown
+                        options={filterOptions}
+                        activeFilters={filters}
+                        onFilterChange={handleFilterChange}
+                        onClear={clearFilters}
+                    />
                 </div>
 
                 {/* Data Table */}

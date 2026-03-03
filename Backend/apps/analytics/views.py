@@ -129,6 +129,9 @@ def traffic_stats(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard_stats(request):
+    now = timezone.now()
+    seven_days_ago = now - timedelta(days=7)
+
     # 1. Top Level Metrics (Current vs Previous Period)
     orders_qs = Order.objects.filter(status='delivered')
     total_sales_agg = orders_qs.aggregate(total=Sum('total_amount'))['total'] or 0.0
@@ -290,79 +293,6 @@ def dashboard_stats(request):
         'topProducts': top_products_data,
         'regions': formatted_regions,
         'topCategories': top_categories_data,
-        'widgetData': {
-            'categories': categories_data,
-            'recentProducts': recent_products_data
-        }
-    })
-
-    # Fallback to simulation if chart_data is all zeros (for empty DB demo)
-    if all(d['sales'] == 0 for d in chart_data):
-        for d in chart_data:
-            d['sales'] = random.uniform(5000, 25000)
-    
-    # 3. Simulated Real-Time Active Users (Last 30 mins)
-    # We generate a random array of 30 integers between 2 and 12, simulating active users per minute
-    # If Google Analytics connects later, this can be swapped with real GA Realtime Data API.
-    active_users = [random.randint(2, 12) for _ in range(30)]
-    active_users_total = sum(active_users) * 10 # Simulated extrapolation
-        
-    # 3. Recent Transactions
-    recent_transactions = Transaction.objects.order_by('-created_at')[:4]
-    transactions_data = []
-    for i, txn in enumerate(recent_transactions, 1):
-        transactions_data.append({
-            'id': f"#{txn.order.id}"[:5],
-            'date': txn.created_at.strftime('%d %b | %I:%M %p').lower(),
-            'status': txn.status.title(),
-            'amount': float(txn.amount),
-            'no': i
-        })
-        
-    # 4. Top Products
-    top_items = OrderItem.objects.values('product__id', 'product__title', 'product__price', 'product__category__name', 'product__stock').annotate(total_ordered=Sum('quantity')).order_by('-total_ordered')[:4]
-    
-    top_products_data = []
-    for item in top_items:
-        top_products_data.append({
-            'id': f"#{item['product__id']}"[:6],
-            'name': item['product__title'] or 'Unknown',
-            'category': item['product__category__name'] or 'General',
-            'price': float(item['product__price'] or 0),
-            'orders': item['total_ordered'],
-            'stockStatus': 'Stock' if (item['product__stock'] or 0) > 0 else 'Stock out'
-        })
-    # 5. Categories & Recent Products for "Add New Product" widget
-    db_categories = Category.objects.all()[:4]
-    categories_data = [{'id': str(c.id), 'name': c.name} for c in db_categories]
-    
-    recent_products = Product.objects.order_by('-created_at')[:3]
-    recent_products_data = []
-    for p in recent_products:
-        recent_products_data.append({
-            'id': str(p.id),
-            'name': p.title,
-            'price': float(p.price)
-        })
-        
-    return Response({
-        'overview': {
-            'totalSales': total_sales,
-            'salesGrowth': sales_growth,
-            'lastWeekSales': last_week_sales,
-            'totalOrders': total_orders,
-            'ordersGrowth': orders_growth,
-            'lastWeekOrders': last_week_orders,
-            'pendingOrders': pending_orders,
-            'canceledOrders': canceled_orders
-        },
-        'report': chart_data,
-        'activeUsers': {
-            'history': active_users,
-            'total': active_users_total
-        },
-        'transactions': transactions_data,
-        'topProducts': top_products_data,
         'widgetData': {
             'categories': categories_data,
             'recentProducts': recent_products_data

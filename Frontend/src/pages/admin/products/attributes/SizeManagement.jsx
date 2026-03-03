@@ -1,12 +1,8 @@
 import React from 'react';
+import AttributeManager from './AttributeManager';
 
 const SizeManagement = () => {
-    return (
-        <div className="p-4">
-            <h2 className="text-xl font-bold">SizeManagement</h2>
-            <p>Admin Page Placeholder</p>
-        </div>
-    );
+    return <AttributeManager type="Size" title="Size" placeholder="e.g. XL, XXL, 42..." />;
 };
 
 export default SizeManagement;

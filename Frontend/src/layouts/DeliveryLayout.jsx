@@ -1,16 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Package, History, User, LogOut, Truck } from 'lucide-react';
-import DeliverySidebar from '../components/delivery/DeliverySidebar';
+import { Outlet, useLocation, useNavigate, NavLink } from 'react-router-dom';
+import { Home, Package, History, User, LogOut, Truck, AlignLeft, X } from 'lucide-react';
+import DashboardSidebar from '../components/dashboard/DashboardSidebar';
+import DashboardTopbar from '../components/dashboard/DashboardTopbar';
 
 const DeliveryLayout = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) setUser(JSON.parse(userData));
     }, []);
+
+    useEffect(() => {
+        setIsMobileOpen(false);
+    }, [location]);
+
+    const getPageTitle = () => {
+        const path = location.pathname.split('/').pop();
+        const titles = {
+            'dashboard': 'Dashboard',
+            'tasks': 'Active Tasks',
+            'history': 'Service History',
+            'profile': 'Personal Profile',
+        };
+        return titles[path] || 'Delivery Portal';
+    };
 
     const handleLogout = () => {
         localStorage.clear();
@@ -19,34 +38,38 @@ const DeliveryLayout = () => {
 
     return (
         <div className="flex min-h-screen bg-white">
+            {/* Sidebar Overlay for Mobile */}
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
+
             {/* Desktop Sidebar */}
-            <DeliverySidebar user={user} />
+            <DashboardSidebar
+                role="DELIVERY"
+                collapsed={sidebarCollapsed}
+                onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+                isMobileOpen={isMobileOpen}
+                onMobileClose={() => setIsMobileOpen(false)}
+                user={user}
+            />
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col lg:ml-[280px] w-full min-w-0 transition-all duration-300">
-                {/* Mobile Topbar */}
-                <header className="bg-emerald-600 text-white p-5 sticky top-0 z-30 shadow-lg lg:hidden">
-                    <div className="flex justify-between items-center w-full">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white/20 p-2 rounded-xl border border-white/30 backdrop-blur-sm shadow-inner">
-                                <Truck size={24} className="text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-black tracking-tighter leading-none">NEXTGEN</h1>
-                                <p className="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none mt-1">Delivery OS</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleLogout}
-                            className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/10 active:scale-90"
-                        >
-                            <LogOut size={20} />
-                        </button>
-                    </div>
-                </header>
+            <div className={`flex-1 flex flex-col h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-[90px]' : 'lg:ml-[266px]'
+                } ml-0 overflow-y-auto`}>
+
+                <DashboardTopbar
+                    pageTitle={getPageTitle()}
+                    user={user}
+                    role="DELIVERY"
+                    onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    onMobileToggle={() => setIsMobileOpen(!isMobileOpen)}
+                />
 
                 {/* Content Outlet */}
-                <main className="flex-1 p-4 md:p-8 lg:p-12 pb-32 lg:pb-12 bg-gray-50/30">
+                <main className="flex-1 p-4 md:p-8 lg:p-10 bg-gray-50/20">
                     <Outlet />
                 </main>
 

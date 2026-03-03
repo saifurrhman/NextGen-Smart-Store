@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-    Search, Bell, Moon, Sun, AlignLeft, X, Settings,
-    User, LogOut, ChevronDown, Check, ShoppingBag, RotateCcw
+    Search, Bell, Moon, Sun, Menu, X, Settings,
+    User, LogOut, ChevronDown, Check, ShoppingBag, RotateCcw,
+    LayoutGrid, ShieldCheck, Zap, Rocket
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminTopbar = ({ pageTitle, user, onMobileToggle, onToggleSidebar }) => {
     const navigate = useNavigate();
@@ -29,7 +31,6 @@ const AdminTopbar = ({ pageTitle, user, onMobileToggle, onToggleSidebar }) => {
                     headers: { Authorization: `Bearer ${token}` }
                 };
 
-                // Fetch recent orders
                 const ordersRes = await axios.get('http://127.0.0.1:8000/api/v1/orders/', config);
                 const refundsRes = await axios.get('http://127.0.0.1:8000/api/v1/orders/refunds/', config);
 
@@ -37,8 +38,8 @@ const AdminTopbar = ({ pageTitle, user, onMobileToggle, onToggleSidebar }) => {
                     .slice(0, 3)
                     .map(order => ({
                         id: `order-${order.id}`,
-                        title: 'New order received',
-                        desc: `Order #${order.order_id || order.id} placed by ${order.customer_name || 'Customer'}`,
+                        title: 'Operational Logic',
+                        desc: `Asset #${order.order_id || order.id} deployed by ${order.customer_name || 'System'}`,
                         time: order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
                         unread: true,
                         type: 'order',
@@ -49,40 +50,34 @@ const AdminTopbar = ({ pageTitle, user, onMobileToggle, onToggleSidebar }) => {
                     .slice(0, 2)
                     .map(refund => ({
                         id: `refund-${refund.id}`,
-                        title: 'Refund request',
-                        desc: `Refund requested for #${refund.order_id || refund.id}`,
+                        title: 'Protocol Reversion',
+                        desc: `Refund sequence for #${refund.order_id || refund.id}`,
                         time: refund.created_at ? new Date(refund.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
                         unread: true,
                         type: 'refund',
                         icon: RotateCcw
                     }));
 
-                // Combine and set notifications
                 const combined = [...recentOrders, ...recentRefunds].sort((a, b) => b.id.localeCompare(a.id));
 
-                // Fallback if no data
                 if (combined.length === 0) {
                     setNotifications([
-                        { id: 1, title: 'Welcome Back!', desc: 'System is running smoothly.', time: 'Just now', unread: false, icon: Check }
+                        { id: 1, title: 'System Online', desc: 'Secure connection established.', time: 'Just now', unread: false, icon: Check }
                     ]);
                 } else {
                     setNotifications(combined);
                 }
             } catch (error) {
-                console.error("Error fetching notification data:", error);
-                // Fallback mock data if API fails or unauthorized
                 setNotifications([
-                    { id: 1, title: 'Real-time sync active', desc: 'Secure connection established.', time: 'Now', unread: false, icon: Check }
+                    { id: 1, title: 'Neural Sync Active', desc: 'Admin authority verified.', time: 'Now', unread: false, icon: Zap }
                 ]);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchRealData();
     }, []);
 
-    // Close dropdowns on outside click
     useEffect(() => {
         const handler = (e) => {
             if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
@@ -101,209 +96,151 @@ const AdminTopbar = ({ pageTitle, user, onMobileToggle, onToggleSidebar }) => {
     };
 
     return (
-        <header className="h-16 bg-white flex items-center justify-between px-4 md:px-6 sticky top-0 z-40 border-b border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        <header className="h-[80px] bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-gray-100 px-6 flex items-center justify-between shadow-sm">
 
-            {/* ── LEFT ── */}
-            <div className="flex items-center gap-3">
-                {/* Mobile hamburger */}
+            {/* Left Section: Title & Mobile Toggle */}
+            <div className="flex items-center gap-4">
                 <button
                     onClick={onMobileToggle}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 transition-all lg:hidden"
+                    className="p-2.5 bg-gray-50 text-gray-400 hover:text-emerald-600 rounded-xl lg:hidden transition-colors"
                 >
-                    <AlignLeft size={20} strokeWidth={2} />
+                    <Menu size={20} />
                 </button>
-
-                {/* Desktop collapse toggle */}
-                <button
-                    onClick={onToggleSidebar}
-                    className="p-2 rounded-lg text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all hidden lg:flex"
-                >
-                    <AlignLeft size={18} strokeWidth={2} />
-                </button>
-
-                {/* Divider */}
-                <div className="hidden md:block h-5 w-px bg-gray-200" />
-
-                {/* Page title */}
-                <h1 className="text-[15px] font-bold text-gray-800 tracking-tight hidden md:block">
-                    {pageTitle}
-                </h1>
+                <div className="flex flex-col">
+                    <h2 className="text-xl font-bold text-gray-800 tracking-tight leading-none uppercase">{pageTitle}</h2>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Admin Ops Panel</p>
+                    </div>
+                </div>
             </div>
 
-            {/* ── CENTER — Search ── */}
-            <div className="flex-1 max-w-[400px] mx-4 hidden md:block">
-                <div className={`relative flex items-center transition-all duration-200 rounded-xl overflow-hidden border ${searchFocused ? 'bg-white border-emerald-300 shadow-[0_0_0_3px_rgba(16,185,129,0.08)]' : 'bg-gray-50 border-gray-100'}`}>
-                    <Search
-                        size={15}
-                        className={`absolute left-3.5 transition-colors ${searchFocused ? 'text-emerald-500' : 'text-gray-400'}`}
-                        strokeWidth={2.5}
-                    />
+            {/* Middle Section: Search */}
+            <div className="hidden md:flex items-center flex-1 max-w-md mx-8 group">
+                <div className="relative w-full">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors" size={18} />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => setSearchFocused(true)}
-                        onBlur={() => setSearchFocused(false)}
-                        placeholder="Search data, users, or reports"
-                        className="w-full pl-9 pr-10 py-2.5 bg-transparent text-[13px] font-medium text-gray-700 placeholder-gray-400 focus:outline-none"
+                        placeholder="Search logs, agents, or authority protocols..."
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl py-2.5 pl-12 pr-4 text-xs font-medium focus:outline-none focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
                     />
-                    {searchQuery && (
-                        <button
-                            onClick={() => setSearchQuery('')}
-                            className="absolute right-3 p-0.5 rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 transition-all"
-                        >
-                            <X size={11} strokeWidth={3} />
-                        </button>
-                    )}
                 </div>
             </div>
 
-            {/* ── RIGHT — Actions ── */}
-            <div className="flex items-center gap-1.5">
+            {/* Right Section: Actions & Profile */}
+            <div className="flex items-center gap-3">
+                {/* System Actions */}
+                <div className="hidden sm:flex items-center gap-2 pr-2 border-r border-gray-100">
+                    <div className="relative" ref={notifRef}>
+                        <button
+                            onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
+                            className={`p-2.5 rounded-xl transition-all relative ${showNotifications ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-50 text-gray-400 hover:text-emerald-600'}`}
+                        >
+                            <Bell size={18} />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full border-2 border-white"></span>
+                            )}
+                        </button>
 
-                {/* Mobile search icon */}
-                <button className="p-2 rounded-lg text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all md:hidden">
-                    <Search size={18} />
-                </button>
-
-                {/* Dark mode toggle */}
-                <button
-                    onClick={() => setDarkMode(!darkMode)}
-                    className={`relative w-11 h-[22px] rounded-full flex items-center px-0.5 transition-colors duration-300 cursor-pointer ${darkMode ? 'bg-gray-700' : 'bg-emerald-100'}`}
-                    title="Toggle theme"
-                >
-                    <div className={`w-[18px] h-[18px] rounded-full bg-white shadow flex items-center justify-center transition-transform duration-300 ${darkMode ? 'translate-x-[22px]' : 'translate-x-0'}`}>
-                        {darkMode
-                            ? <Moon size={9} className="text-indigo-600" />
-                            : <Sun size={9} className="text-amber-500" />
-                        }
-                    </div>
-                </button>
-
-                {/* Notifications */}
-                <div className="relative" ref={notifRef}>
-                    <button
-                        onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
-                        className={`relative p-2 rounded-lg transition-all ${showNotifications ? 'bg-emerald-50 text-emerald-600' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}
-                    >
-                        <Bell size={19} strokeWidth={1.8} />
-                        {unreadCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-[7px] h-[7px] bg-red-500 rounded-full border-[1.5px] border-white" />
-                        )}
-                    </button>
-
-                    {/* Notifications Dropdown */}
-                    {showNotifications && (
-                        <div className="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.10)] border border-gray-100 overflow-hidden z-50">
-                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[14px] font-bold text-gray-800">Notifications</span>
-                                    {unreadCount > 0 && (
-                                        <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold">{unreadCount}</span>
-                                    )}
-                                </div>
-                                <button className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
-                                    <Check size={11} /> Mark all read
-                                </button>
-                            </div>
-                            <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
-                                {loading && (
-                                    <div className="px-5 py-8 text-center text-gray-400 text-sm">Loading real-time updates...</div>
-                                )}
-                                {!loading && notifications.map(n => (
-                                    <div key={n.id} className={`flex items-start gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors cursor-pointer ${n.unread ? 'bg-emerald-50/30' : ''}`}>
-                                        <div className={`mt-0.5 p-1.5 rounded-lg flex-shrink-0 ${n.unread ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
-                                            {n.icon ? <n.icon size={15} /> : <div className="w-2 h-2 bg-current rounded-full m-1.5" />}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] font-semibold text-gray-800 truncate">{n.title}</p>
-                                            <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{n.desc}</p>
-                                            <span className="text-[10px] text-gray-400 font-medium mt-1 inline-block">{n.time}</span>
-                                        </div>
-                                        {n.unread && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2" />}
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="px-5 py-3 border-t border-gray-50 text-center bg-gray-50/30">
-                                <button
-                                    onClick={() => navigate('/admin/orders/all')}
-                                    className="text-[12px] font-semibold text-emerald-600 hover:text-emerald-700"
+                        <AnimatePresence>
+                            {showNotifications && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="absolute right-0 mt-4 w-[380px] bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-50 p-2"
                                 >
-                                    View all activities
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                                    <div className="p-4 border-b border-gray-50 flex items-center justify-between">
+                                        <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-[0.2em]">Operational Stream</h3>
+                                        <span className="bg-emerald-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg uppercase tracking-widest">{unreadCount} Critical</span>
+                                    </div>
+                                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                                        {notifications.map((n) => (
+                                            <div key={n.id} className="p-4 hover:bg-gray-50 rounded-xl transition-all cursor-pointer group flex items-start gap-4 mb-1">
+                                                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
+                                                    {n.icon ? <n.icon size={16} strokeWidth={2.5} /> : <Zap size={16} strokeWidth={2.5} />}
+                                                </div>
+                                                <div className="flex-1 overflow-hidden">
+                                                    <div className="flex items-center justify-between mb-0.5">
+                                                        <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest truncate">{n.title}</p>
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter whitespace-nowrap">{n.time}</span>
+                                                    </div>
+                                                    <p className="text-[11px] font-medium text-gray-500 leading-tight uppercase tracking-tight">{n.desc}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="p-3">
+                                        <button onClick={() => navigate('/admin/orders/all')} className="w-full py-3 bg-gray-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-600 transition-colors shadow-lg shadow-gray-200">
+                                            Access Management Terminal
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    <button
+                        onClick={() => setDarkMode(!darkMode)}
+                        className="p-2.5 bg-gray-50 text-gray-400 hover:text-emerald-600 rounded-xl transition-all"
+                    >
+                        {darkMode ? <Moon size={18} /> : <Sun size={18} />}
+                    </button>
                 </div>
 
-                {/* Divider */}
-                <div className="h-5 w-px bg-gray-200 mx-1" />
+                {/* Supervisor Identity */}
+                <div className="flex items-center gap-3 pl-2 group cursor-pointer relative py-2" ref={profileRef} onClick={() => setShowProfile(!showProfile)}>
+                    <div className="flex flex-col items-end text-right hidden sm:flex">
+                        <p className="text-xs font-bold text-gray-800 uppercase tracking-tight">{user?.username || 'Supervisor'}</p>
+                        <div className="flex items-center gap-1">
+                            <Rocket size={10} className="text-emerald-600" />
+                            <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest leading-none">Verified Auth</p>
+                        </div>
+                    </div>
 
-                {/* User Profile */}
-                <div className="relative" ref={profileRef}>
-                    <button
-                        onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
-                        className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl transition-all ${showProfile ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
-                    >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-[13px] shadow-sm flex-shrink-0">
+                    <div className="relative">
+                        <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-emerald-100 border-2 border-white transition-transform group-hover:scale-105">
                             {initials}
                         </div>
-                        <div className="hidden md:block text-left">
-                            <p className="text-[13px] font-bold text-gray-800 leading-tight">{user?.username || 'Admin'}</p>
-                            <p className="text-[10px] text-gray-400 leading-tight font-medium">Super Admin</p>
-                        </div>
-                        <ChevronDown
-                            size={13}
-                            strokeWidth={2.5}
-                            className={`hidden md:block text-gray-400 transition-transform duration-200 ${showProfile ? 'rotate-180' : ''}`}
-                        />
-                    </button>
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-lg border-2 border-white"></div>
+                    </div>
+                    <ChevronDown size={14} className={`text-gray-300 group-hover:text-emerald-500 transition-all ${showProfile ? 'rotate-180' : ''}`} />
 
-                    {/* Profile Dropdown */}
-                    {showProfile && (
-                        <div className="absolute right-0 top-full mt-2 w-[220px] bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.10)] border border-gray-100 overflow-hidden z-50">
-                            {/* User Info */}
-                            <div className="px-4 py-4 bg-gradient-to-br from-emerald-50 to-white border-b border-gray-50">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-[14px] shadow">
+                    <AnimatePresence>
+                        {showProfile && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden"
+                            >
+                                <div className="p-4 border-b border-gray-50 flex items-center gap-3 mb-2">
+                                    <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">
                                         {initials}
                                     </div>
-                                    <div className="min-w-0">
-                                        <p className="text-[13px] font-bold text-gray-800 truncate">{user?.username || 'Admin'}</p>
-                                        <p className="text-[11px] text-gray-500 truncate">{user?.email || 'admin@store.com'}</p>
+                                    <div className="overflow-hidden">
+                                        <p className="text-xs font-bold text-gray-800 uppercase tracking-tight truncate">{user?.username || 'Supervisor'}</p>
+                                        <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Master Admin</p>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Menu Items */}
-                            <div className="p-2">
-                                <button
-                                    onClick={() => { navigate('/admin/profile'); setShowProfile(false); }}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-all text-left"
-                                >
-                                    <User size={15} className="text-gray-400" /> My Profile
-                                </button>
-                                <button
-                                    onClick={() => { navigate('/admin/settings'); setShowProfile(false); }}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-all text-left"
-                                >
-                                    <Settings size={15} className="text-gray-400" /> Settings
-                                </button>
-                            </div>
-
-                            {/* Logout */}
-                            <div className="p-2 border-t border-gray-50">
-                                <button
-                                    onClick={handleSignOut}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold text-red-500 hover:bg-red-50 transition-all text-left"
-                                >
-                                    <LogOut size={15} /> Sign Out
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                                <div className="space-y-1">
+                                    <button onClick={() => navigate('/admin/profile')} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all">
+                                        <User size={14} /> Profile File
+                                    </button>
+                                    <button onClick={() => navigate('/admin/settings')} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all">
+                                        <Settings size={14} /> Global Control
+                                    </button>
+                                    <div className="h-px bg-gray-50 my-1 mx-2" />
+                                    <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
+                                        <LogOut size={14} /> Disconnect
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-
             </div>
         </header>
     );

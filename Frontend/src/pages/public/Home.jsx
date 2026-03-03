@@ -19,12 +19,12 @@ const Home = () => {
         const fetchData = async () => {
             try {
                 // 1. Fetch Trending Products
-                const prodResponse = await api.get('/store/public/products/?limit=4');
+                const prodResponse = await api.get('products/?limit=4');
                 setProducts(prodResponse.data.results || prodResponse.data);
 
                 // 2. Fetch Hero Banner (If API exists)
                 try {
-                    const bannerResponse = await api.get('/store/public/hero-banner/');
+                    const bannerResponse = await api.get('hero-banner/');
                     if (bannerResponse.data) {
                         setHeroData(prev => ({ ...prev, ...bannerResponse.data }));
                     }

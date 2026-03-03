@@ -267,7 +267,7 @@ class RegisterWithOTPView(APIView):
         if not otp.is_valid():
             return Response({'error': 'Code expired. Please register again.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        ALLOWED_ROLES = ['CUSTOMER', 'VENDOR', 'SUB_ADMIN']
+        ALLOWED_ROLES = ['CUSTOMER', 'VENDOR', 'SUB_ADMIN', 'DELIVERY']
         role = request.data.get('role', 'CUSTOMER').upper()
         if role not in ALLOWED_ROLES:
             role = 'CUSTOMER'
@@ -337,7 +337,7 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
 
     def create(self, request, *args, **kwargs):
-        ALLOWED_ROLES = ['CUSTOMER', 'VENDOR', 'SUB_ADMIN']
+        ALLOWED_ROLES = ['CUSTOMER', 'VENDOR', 'SUB_ADMIN', 'DELIVERY']
         role = request.data.get('role', 'CUSTOMER').upper()
         if role not in ALLOWED_ROLES:
             role = 'CUSTOMER'

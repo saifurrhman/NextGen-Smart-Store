@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
     Package, Star, ShoppingBag, Eye,
-    ArrowUpRight, Download, Search, Filter
+    ArrowUpRight, Download, Search
 } from 'lucide-react';
 import api from '../../../utils/api';
+import FilterDropdown from '../../../components/admin/common/FilterDropdown';
 
 const ProductPerformance = () => {
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({
+        period: '30days',
+        stock: ''
+    });
     const [topProducts, setTopProducts] = useState([]);
     const [topCategories, setTopCategories] = useState([]);
     const [stats, setStats] = useState({
@@ -19,7 +25,12 @@ const ProductPerformance = () => {
     useEffect(() => {
         const fetchProductData = async () => {
             try {
-                const response = await api.get('/api/v1/analytics/dashboard/');
+                let url = '/api/v1/analytics/dashboard/?';
+                if (searchTerm) url += `search=${searchTerm}&`;
+                if (filters.period) url += `period=${filters.period}&`;
+                if (filters.stock) url += `stock=${filters.stock}&`;
+
+                const response = await api.get(url);
                 const data = response.data;
 
                 setTopProducts(data.topProducts || []);
@@ -41,7 +52,38 @@ const ProductPerformance = () => {
             }
         };
         fetchProductData();
-    }, []);
+    }, [searchTerm, filters]);
+
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    };
+
+    const clearFilters = () => {
+        setFilters({ period: '30days', stock: '' });
+    };
+
+    const filterOptions = [
+        {
+            key: 'period',
+            label: 'Time Period',
+            options: [
+                { label: 'Last 7 Days', value: '7days' },
+                { label: 'Last 30 Days', value: '30days' },
+                { label: 'Last 90 Days', value: '90days' },
+                { label: 'Year to Date', value: 'ytd' },
+            ]
+        },
+        {
+            key: 'stock',
+            label: 'Stock Status',
+            options: [
+                { label: 'All Status', value: '' },
+                { label: 'In Stock', value: 'Stock' },
+                { label: 'Low Stock', value: 'Low Stock' },
+                { label: 'Out of Stock', value: 'Out of Stock' },
+            ]
+        }
+    ];
 
     const performanceCards = [
         { label: 'Total Products', value: stats.totalProducts.toLocaleString(), icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -93,12 +135,17 @@ const ProductPerformance = () => {
                                 <input
                                     type="text"
                                     placeholder="Search products..."
-                                    className="bg-gray-50 border-none rounded-lg pl-9 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500/20 w-48"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="bg-gray-50 border-none rounded-lg pl-9 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500/20 w-48 text-gray-700 placeholder:text-gray-400"
                                 />
                             </div>
-                            <button className="p-1.5 bg-gray-50 rounded-lg text-gray-500 hover:text-emerald-600">
-                                <Filter size={18} />
-                            </button>
+                            <FilterDropdown
+                                options={filterOptions}
+                                activeFilters={filters}
+                                onFilterChange={handleFilterChange}
+                                onClear={clearFilters}
+                            />
                         </div>
                     </div>
 

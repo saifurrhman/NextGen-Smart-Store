@@ -11,7 +11,7 @@ const PublicLayout = () => {
             try {
                 // Fetch simple category list (id, name, slug)
                 // Note: Ensure your backend has this endpoint exposed publicly
-                const response = await api.get('/api/v1/categories/');
+                const response = await api.get('categories/');
                 setCategories(response.data.results || response.data);
             } catch (error) {
                 console.error("Failed to load categories:", error);
@@ -39,7 +39,7 @@ const PublicLayout = () => {
             }
 
             try {
-                await api.post('/api/v1/analytics/track_visit/', { source });
+                await api.post('analytics/track_visit/', { source });
                 sessionStorage.setItem('traffic_logged', 'true');
             } catch (error) {
                 console.error("Failed to log traffic:", error);

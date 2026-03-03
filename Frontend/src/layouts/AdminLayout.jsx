@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import AdminSidebar from '../components/admin/AdminSidebar';
-import AdminTopbar from '../components/admin/AdminTopbar';
+import DashboardSidebar from '../components/dashboard/DashboardSidebar';
+import DashboardTopbar from '../components/dashboard/DashboardTopbar';
 
 const AdminLayout = () => {
     const location = useLocation();
@@ -73,7 +73,8 @@ const AdminLayout = () => {
             )}
 
             {/* Sidebar */}
-            <AdminSidebar
+            <DashboardSidebar
+                role="ADMIN"
                 collapsed={sidebarCollapsed}
                 onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
                 isMobileOpen={isMobileOpen}
@@ -84,9 +85,10 @@ const AdminLayout = () => {
             {/* Main Content */}
             <div className={`flex-1 flex flex-col h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-[90px]' : 'lg:ml-[266px]'
                 } ml-0 overflow-y-auto`}>
-                <AdminTopbar
+                <DashboardTopbar
                     pageTitle={getPageTitle()}
                     user={user}
+                    role="ADMIN"
                     onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
                     onMobileToggle={() => setIsMobileOpen(!isMobileOpen)}
                 />

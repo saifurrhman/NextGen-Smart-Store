@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Search, Filter, Download as ExportIcon, Plus, MoreVertical } from 'lucide-react';
+import { MessageSquare, Search, Download as ExportIcon, Plus, MoreVertical, ChevronDown, FileText } from 'lucide-react';
 import api from '../../../../utils/api';
+import { exportToExcel, exportToPDF, exportToCSV } from '../../../../utils/exportUtils';
+import { motion, AnimatePresence } from 'framer-motion';
+import FilterDropdown from '../../../../components/admin/common/FilterDropdown';
 
 const ActiveSessions = () => {
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({
+        status: ''
+    });
+    const [showExportOptions, setShowExportOptions] = useState(false);
 
     useEffect(() => {
         fetchSessions();
-    }, [searchTerm]);
+    }, [searchTerm, filters]);
 
     const fetchSessions = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/api/v1/support/chat-sessions/?search=${searchTerm}`);
+            let url = `/api/v1/support/chat-sessions/?search=${searchTerm}`;
+            if (filters.status) url += `&status=${filters.status}`;
+            const response = await api.get(url);
             setSessions(response.data.results || response.data);
         } catch (error) {
             console.error("Failed to fetch chat sessions:", error);
@@ -22,6 +31,66 @@ const ActiveSessions = () => {
             setLoading(false);
         }
     };
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    };
+
+    const clearFilters = () => {
+        setFilters({ status: '' });
+    };
+
+    const handleExportExcel = () => {
+        const dataToExport = sessions.map(session => ({
+            "Session ID": `CHAT-${session.id + 1000}`,
+            "Customer": session.customer_name || session.user_details?.username || 'Guest',
+            "Topic": session.topic,
+            "Agent": session.agent_details?.username || 'Unassigned',
+            "Duration": formatDuration(session.duration_seconds),
+            "Status": session.status
+        }));
+        exportToExcel(dataToExport, "Active_Chat_Sessions_Report");
+        setShowExportOptions(false);
+    };
+
+    const handleExportCSV = () => {
+        const dataToExport = sessions.map(session => ({
+            "Session ID": `CHAT-${session.id + 1000}`,
+            "Customer": session.customer_name || session.user_details?.username || 'Guest',
+            "Topic": session.topic,
+            "Agent": session.agent_details?.username || 'Unassigned',
+            "Duration": formatDuration(session.duration_seconds),
+            "Status": session.status
+        }));
+        exportToCSV(dataToExport, "Active_Chat_Sessions_Report");
+        setShowExportOptions(false);
+    };
+
+    const handleExportPDF = () => {
+        const columns = ["ID", "Customer", "Topic", "Agent", "Duration", "Status"];
+        const dataToExport = sessions.map(session => [
+            `CHAT-${session.id + 1000}`,
+            session.customer_name || session.user_details?.username || 'Guest',
+            session.topic,
+            session.agent_details?.username || 'Unassigned',
+            formatDuration(session.duration_seconds),
+            session.status
+        ]);
+        exportToPDF(dataToExport, columns, "Active_Chat_Sessions_Report", "Support Center: Active Chat Sessions Status");
+        setShowExportOptions(false);
+    };
+
+    const filterOptions = [
+        {
+            key: 'status',
+            label: 'Session Status',
+            options: [
+                { label: 'All Status', value: '' },
+                { label: 'Active', value: 'active' },
+                { label: 'Waiting', value: 'waiting' },
+                { label: 'Closed', value: 'closed' },
+            ]
+        }
+    ];
 
     const formatDuration = (seconds) => {
         const mins = Math.floor(seconds / 60);
@@ -39,11 +108,64 @@ const ActiveSessions = () => {
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Manage and view your active chat sessions</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                        <ExportIcon size={16} />
-                        Export
-                    </button>
+                <div className="flex items-center gap-2 relative">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowExportOptions(!showExportOptions)}
+                            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <ExportIcon size={16} className="text-emerald-500" />
+                            Export
+                            <ChevronDown size={14} className={`transition-transform duration-200 ${showExportOptions ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {showExportOptions && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setShowExportOptions(false)}
+                                    ></div>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden"
+                                    >
+                                        <div className="p-1">
+                                            <button
+                                                onClick={handleExportExcel}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors border-none"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                                                    <ExportIcon size={14} className="text-emerald-500" />
+                                                </div>
+                                                Export Excel
+                                            </button>
+                                            <button
+                                                onClick={handleExportCSV}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border-none"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                                                    <ExportIcon size={14} className="text-blue-500" />
+                                                </div>
+                                                Export CSV
+                                            </button>
+                                            <button
+                                                onClick={handleExportPDF}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border-none"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                                                    <FileText size={14} className="text-red-500" />
+                                                </div>
+                                                Export PDF
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </div>
                     <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
                         <Plus size={16} />
                         Create New
@@ -60,13 +182,15 @@ const ActiveSessions = () => {
                             placeholder="Search in Active Chat Sessions..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm"
+                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm text-gray-700 font-medium"
                         />
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors w-full sm:w-auto shadow-sm">
-                        <Filter size={16} />
-                        Filters
-                    </button>
+                    <FilterDropdown
+                        options={filterOptions}
+                        activeFilters={filters}
+                        onFilterChange={handleFilterChange}
+                        onClear={clearFilters}
+                    />
                 </div>
 
                 <div className="overflow-x-auto min-h-[400px]">
@@ -101,10 +225,10 @@ const ActiveSessions = () => {
                                         <td className="px-6 py-4 text-gray-600">{formatDuration(session.duration_seconds)}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${session.status === 'active' ? 'bg-green-50 text-green-700' :
-                                                    session.status === 'waiting' ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-700'
+                                                session.status === 'waiting' ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-700'
                                                 }`}>
                                                 <span className={`w-1.5 h-1.5 rounded-full ${session.status === 'active' ? 'bg-green-500' :
-                                                        session.status === 'waiting' ? 'bg-amber-500' : 'bg-gray-500'
+                                                    session.status === 'waiting' ? 'bg-amber-500' : 'bg-gray-500'
                                                     }`}></span>
                                                 {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                                             </span>

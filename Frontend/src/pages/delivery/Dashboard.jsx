@@ -1,34 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { Package, CheckCircle, TrendingUp, Clock, ChevronRight, Zap, Target, Star } from 'lucide-react';
+import {
+    Package, CheckCircle, TrendingUp, Clock, ChevronRight,
+    Zap, Target, Star, MapPin, RefreshCcw
+} from 'lucide-react';
 import api from '../../utils/api';
 
 const DeliveryDashboard = () => {
     const [stats, setStats] = useState({
         pending: 0,
+        transit: 0,
         completed: 0,
         earnings: 0
     });
+    const [recentTasks, setRecentTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
+    const [currentSector, setCurrentSector] = useState('Sector 7-G, central');
 
     useEffect(() => {
         fetchData();
+        const interval = setInterval(fetchData, 60000); // Auto-refresh every minute
+        return () => clearInterval(interval);
     }, []);
 
     const fetchData = async () => {
         try {
             const [tasksRes, profileRes] = await Promise.all([
-                api.get('/api/v1/operations/delivery/my-tasks/'),
-                api.get('/api/v1/users/profile/')
+                api.get('operations/delivery/my-tasks/'),
+                api.get('users/profile/')
             ]);
 
             setUser(profileRes.data);
             const tasks = tasksRes.data;
+
+            setRecentTasks(tasks.slice(0, 5));
             setStats({
-                pending: tasks.filter(t => t.status !== 'DELIVERED').length,
+                pending: tasks.filter(t => t.status === 'PENDING' || t.status === 'ASSIGNED').length,
+                transit: tasks.filter(t => t.status === 'IN_TRANSIT').length,
                 completed: tasks.filter(t => t.status === 'DELIVERED').length,
-                earnings: tasks.filter(t => t.status === 'DELIVERED').length * 150 // Mock earnings per delivery
+                earnings: tasks.filter(t => t.status === 'DELIVERED').length * 150
             });
+
+            // Set current sector from user profile or active task
+            const activeTask = tasks.find(t => t.status === 'in_transit');
+            if (activeTask && activeTask.destination_address) {
+                setCurrentSector(activeTask.destination_address);
+            } else if (profileRes.data.address) {
+                setCurrentSector(profileRes.data.address);
+            }
+
+            setLastUpdated(new Date());
         } catch (error) {
             console.error("Dashboard fetch error:", error);
         } finally {
@@ -36,130 +58,233 @@ const DeliveryDashboard = () => {
         }
     };
 
-    const StatusCard = ({ icon: Icon, label, value, color, bg }) => (
-        <div className={`relative overflow-hidden bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-200/20 transition-all group active:scale-[0.98]`}>
-            <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full ${bg} opacity-10 group-hover:scale-110 transition-transform duration-500`}></div>
-            <div className="relative z-10 flex flex-col h-full justify-between">
-                <div className={`w-12 h-12 ${bg} ${color} rounded-2xl flex items-center justify-center shadow-lg shadow-gray-100 border border-white`}>
-                    <Icon size={24} strokeWidth={2.5} />
+    const handleUpdateSector = async () => {
+        const newSector = prompt("Enter your new Deployment Sector:", currentSector);
+        if (newSector && newSector !== currentSector) {
+            try {
+                setLoading(true);
+                await api.patch('users/profile/', { address: newSector });
+                setCurrentSector(newSector);
+                alert("Sector updated successfully!");
+                fetchData();
+            } catch (error) {
+                console.error("Update sector error:", error);
+                alert("Failed to update sector. Please try again.");
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    const StatusCard = ({ icon: Icon, label, value, color, growth, suffix = "" }) => (
+        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm relative group hover:shadow-md transition-all duration-300">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</h3>
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold text-gray-800 tracking-tight">{value}{suffix}</h2>
+                    {growth && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${color === 'text-emerald-500' ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-50 text-gray-500'}`}>
+                            {growth}
+                        </span>
+                    )}
                 </div>
-                <div className="mt-8">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">{label}</p>
-                    <p className="text-3xl font-black text-gray-900 tracking-tighter">{value}</p>
+                <div className={`p-2 rounded-lg bg-gray-50 ${color} group-hover:scale-110 transition-transform`}>
+                    <Icon size={18} />
                 </div>
+            </div>
+            <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden mt-4">
+                <div className={`h-full rounded-full w-2/3 ${color.replace('text-', 'bg-')}`}></div>
             </div>
         </div>
     );
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Greeting & Quick Action */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                        <Zap size={12} className="text-emerald-600 fill-emerald-600" />
-                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">System Active</span>
+        <div className="space-y-6 max-w-[1600px] mx-auto pb-10 animate-in fade-in duration-500">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Analytics Overview</h1>
+                    <div className="flex items-center gap-3 mt-1.5">
+                        <p className="text-sm text-gray-500">System status synchronized at {lastUpdated.toLocaleTimeString()}</p>
+                        <div className="h-4 w-px bg-gray-200"></div>
+                        <button
+                            onClick={fetchData}
+                            className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
+                        >
+                            <RefreshCcw size={12} className={loading ? 'animate-spin' : ''} />
+                            Force Refresh
+                        </button>
                     </div>
-                    <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none uppercase">
-                        Hi, {user?.username || 'Specialist'}
-                    </h2>
-                    <p className="text-xs font-bold text-gray-400 max-w-xs">You have {stats.pending} operations pending your attention in the field.</p>
                 </div>
-
-                <div className="flex items-center gap-3 p-2 bg-white rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-100">
-                        <Target size={20} />
+                <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold">
+                        <MapPin size={16} />
                     </div>
-                    <div className="pr-6">
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Current Session</p>
-                        <p className="text-xs font-black text-emerald-600 uppercase">On Duty • Live OS</p>
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Deployment Sector</p>
+                        <p className="text-sm font-bold text-gray-800">{currentSector}</p>
                     </div>
+                    <button
+                        onClick={handleUpdateSector}
+                        className="ml-2 text-[10px] font-bold text-emerald-600 underline uppercase tracking-tighter"
+                    >
+                        Update
+                    </button>
                 </div>
             </div>
 
-            {/* Stats Grid */}
+            {/* Top Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatusCard
                     icon={Clock}
-                    label="Pending Tasks"
+                    label="Pending Mobile Tasks"
                     value={stats.pending}
-                    color="text-amber-600"
-                    bg="bg-amber-50"
+                    color="text-amber-500"
+                    growth="Live Sync"
                 />
                 <StatusCard
                     icon={Package}
-                    label="Active Transit"
-                    value="2"
-                    color="text-blue-600"
-                    bg="bg-blue-50"
+                    label="Active In-Transit"
+                    value={stats.transit}
+                    color="text-blue-500"
+                    growth="On Route"
                 />
                 <StatusCard
                     icon={CheckCircle}
-                    label="Completed"
+                    label="Operations Completed"
                     value={stats.completed}
-                    color="text-emerald-600"
-                    bg="bg-emerald-50"
+                    color="text-emerald-500"
+                    growth="Verified"
                 />
-                <div className="relative overflow-hidden bg-emerald-600 p-6 rounded-[2.5rem] shadow-2xl shadow-emerald-200 border border-emerald-500 group transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full bg-white opacity-10 group-hover:scale-110 transition-transform duration-500"></div>
-                    <div className="relative z-10 flex flex-col h-full justify-between">
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white border border-white/30 backdrop-blur-sm">
-                            <TrendingUp size={24} strokeWidth={2.5} />
-                        </div>
-                        <div className="mt-8 text-white">
-                            <p className="text-[10px] font-black opacity-70 uppercase tracking-[0.2em] mb-1">Estimated Revenue</p>
-                            <p className="text-3xl font-black tracking-tighter">Rs.{stats.earnings.toLocaleString()}</p>
-                        </div>
-                    </div>
-                </div>
+                <StatusCard
+                    icon={TrendingUp}
+                    label="Total Net Earnings"
+                    value={stats.earnings.toLocaleString()}
+                    suffix=" PKR"
+                    color="text-emerald-600"
+                    growth="Net Payout"
+                />
             </div>
 
-            {/* Recent Activity Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20 lg:pb-0">
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-lg font-black text-gray-900 tracking-tighter uppercase">Recent Operations</h3>
-                        <button className="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline decoration-2 underline-offset-4">Internal Logs</button>
+            {/* Main Content Sections */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                {/* Recent Operations (Admin Style Table) */}
+                <div className="xl:col-span-2 bg-white rounded-xl border border-gray-100 p-6 shadow-sm flex flex-col">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-gray-800 tracking-tight">Operation Logs</h3>
+                        <button className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-50 transition-all">Export Report</button>
                     </div>
 
-                    <div className="space-y-4">
-                        {[4211, 4212].map((id) => (
-                            <div key={id} className="group flex items-center justify-between p-5 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-200/20 transition-all">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-14 h-14 bg-gray-50 rounded-[1.5rem] flex items-center justify-center text-emerald-600 group-hover:bg-emerald-50 transition-colors border border-gray-100 group-hover:border-emerald-100">
-                                        <Package size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-black text-gray-900 tracking-tight leading-none mb-1">ORDER #{id} • SUCCESSFUL</p>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">Verified 24 Feb • 14:30 PM</p>
-                                    </div>
-                                </div>
-                                <button className="p-3 bg-gray-50 text-gray-400 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all group-hover:shadow-lg group-hover:shadow-emerald-100 active:scale-90">
-                                    <ChevronRight size={20} />
-                                </button>
-                            </div>
-                        ))}
+                    <div className="flex-1 overflow-x-auto min-h-[300px]">
+                        <table className="w-full text-xs text-left">
+                            <thead className="text-gray-400 font-bold uppercase tracking-widest border-b border-gray-50">
+                                <tr>
+                                    <th className="pb-4 px-2">Tracking ID</th>
+                                    <th className="pb-4 px-2">Mobilization</th>
+                                    <th className="pb-4 px-2">Current Phase</th>
+                                    <th className="pb-4 px-2 text-right opacity-0">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-gray-800">
+                                {recentTasks.length > 0 ? recentTasks.map((task) => (
+                                    <tr key={task.id} className="border-b border-gray-50/50 hover:bg-gray-50/50 transition-colors group">
+                                        <td className="py-4 px-2 font-bold text-[13px] tracking-tight">#{task.order_id || task.id}</td>
+                                        <td className="py-4 px-2 text-gray-500 font-medium">
+                                            {task.created_at ? new Date(task.created_at).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="py-4 px-2">
+                                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase ${task.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                                }`}>
+                                                <div className={`w-1 h-1 rounded-full ${task.status === 'DELIVERED' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+                                                {task.status}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-2 text-right">
+                                            <button className="p-2 bg-gray-50 text-gray-400 rounded-lg group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                                                <ChevronRight size={14} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="4" className="py-20 text-center text-gray-400 italic">No recent operation logs detected.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div className="space-y-6 text-center lg:text-left">
-                    <h3 className="text-lg font-black text-gray-900 tracking-tighter uppercase px-2">Performance IQ</h3>
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -mr-10 -mt-10 opacity-50"></div>
+                {/* Performance Sidebar (Admin Widget Style) */}
+                <div className="space-y-6">
+                    {/* Professional Map/Location Widget */}
+                    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <MapPin size={80} />
+                        </div>
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Live Deployment</h3>
+                        <div className="flex items-start gap-4 mb-6">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-100">
+                                <MapPin size={24} />
+                            </div>
+                            <div>
+                                <p className="text-lg font-bold text-gray-800 leading-tight">Operating Sector</p>
+                                <p className="text-sm text-emerald-600 font-medium">{currentSector}</p>
+                            </div>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-xl space-y-2 mb-6">
+                            <div className="flex justify-between text-[10px] font-bold uppercase text-gray-400">
+                                <span>Signal Strength</span>
+                                <span className="text-emerald-500">Optimal</span>
+                            </div>
+                            <div className="flex gap-1 h-1">
+                                {[1, 2, 3, 4, 5].map(i => <div key={i} className="flex-1 bg-emerald-500 rounded-full"></div>)}
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleUpdateSector}
+                            className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all"
+                        >
+                            Change Sector
+                        </button>
+                    </div>
 
-                        <div className="relative flex flex-col items-center lg:items-start gap-4">
-                            <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                                <Star size={10} className="fill-emerald-600 text-emerald-600" />
-                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest font-mono">Specialist Rating</span>
+                    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm flex flex-col space-y-6">
+                        <div>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Performance Hub</h3>
+                                <Zap size={14} className="text-amber-500 fill-amber-500" />
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Efficiency Metric</p>
-                                <p className="text-4xl font-black text-gray-900 tracking-tighter">4.95 / 5.0</p>
+                            <div className="p-5 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl text-white shadow-xl shadow-emerald-100">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Star size={14} className="fill-white" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Specialist Rating</span>
+                                </div>
+                                <h2 className="text-3xl font-bold mb-1 tracking-tight">4.95</h2>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-90">Elite Performance Level</p>
                             </div>
-                            <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden shadow-inner">
-                                <div className="bg-emerald-600 h-full w-[95%] rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]"></div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-wider">
+                                <span className="text-gray-400">Fulfillment IQ</span>
+                                <span className="text-emerald-600">95%</span>
                             </div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Based on latest performance logs</p>
+                            <div className="w-full bg-gray-50 h-2 rounded-full overflow-hidden border border-gray-100">
+                                <div className="bg-emerald-500 h-full rounded-full w-[95%] shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-50">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                                    <Target size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Status</p>
+                                    <p className="text-xs font-bold text-gray-800 italic">Sector Priority Protocol</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
     Home, ChevronRight, Image as ImageIcon, Box, Upload, X,
     Plus, Trash2, Save, AlertCircle, CheckCircle2
@@ -12,6 +12,7 @@ const AddProduct = () => {
     const [attributes, setAttributes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState({ type: '', text: '' });
+    const location = useLocation();
 
     const [formData, setFormData] = useState({
         title: '',
@@ -33,8 +34,8 @@ const AddProduct = () => {
         const fetchData = async () => {
             try {
                 const [catRes, attrRes] = await Promise.all([
-                    api.get('/api/v1/categories/'),
-                    api.get('/api/v1/attributes/')
+                    api.get('categories/'),
+                    api.get('attributes/')
                 ]);
                 setCategories(catRes.data.results || catRes.data);
                 setAttributes(attrRes.data.results || attrRes.data);
@@ -43,7 +44,11 @@ const AddProduct = () => {
             }
         };
         fetchData();
-    }, []);
+
+        if (location.state?.categoryId) {
+            setFormData(prev => ({ ...prev, category: location.state.categoryId }));
+        }
+    }, [location.state]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -272,8 +277,8 @@ const AddProduct = () => {
                                         type="button"
                                         onClick={() => handleAttributeToggle(attr.id)}
                                         className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border ${formData.attributes.includes(attr.id)
-                                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200'
-                                                : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-500'
+                                            ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-500'
                                             }`}
                                     >
                                         {attr.name} ({attr.terms.split(',').length})
