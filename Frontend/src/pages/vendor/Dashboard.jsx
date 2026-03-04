@@ -10,9 +10,11 @@ import {
     MoreHorizontal,
     Clock,
     CheckCircle2,
-    Search
+    Search,
+    Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import api from '../../services/api';
 
 const StatusCard = ({ title, value, change, isPositive, icon: Icon, color }) => (
     <motion.div
@@ -38,25 +40,44 @@ const StatusCard = ({ title, value, change, isPositive, icon: Icon, color }) => 
 );
 
 const Dashboard = () => {
+    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
-        revenue: '$12,450.80',
-        orders: '142',
-        products: '48',
-        rating: '4.8/5'
+        revenue: '$0.00',
+        orders: '0',
+        products: '0',
+        rating: '0.0/5'
     });
 
-    const recentOrders = [
-        { id: '#ORD-7721', customer: 'Alex Rivera', product: 'Premium Headphones', amount: '$299.00', status: 'Processing', time: '2 mins ago' },
-        { id: '#ORD-7720', customer: 'Sarah Chen', product: 'Wireless Mouse', amount: '$49.00', status: 'Shipped', time: '15 mins ago' },
-        { id: '#ORD-7719', customer: 'Marco V.', product: 'Mechanical Keyboard', amount: '$159.00', status: 'Delivered', time: '1 hour ago' },
-        { id: '#ORD-7718', customer: 'Elena G.', product: 'USB-C Hub', amount: '$89.00', status: 'Pending', time: '3 hours ago' },
-    ];
+    const [recentOrders, setRecentOrders] = useState([]);
+    const [topProducts, setTopProducts] = useState([]);
+    const [chartData, setChartData] = useState([]);
 
-    const topProducts = [
-        { name: 'Ultra-Slim Laptop', sales: 42, revenue: '$54,600', stock: 12 },
-        { name: 'Noise-Cancel Headphones', sales: 38, revenue: '$11,400', stock: 5 },
-        { name: '4K Pro Monitor', sales: 29, revenue: '$23,200', stock: 8 },
-    ];
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const response = await api.get('/vendors/dashboard/');
+                if (response.data) {
+                    setStats(response.data.stats);
+                    setRecentOrders(response.data.recentOrders || []);
+                    setTopProducts(response.data.topProducts || []);
+                    setChartData(response.data.chart || []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch dashboard data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -101,15 +122,15 @@ const Dashboard = () => {
 
                     {/* SVG Chart Placeholder */}
                     <div className="flex-1 min-h-[300px] w-full relative flex items-end gap-2 group">
-                        {[40, 65, 45, 85, 55, 95, 75, 50, 80, 60, 90, 70].map((height, i) => (
+                        {(chartData.length > 0 ? chartData : [40, 65, 45, 85, 55, 95, 75, 50, 80, 60, 90, 70]).map((height, i) => (
                             <div key={i} className="flex-1 flex flex-col items-center gap-2 group/bar">
                                 <div
                                     className="w-full bg-emerald-100 rounded-lg relative overflow-hidden transition-all duration-700 ease-out group-hover/bar:bg-emerald-500"
-                                    style={{ height: `${height}%` }}
+                                    style={{ height: `${Math.max(10, height)}%` }}
                                 >
                                     <div className="absolute top-0 left-0 w-full h-1/2 bg-white/20 blur-xl pointer-events-none" />
                                 </div>
-                                <span className="text-[8px] font-bold text-gray-300 uppercase">D-{12 - i}</span>
+                                <span className="text-[8px] font-bold text-gray-300 uppercase">D-{chartData.length - i}</span>
                             </div>
                         ))}
                     </div>
@@ -123,20 +144,24 @@ const Dashboard = () => {
                 >
                     <h3 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-6 pb-4 border-b border-gray-50">Top Velocity Products</h3>
                     <div className="space-y-6">
-                        {topProducts.map((product, i) => (
-                            <div key={i} className="flex items-center justify-between group cursor-pointer p-2 hover:bg-gray-50 rounded-xl transition-all">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                                        {i + 1}
+                        {topProducts.length === 0 ? (
+                            <div className="text-center py-8 text-gray-400 text-xs font-bold uppercase tracking-widest">No product sales yet</div>
+                        ) : (
+                            topProducts.map((product, i) => (
+                                <div key={i} className="flex items-center justify-between group cursor-pointer p-2 hover:bg-gray-50 rounded-xl transition-all">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                            {i + 1}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-800 truncate uppercase mt-0.5">{product.name}</p>
+                                            <p className="text-[10px] text-emerald-600 font-bold tracking-widest">{product.sales} Sales • {product.stock} Stock</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-800 truncate uppercase mt-0.5">{product.name}</p>
-                                        <p className="text-[10px] text-emerald-600 font-bold tracking-widest">{product.sales} Sales • {product.stock} Stock</p>
-                                    </div>
+                                    <ArrowUpRight size={14} className="text-gray-300 group-hover:text-emerald-500 transition-transform group-hover:translate-x-0.5" />
                                 </div>
-                                <ArrowUpRight size={14} className="text-gray-300 group-hover:text-emerald-500 transition-transform group-hover:translate-x-0.5" />
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                     <button className="w-full mt-8 py-3 bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-gray-100">
                         View Inventory Report
@@ -174,33 +199,39 @@ const Dashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {recentOrders.map((order, i) => (
-                                <tr key={i} className="hover:bg-neutral-50/50 transition-colors group cursor-pointer">
-                                    <td className="px-8 py-5 text-xs font-bold text-emerald-600 tracking-wider font-mono uppercase">{order.id}</td>
-                                    <td className="px-8 py-5 text-xs font-bold text-gray-800 truncate uppercase mt-0.5">{order.customer}</td>
-                                    <td className="px-8 py-5">
-                                        <span className="text-xs font-bold text-gray-500 truncate uppercase mt-0.5">{order.product}</span>
-                                    </td>
-                                    <td className="px-8 py-5 text-xs font-bold text-gray-800">{order.amount}</td>
-                                    <td className="px-8 py-5">
-                                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit ${order.status === 'Shipped' || order.status === 'Delivered'
+                            {recentOrders.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="px-8 py-12 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">No recent orders found</td>
+                                </tr>
+                            ) : (
+                                recentOrders.map((order, i) => (
+                                    <tr key={i} className="hover:bg-neutral-50/50 transition-colors group cursor-pointer">
+                                        <td className="px-8 py-5 text-xs font-bold text-emerald-600 tracking-wider font-mono uppercase">{order.id}</td>
+                                        <td className="px-8 py-5 text-xs font-bold text-gray-800 truncate uppercase mt-0.5">{order.customer}</td>
+                                        <td className="px-8 py-5">
+                                            <span className="text-xs font-bold text-gray-500 truncate uppercase mt-0.5">{order.product}</span>
+                                        </td>
+                                        <td className="px-8 py-5 text-xs font-bold text-gray-800">{order.amount}</td>
+                                        <td className="px-8 py-5">
+                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit ${order.status === 'Shipped' || order.status === 'Delivered'
                                                 ? 'bg-emerald-50 text-emerald-600'
                                                 : order.status === 'Processing'
                                                     ? 'bg-blue-50 text-blue-600'
-                                                    : 'bg-rose-50 text-rose-600'
-                                            }`}>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                                            <span className="text-[10px] font-bold uppercase tracking-widest">{order.status}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-5">
-                                        <div className="flex items-center gap-2 text-gray-400">
-                                            <Clock size={12} />
-                                            <span className="text-[10px] font-bold uppercase tracking-widest">{order.time}</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                                    : order.status === 'Pending' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'
+                                                }`}>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">{order.status}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2 text-gray-400">
+                                                <Clock size={12} />
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">{order.time}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
