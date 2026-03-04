@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Plus,
     Search,
@@ -11,20 +11,57 @@ import {
     AlertCircle,
     CheckCircle2,
     ChevronRight,
-    ArrowUpDown
+    ArrowUpDown,
+    Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import api from '../../services/api';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const MyProducts = () => {
+    const { formatCurrency } = useCurrency();
     const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [products, setProducts] = useState([]);
 
-    const products = [
-        { id: 1, name: 'Ultra-Slim Pro Laptop 14"', category: 'Electronics', price: '$1,299', stock: 12, status: 'In Stock', image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&q=80&w=200&h=200', sku: 'LP-PRO-14' },
-        { id: 2, name: 'Noise-Cancelling Wireless Headphones', category: 'Audio', price: '$299', stock: 5, status: 'Low Stock', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=200&h=200', sku: 'HP-WRL-NC' },
-        { id: 3, name: '4K Professional Monitor 27"', category: 'Peripherals', price: '$499', stock: 0, status: 'Out of Stock', image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=200&h=200', sku: 'MON-4K-27' },
-        { id: 4, name: 'Mechanical RGB Keyboard', category: 'Accessories', price: '$159', stock: 24, status: 'In Stock', image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&q=80&w=200&h=200', sku: 'KB-MECH-RGB' },
-    ];
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                // If search query exists, append it
+                let url = '/vendors/products/';
+                if (searchQuery) url += `?search=${encodeURIComponent(searchQuery)}`;
+
+                const response = await api.get(url);
+                if (response.data && response.data.results) {
+                    setProducts(response.data.results);
+                }
+            } catch (error) {
+                console.error("Failed to fetch vendor products:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // Debounce search
+        const timeoutId = setTimeout(() => {
+            fetchProducts();
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery, products.length]);
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to de-list this product? This action is irreversible across the network.")) {
+            try {
+                await api.delete(`/vendors/products/${id}/`);
+                setProducts(prev => prev.filter(p => p.id !== id));
+            } catch (err) {
+                console.error("Failed to delete product:", err);
+                alert("Critical: Failed to de-list product. Network error.");
+            }
+        }
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -56,90 +93,117 @@ const MyProducts = () => {
             </div>
 
             {/* Product Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-                {products.map((product, i) => (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: i * 0.1 }}
-                        key={product.id}
-                        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-500 flex flex-col"
+            {loading ? (
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                    {products.length === 0 ? (
+                        <div className="col-span-full py-12 text-center text-gray-500 font-medium">
+                            <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                            <p>No products found {searchQuery && `matching "${searchQuery}"`}.</p>
+                            {!searchQuery && (
+                                <Link to="/vendor/add-product" className="text-emerald-600 hover:underline text-xs mt-2 block font-bold uppercase tracking-widest">
+                                    Initialize First Asset
+                                </Link>
+                            )}
+                        </div>
+                    ) : (
+                        products.map((product, i) => (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: i * 0.05 }}
+                                key={product.id}
+                                className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500 flex flex-col relative"
+                            >
+                                {/* Image Layer */}
+                                <div className="aspect-square relative overflow-hidden bg-gray-50">
+                                    <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                    <div className="absolute top-4 left-4 h-fit">
+                                        <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm ${product.status === 'In Stock'
+                                            ? 'bg-emerald-500 text-white'
+                                            : product.status === 'Low Stock'
+                                                ? 'bg-amber-500 text-white'
+                                                : 'bg-rose-500 text-white'
+                                            }`}>
+                                            {product.status === 'In Stock' ? <CheckCircle2 size={10} /> : <AlertCircle size={10} />}
+                                            {product.status}
+                                        </div>
+                                    </div>
+                                    <div className="absolute top-4 right-4 h-fit">
+                                        <Link
+                                            to={`/vendor/edit-product/${product.id}`}
+                                            className="p-2 bg-white/90 backdrop-blur-md rounded-lg text-gray-500 hover:text-emerald-600 shadow-sm transition-all border border-white block"
+                                        >
+                                            <Edit3 size={14} />
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                {/* Content Layer */}
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em]">{product.category}</span>
+                                        <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest font-mono">{product.sku}</span>
+                                    </div>
+                                    <h3 className="text-sm font-black text-gray-800 uppercase tracking-tight leading-tight mb-6 group-hover:text-emerald-600 transition-colors line-clamp-2 min-h-[40px]">
+                                        {product.name}
+                                    </h3>
+
+                                    <div className="mt-auto pt-5 border-t border-gray-50 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1">Price Point</p>
+                                            <p className="text-xl font-black text-gray-900 tracking-tighter">{formatCurrency(product.price)}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1">Inventory</p>
+                                            <p className={`text-xs font-black tracking-tight leading-none ${product.stock === 0 ? 'text-rose-500' : 'text-gray-900'}`}>
+                                                {product.stock} Units
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Quick Actions Footer */}
+                                <div className="border-t border-gray-50 bg-gray-50/30 p-3 grid grid-cols-2 gap-2">
+                                    <Link
+                                        to={`/products/${product.id}`}
+                                        className="flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                    >
+                                        <Eye size={12} />
+                                        Observe
+                                    </Link>
+                                    <button
+                                        onClick={() => handleDelete(product.id)}
+                                        className="flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-rose-400 uppercase tracking-widest hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                    >
+                                        <Trash2 size={12} />
+                                        De-list
+                                    </button>
+                                </div>
+                            </motion.div>
+                        ))
+                    )}
+
+                    {/* New Product Shortcut */}
+                    <Link
+                        to="/vendor/add-product"
+                        className="group border-2 border-dashed border-gray-100 rounded-[2rem] flex flex-col items-center justify-center p-8 hover:border-emerald-200 hover:bg-emerald-50/20 transition-all duration-300 text-center"
                     >
-                        {/* Image Layer */}
-                        <div className="aspect-square relative overflow-hidden bg-gray-50">
-                            <img
-                                src={product.image}
-                                alt={product.name}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            />
-                            <div className="absolute top-4 left-4 h-fit">
-                                <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm ${product.status === 'In Stock'
-                                        ? 'bg-emerald-500 text-white'
-                                        : product.status === 'Low Stock'
-                                            ? 'bg-amber-500 text-white'
-                                            : 'bg-rose-500 text-white'
-                                    }`}>
-                                    {product.status === 'In Stock' ? <CheckCircle2 size={10} /> : <AlertCircle size={10} />}
-                                    {product.status}
-                                </div>
-                            </div>
-                            <div className="absolute top-4 right-4 h-fit">
-                                <button className="p-2 bg-white/90 backdrop-blur-md rounded-lg text-gray-500 hover:text-emerald-600 shadow-sm transition-all border border-white">
-                                    <Edit3 size={14} />
-                                </button>
-                            </div>
+                        <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500 shadow-sm border border-gray-100">
+                            <Plus size={32} strokeWidth={2.5} />
                         </div>
-
-                        {/* Content Layer */}
-                        <div className="p-5 flex-1 flex flex-col">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em]">{product.category}</span>
-                                <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest font-mono">{product.sku}</span>
-                            </div>
-                            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight leading-tight mb-4 group-hover:text-emerald-600 transition-colors line-clamp-2 min-h-[40px]">
-                                {product.name}
-                            </h3>
-
-                            <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Price Point</p>
-                                    <p className="text-xl font-black text-gray-900 tracking-tighter">{product.price}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Inventory</p>
-                                    <p className={`text-xs font-bold leading-none ${product.stock === 0 ? 'text-rose-500' : 'text-gray-800'}`}>
-                                        {product.stock} Units
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Quick Actions Footer */}
-                        <div className="border-t border-gray-50 bg-gray-50/30 p-3 grid grid-cols-2 gap-2">
-                            <button className="flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
-                                <Eye size={12} />
-                                Observe
-                            </button>
-                            <button className="flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-rose-400 uppercase tracking-widest hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
-                                <Trash2 size={12} />
-                                De-list
-                            </button>
-                        </div>
-                    </motion.div>
-                ))}
-
-                {/* New Product Shortcut */}
-                <Link
-                    to="/vendor/add-product"
-                    className="group border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-8 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all duration-300 text-center"
-                >
-                    <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500 shadow-sm border border-gray-100">
-                        <Plus size={32} />
-                    </div>
-                    <p className="text-sm font-bold text-gray-800 uppercase tracking-tight mb-1">New Entry</p>
-                    <p className="text-[10px] text-gray-400 font-medium px-4">Initialize a new product across the global retail network.</p>
-                </Link>
-            </div>
+                        <p className="text-sm font-black text-gray-900 uppercase tracking-tight mb-1.5">New Entry</p>
+                        <p className="text-[10px] text-gray-400 font-medium px-4 leading-relaxed">Initialize a new product across the global retail network.</p>
+                    </Link>
+                </div>
+            )}
         </div>
     );
 };

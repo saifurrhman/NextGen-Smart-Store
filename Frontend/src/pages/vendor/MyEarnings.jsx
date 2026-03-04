@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Wallet,
     ArrowUpRight,
@@ -13,29 +13,76 @@ import {
     CheckCircle2,
     ChevronRight,
     CreditCard,
-    PieChart
+    PieChart,
+    Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import api from '../../services/api';
+import { useCurrency } from '../../context/CurrencyContext';
 
-const StatMini = ({ label, value, icon: Icon, color }) => (
-    <div className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-        <div className={`p-2.5 rounded-xl ${color} bg-opacity-10 text-${color.split('-')[1]}-600`}>
-            <Icon size={18} />
+const StatMini = ({ label, value, icon: Icon, colorName = "emerald" }) => (
+    <motion.div
+        whileHover={{ y: -5 }}
+        className="flex items-center gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden group w-full"
+    >
+        <div className={`absolute top-0 right-0 w-24 h-24 bg-${colorName}-50 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110`} />
+
+        <div className={`p-3 rounded-2xl bg-${colorName}-50 text-${colorName}-600 relative z-10`}>
+            <Icon size={22} strokeWidth={2} />
         </div>
-        <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
-            <p className="text-lg font-black text-gray-900 tracking-tighter">{value}</p>
+        <div className="relative z-10">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
+            <p className="text-xl font-black text-gray-900 tracking-tighter">{value}</p>
         </div>
-    </div>
+    </motion.div>
 );
 
 const MyEarnings = () => {
-    const transactions = [
-        { id: '#TRX-9942', type: 'Payout', amount: '-$1,200.00', status: 'Completed', date: 'Mar 01, 2026', method: 'Bank Transfer' },
-        { id: '#TRX-9941', type: 'Order Earned', amount: '+$259.00', status: 'Completed', date: 'Feb 28, 2026', method: 'Sale #ORD-8821' },
-        { id: '#TRX-9940', type: 'Order Earned', amount: '+$59.00', status: 'Processing', date: 'Feb 28, 2026', method: 'Sale #ORD-8820' },
-        { id: '#TRX-9939', type: 'Payout', amount: '-$850.00', status: 'Pending', date: 'Feb 26, 2026', method: 'PayPal' },
-    ];
+    const { formatCurrency } = useCurrency();
+    const [loading, setLoading] = useState(true);
+    const [overview, setOverview] = useState({
+        available: 0,
+        pending: 0,
+        lifetime: 0,
+        nextPayout: 'N/A',
+        activePromos: '0 Live',
+        weeklyGrowth: '+0.0%'
+    });
+    const [transactions, setTransactions] = useState([]);
+    const [search, setSearch] = useState('');
+
+    useEffect(() => {
+        const fetchEarnings = async () => {
+            try {
+                const response = await api.get('/vendors/earnings/');
+                if (response.data) {
+                    setOverview({
+                        ...response.data.overview,
+                        activePromos: `${response.data.overview.activePromos} Live`
+                    });
+                    setTransactions(response.data.transactions || []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch earnings", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEarnings();
+    }, []);
+
+    const filteredTransactions = transactions.filter(trx =>
+        trx.id.toLowerCase().includes(search.toLowerCase()) ||
+        trx.method.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-12">
@@ -53,12 +100,12 @@ const MyEarnings = () => {
                             <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 shadow-inner">
                                 <Wallet size={24} className="text-emerald-400" />
                             </div>
-                            <div className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400">Merchant Vault</div>
+                            <div className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400">Merchant Vault</div>
                         </div>
 
                         <div className="mb-12">
-                            <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] mb-2">Available for Payout</p>
-                            <h2 className="text-5xl font-black tracking-tighter">$8,450.20</h2>
+                            <p className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em] mb-2">Available for Payout</p>
+                            <h2 className="text-5xl font-black tracking-tighter text-white">{formatCurrency(overview.available)}</h2>
                         </div>
 
                         <div className="mt-auto flex gap-3">
@@ -73,10 +120,10 @@ const MyEarnings = () => {
                 {/* Secondary Metrics */}
                 <div className="lg:col-span-2 space-y-6 flex flex-col justify-between">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <StatMini label="Pending Clearance" value="$1,240.00" icon={Clock} color="bg-amber-500" />
-                        <StatMini label="Lifetime Earned" value="$42,890.50" icon={TrendingUp} color="bg-emerald-500" />
-                        <StatMini label="Next Payout Date" value="Mar 15, 2026" icon={Calendar} color="bg-blue-500" />
-                        <StatMini label="Active Promos" value="4 Live" icon={PieChart} color="bg-purple-500" />
+                        <StatMini label="Pending Clearance" value={formatCurrency(overview.pending)} icon={Clock} colorName="amber" />
+                        <StatMini label="Lifetime Earned" value={formatCurrency(overview.lifetime)} icon={TrendingUp} colorName="emerald" />
+                        <StatMini label="Next Payout Date" value={overview.nextPayout} icon={Calendar} colorName="blue" />
+                        <StatMini label="Active Promos" value={overview.activePromos} icon={PieChart} colorName="purple" />
                     </div>
 
                     {/* Mini Analytics Preview */}
@@ -87,7 +134,7 @@ const MyEarnings = () => {
                             </div>
                             <div>
                                 <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest mb-1">Weekly Growth</h3>
-                                <p className="text-xs text-secondary font-medium">+14.2% increase from previous billing cycle</p>
+                                <p className="text-xs text-secondary font-medium">{overview.weeklyGrowth} increase from previous billing cycle</p>
                             </div>
                         </div>
                         <ChevronRight size={20} className="text-gray-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
@@ -114,7 +161,9 @@ const MyEarnings = () => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors" size={14} />
                             <input
                                 type="text"
-                                placeholder="Search Hash ID..."
+                                placeholder="Search Hash ID or Method..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
                                 className="bg-gray-50 border border-transparent rounded-xl py-2 pl-9 pr-4 text-[10px] font-bold focus:outline-none focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/5 transition-all w-48"
                             />
                         </div>
@@ -134,24 +183,30 @@ const MyEarnings = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {transactions.map((trx, i) => (
-                                <tr key={trx.id} className="hover:bg-neutral-50/50 transition-colors group cursor-pointer">
-                                    <td className="px-8 py-6 text-xs font-bold text-emerald-600 tracking-wider font-mono uppercase">{trx.id}</td>
-                                    <td className="px-8 py-6 text-xs font-extrabold text-gray-800 uppercase tracking-tight">{trx.type}</td>
-                                    <td className="px-8 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{trx.method}</td>
-                                    <td className={`px-8 py-6 text-sm font-black tracking-tighter ${trx.amount.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                        {trx.amount}
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className={`px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest flex items-center gap-2 w-fit ${trx.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                                            }`}>
-                                            <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                                            {trx.status}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{trx.date}</td>
+                            {filteredTransactions.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="px-8 py-12 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">No transactions found</td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filteredTransactions.map((trx) => (
+                                    <tr key={trx.id} className="hover:bg-neutral-50/50 transition-colors group cursor-pointer">
+                                        <td className="px-8 py-6 text-xs font-bold text-emerald-600 tracking-wider font-mono uppercase">{trx.id}</td>
+                                        <td className="px-8 py-6 text-xs font-extrabold text-gray-800 uppercase tracking-tight">{trx.type}</td>
+                                        <td className="px-8 py-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{trx.method}</td>
+                                        <td className={`px-8 py-6 text-sm font-black tracking-tighter ${trx.amount > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            {trx.amount > 0 ? '+' : ''}{formatCurrency(trx.amount)}
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div className={`px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest flex items-center gap-2 w-fit ${trx.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                }`}>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                                                {trx.status}
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{trx.date}</td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

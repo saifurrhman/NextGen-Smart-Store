@@ -15,37 +15,42 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../../services/api';
+import { useCurrency } from '../../context/CurrencyContext';
 
-const StatusCard = ({ title, value, change, isPositive, icon: Icon, color }) => (
+const StatusCard = ({ title, value, change, isPositive, icon: Icon, colorName = "emerald" }) => (
     <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group"
+        whileHover={{ y: -5 }}
+        className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-200/50 transition-all group relative overflow-hidden"
     >
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-xl ${color} bg-opacity-10 transition-colors`}>
-                <Icon size={22} className={color.replace('bg-', 'text-')} />
+        <div className={`absolute top-0 right-0 w-24 h-24 bg-${colorName}-50 rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110`} />
+
+        <div className="flex justify-between items-start mb-6 relative z-10">
+            <div className={`p-3 rounded-2xl bg-${colorName}-50 text-${colorName}-600`}>
+                <Icon size={22} strokeWidth={2.5} />
             </div>
-            <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg ${isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-                }`}>
-                {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                {change}
-            </div>
+            {change && (
+                <div className={`flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-lg ${isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                    }`}>
+                    {isPositive ? <TrendingUp size={10} strokeWidth={3} /> : <TrendingDown size={10} strokeWidth={3} />}
+                    {change}
+                </div>
+            )}
         </div>
-        <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{title}</p>
-            <h3 className="text-2xl font-bold text-gray-800 tracking-tight">{value}</h3>
+        <div className="relative z-10">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1.5">{title}</p>
+            <h3 className="text-3xl font-black text-gray-900 tracking-tighter">{value}</h3>
         </div>
     </motion.div>
 );
 
 const Dashboard = () => {
+    const { formatCurrency } = useCurrency();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
-        revenue: '$0.00',
+        revenue: 0,
         orders: '0',
         products: '0',
-        rating: '0.0/5'
+        rating: 0
     });
 
     const [recentOrders, setRecentOrders] = useState([]);
@@ -95,10 +100,10 @@ const Dashboard = () => {
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatusCard title="Total Revenue" value={stats.revenue} change="+12.5%" isPositive={true} icon={DollarSign} color="bg-emerald-500" />
-                <StatusCard title="Sales Volume" value={stats.orders} change="+8.2%" isPositive={true} icon={ShoppingBag} color="bg-blue-500" />
-                <StatusCard title="Active Listings" value={stats.products} change="-2.4%" isPositive={false} icon={Package} color="bg-orange-500" />
-                <StatusCard title="Customer Rating" value={stats.rating} change="+0.3%" isPositive={true} icon={Users} color="bg-purple-500" />
+                <StatusCard title="Total Revenue" value={formatCurrency(stats.revenue)} icon={DollarSign} colorName="emerald" />
+                <StatusCard title="Sales Volume" value={stats.orders} icon={ShoppingBag} colorName="blue" />
+                <StatusCard title="Active Listings" value={stats.products} icon={Package} colorName="orange" />
+                <StatusCard title="Customer Rating" value={stats.rating > 0 ? `${stats.rating}/5` : 'No reviews'} icon={Users} colorName="purple" />
             </div>
 
             {/* Analytics & Orders Section */}
@@ -107,30 +112,32 @@ const Dashboard = () => {
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full"
+                    className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col h-full relative overflow-hidden"
                 >
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-12 relative z-10">
                         <div>
-                            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-1">Sales Projections</h3>
-                            <p className="text-xs text-secondary font-medium">Growth trajectory for the current quarter</p>
+                            <h3 className="text-sm font-black text-gray-800 uppercase tracking-[0.2em] mb-1">Sales Projections</h3>
+                            <p className="text-xs text-gray-400 font-medium">Growth trajectory for the current quarter</p>
                         </div>
-                        <select className="bg-gray-50 border-none text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-1.5 focus:ring-0 cursor-pointer">
+                        <select className="bg-gray-50 border-none text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer transition-all">
                             <option>Last 7 Days</option>
                             <option>Last 30 Days</option>
                         </select>
                     </div>
 
                     {/* SVG Chart Placeholder */}
-                    <div className="flex-1 min-h-[300px] w-full relative flex items-end gap-2 group">
-                        {(chartData.length > 0 ? chartData : [40, 65, 45, 85, 55, 95, 75, 50, 80, 60, 90, 70]).map((height, i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-2 group/bar">
-                                <div
-                                    className="w-full bg-emerald-100 rounded-lg relative overflow-hidden transition-all duration-700 ease-out group-hover/bar:bg-emerald-500"
-                                    style={{ height: `${Math.max(10, height)}%` }}
+                    <div className="flex-1 min-h-[300px] w-full relative flex items-end gap-3 group px-4 pb-8">
+                        {(chartData.length > 0 ? chartData : [20, 40, 30, 70, 50, 80, 60, 90, 70, 100, 80, 95]).map((height, i) => (
+                            <div key={i} className="flex-1 flex flex-col items-center gap-3 group/bar h-full justify-end">
+                                <motion.div
+                                    initial={{ height: 0 }}
+                                    animate={{ height: `${Math.max(8, height)}%` }}
+                                    transition={{ duration: 1, delay: i * 0.05, ease: "circOut" }}
+                                    className="w-full bg-emerald-500/10 rounded-2xl relative overflow-hidden transition-all duration-500 group-hover/bar:bg-emerald-500 group-hover/bar:shadow-lg group-hover/bar:shadow-emerald-500/20"
                                 >
-                                    <div className="absolute top-0 left-0 w-full h-1/2 bg-white/20 blur-xl pointer-events-none" />
-                                </div>
-                                <span className="text-[8px] font-bold text-gray-300 uppercase">D-{chartData.length - i}</span>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/20 to-transparent opacity-0 group-hover/bar:opacity-100 transition-opacity" />
+                                </motion.div>
+                                <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest group-hover/bar:text-emerald-500 transition-colors">D-{chartData.length - i}</span>
                             </div>
                         ))}
                     </div>
@@ -211,7 +218,7 @@ const Dashboard = () => {
                                         <td className="px-8 py-5">
                                             <span className="text-xs font-bold text-gray-500 truncate uppercase mt-0.5">{order.product}</span>
                                         </td>
-                                        <td className="px-8 py-5 text-xs font-bold text-gray-800">{order.amount}</td>
+                                        <td className="px-8 py-5 text-xs font-bold text-gray-800">{formatCurrency(order.amount)}</td>
                                         <td className="px-8 py-5">
                                             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit ${order.status === 'Shipped' || order.status === 'Delivered'
                                                 ? 'bg-emerald-50 text-emerald-600'
