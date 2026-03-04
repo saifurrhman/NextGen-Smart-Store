@@ -17,6 +17,8 @@ class VendorProfile(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
+                                           help_text="Override global commission rate. Leave blank to use global default.")
     
     # Bank Info
     bank_name = models.CharField(max_length=100, blank=True)

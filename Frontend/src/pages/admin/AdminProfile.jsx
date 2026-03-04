@@ -48,9 +48,10 @@ const AdminProfile = () => {
                 lastName: data.last_name || '',
                 email: data.email || '',
                 phone: data.phone_number || '',
-                dateOfBirth: '',
+                dateOfBirth: data.date_of_birth || '',
                 location: data.address || '',
-                bio: '',
+                bio: data.bio || '',
+                avatar: data.avatar || null,
             });
             // Keep localStorage in sync
             localStorage.setItem('user', JSON.stringify(data));
@@ -63,9 +64,10 @@ const AdminProfile = () => {
                     lastName: userData.last_name || '',
                     email: userData.email || '',
                     phone: userData.phone_number || '',
-                    dateOfBirth: '',
+                    dateOfBirth: userData.date_of_birth || '',
                     location: userData.address || '',
-                    bio: '',
+                    bio: userData.bio || '',
+                    avatar: userData.avatar || null,
                 });
             } catch (e) { /* ignore */ }
         } finally {
@@ -129,26 +131,64 @@ const AdminProfile = () => {
     };
 
     // ─── Save Profile (API) ───
-    const handleProfileSave = async () => {
+    const handleProfileSave = async (extraData = {}) => {
         setErrorMsg('');
         setSuccessMsg('');
         setSaving(true);
         try {
-            const response = await profileAPI.updateProfile({
-                first_name: profileForm.firstName,
-                last_name: profileForm.lastName,
-                phone_number: profileForm.phone,
-                address: profileForm.location,
-                username: profileForm.firstName || profileForm.email.split('@')[0],
-            });
-            // Update localStorage with fresh data
-            localStorage.setItem('user', JSON.stringify(response.data));
+            const formData = new FormData();
+            formData.append('first_name', profileForm.firstName);
+            formData.append('last_name', profileForm.lastName);
+            formData.append('phone_number', profileForm.phone);
+            formData.append('address', profileForm.location);
+            formData.append('bio', profileForm.bio);
+            formData.append('username', profileForm.firstName || profileForm.email.split('@')[0]);
+
+            if (profileForm.dateOfBirth) {
+                formData.append('date_of_birth', profileForm.dateOfBirth);
+            }
+
+            // Handle image upload if selected
+            if (extraData.avatarFile) {
+                formData.append('avatar', extraData.avatarFile);
+            }
+
+            // Handle avatar deletion
+            if (extraData.deleteAvatar) {
+                formData.append('delete_avatar', 'true');
+            }
+
+            const response = await profileAPI.updateProfile(formData);
+
+            // Refresh form with returned data
+            const data = response.data;
+            setProfileForm(prev => ({
+                ...prev,
+                avatar: data.avatar,
+                dateOfBirth: data.date_of_birth || '',
+                bio: data.bio || '',
+            }));
+
+            localStorage.setItem('user', JSON.stringify(data));
             setSuccessMsg('Profile updated successfully!');
             setIsEditing(false);
         } catch (err) {
             setErrorMsg(err.response?.data?.error || 'Failed to update profile.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleProfileSave({ avatarFile: file });
+        }
+    };
+
+    const handleAvatarDelete = () => {
+        if (window.confirm("Are you sure you want to remove your profile picture?")) {
+            handleProfileSave({ deleteAvatar: true });
         }
     };
 
@@ -194,9 +234,17 @@ const AdminProfile = () => {
 
                             {/* Avatar */}
                             <div className="flex flex-col items-center text-center">
-                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white text-2xl font-bold mb-4 ring-4 ring-brand-accent shadow-lg">
-                                    {initials}
-                                </div>
+                                {profileForm.avatar ? (
+                                    <img
+                                        src={profileForm.avatar.startsWith('http') ? profileForm.avatar : `http://localhost:8000${profileForm.avatar}`}
+                                        alt="Profile"
+                                        className="w-24 h-24 rounded-full object-cover mb-4 ring-4 ring-brand-accent shadow-lg"
+                                    />
+                                ) : (
+                                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white text-2xl font-bold mb-4 ring-4 ring-brand-accent shadow-lg">
+                                        {initials}
+                                    </div>
+                                )}
 
                                 <h4 className="text-lg font-semibold text-brand-dark">
                                     {profileForm.firstName || profileForm.lastName
@@ -365,14 +413,36 @@ const AdminProfile = () => {
 
                         {/* Avatar upload */}
                         <div className="flex items-center gap-4 mb-8">
-                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
-                                {initials}
-                            </div>
+                            <input
+                                type="file"
+                                id="avatar-upload"
+                                hidden
+                                accept="image/*"
+                                onChange={handleAvatarChange}
+                            />
+                            {profileForm.avatar ? (
+                                <img
+                                    src={profileForm.avatar.startsWith('http') ? profileForm.avatar : `http://localhost:8000${profileForm.avatar}`}
+                                    alt="Profile"
+                                    className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                                />
+                            ) : (
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                                    {initials}
+                                </div>
+                            )}
                             <div className="flex gap-2">
-                                <button className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors flex items-center gap-1.5">
+                                <button
+                                    onClick={() => document.getElementById('avatar-upload').click()}
+                                    className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors flex items-center gap-1.5"
+                                >
                                     <Upload size={14} /> Upload New
                                 </button>
-                                <button className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:border-red-300 hover:text-red-500 transition-colors flex items-center gap-1.5">
+                                <button
+                                    onClick={handleAvatarDelete}
+                                    disabled={!profileForm.avatar}
+                                    className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:border-red-300 hover:text-red-500 transition-colors flex items-center gap-1.5 disabled:opacity-40"
+                                >
                                     <Trash2 size={14} /> Delete
                                 </button>
                             </div>

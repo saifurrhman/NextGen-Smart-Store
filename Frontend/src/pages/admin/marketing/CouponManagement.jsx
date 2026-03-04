@@ -62,7 +62,7 @@ const CouponManagement = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this coupon?')) {
             try {
-                await api.delete(`/api/v1/marketing/coupons/${id}/`);
+                await api.delete(`marketing/coupons/${id}/`);
                 fetchCoupons();
             } catch (error) {
                 console.error("Failed to delete coupon:", error);
@@ -74,24 +74,31 @@ const CouponManagement = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                min_purchase: formData.min_purchase ? parseFloat(formData.min_purchase) : null,
+            };
             if (isEditing) {
-                await api.put(`/api/v1/marketing/coupons/${selectedCoupon.id}/`, formData);
+                await api.put(`marketing/coupons/${selectedCoupon.id}/`, payload);
             } else {
-                await api.post('/api/v1/marketing/coupons/', formData);
+                await api.post('marketing/coupons/', payload);
             }
             setIsModalOpen(false);
             resetForm();
             fetchCoupons();
         } catch (error) {
-            console.error("Failed to save coupon:", error);
-            alert("Failed to save coupon. Please check all fields.");
+            console.error("Failed to save coupon:", error.response?.data || error.message);
+            const errorMsg = error.response?.data
+                ? Object.entries(error.response.data).map(([field, msg]) => `${field}: ${msg}`).join('\n')
+                : "Please check all fields and try again.";
+            alert(`Failed to save coupon:\n${errorMsg}`);
         }
     };
 
     const fetchCoupons = async () => {
         setLoading(true);
         try {
-            let url = `/api/v1/marketing/coupons/?page=${page}&search=${searchTerm}`;
+            let url = `marketing/coupons/?page=${page}&search=${searchTerm}`;
             if (filters.status) url += `&status=${filters.status}`;
 
             const response = await api.get(url);

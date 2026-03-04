@@ -1,141 +1,110 @@
-import React from 'react';
-import { Share2, Search, Filter, Download, Plus, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Share2, Search, Filter, Download, Plus, Instagram, Facebook, Twitter, Link2, ExternalLink } from 'lucide-react';
+import { exportToExcel, exportToPDF } from '../../../utils/exportUtils';
 
 const SocialMedia = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const PLATFORMS = [
+        { name: 'Instagram', handle: '@nextgen_store', followers: '24.5K', status: 'Connected', lastSync: '10 mins ago', icon: Instagram, color: 'text-pink-600', bg: 'bg-pink-50' },
+        { name: 'Facebook', handle: 'NextGen Smart Store', followers: '18.2K', status: 'Connected', lastSync: '15 mins ago', icon: Facebook, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { name: 'TikTok', handle: '@nextgen.official', followers: '142K', status: 'Disconnected', lastSync: '2 days ago', icon: Share2, color: 'text-black', bg: 'bg-gray-100' },
+    ];
+
+    const filtered = PLATFORMS.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.handle.toLowerCase().includes(searchTerm.toLowerCase()));
+
     return (
         <div className="space-y-6">
-            {/* Header Content */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-brand-dark flex items-center gap-2">
-                        <Share2 size={22} className="text-brand" />
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <Share2 size={24} className="text-pink-500" />
                         Social Media Integrations
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage and view your social media integrations</p>
+                    <p className="text-sm text-gray-500 mt-1 font-medium">Manage and sync your social media accounts</p>
                 </div>
-                {!false && (
-                    <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                            <Download size={16} />
-                            Export
-                        </button>
-                        <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
-                            <Plus size={16} />
-                            Create New
-                        </button>
-                    </div>
-                )}
+                <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    <button onClick={() => exportToExcel(PLATFORMS, "Social_Media_Integrations")} className="px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 border-r border-gray-100 transition-all">Excel</button>
+                    <button onClick={() => exportToPDF(PLATFORMS.map(p => [p.name, p.handle, p.followers, p.status]), ["Platform", "Handle", "Followers", "Status"], "Social_Media_Integrations", "Social Media Account Status")} className="px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-all font-bold">PDF</button>
+                </div>
             </div>
 
-            {/* Main Content Area */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                
-                {/* Toolbar */}
-                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
-                    <div className="relative flex-1 w-full max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search in Social Media Integrations..." 
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all shadow-sm"
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {PLATFORMS.map((p) => (
+                    <div key={p.name} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                            <div className={`w-12 h-12 rounded-xl ${p.bg} flex items-center justify-center`}>
+                                <p.icon size={24} className={p.color} />
+                            </div>
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${p.status === 'Connected' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                {p.status}
+                            </span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-gray-800">{p.name}</h3>
+                            <p className="text-sm text-gray-500 font-medium">{p.handle}</p>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-50 mt-1">
+                            <div>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase">Followers</p>
+                                <p className="text-sm font-black text-gray-800">{p.followers}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase">Last Sync</p>
+                                <p className="text-[10px] font-bold text-gray-600">{p.lastSync}</p>
+                            </div>
+                        </div>
+                        <button className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${p.status === 'Connected' ? 'bg-gray-50 text-gray-700 hover:bg-gray-100' : 'bg-brand text-white hover:bg-brand-dark shadow-lg shadow-brand/20'}`}>
+                            {p.status === 'Connected' ? <><Link2 size={14} /> Manage Account</> : <><ExternalLink size={14} /> Connect Account</>}
+                        </button>
+                    </div>
+                ))}
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-gray-50 bg-gray-50/30">
+                    <div className="relative w-full max-w-md">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search integrations..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-pink-500 transition-all shadow-sm"
                         />
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors w-full sm:w-auto shadow-sm">
-                        <Filter size={16} />
-                        Filters
-                    </button>
                 </div>
-                
-                {/* Data Table */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50/50 text-gray-500 font-medium border-b border-gray-100">
+                        <thead className="bg-[#fdf8fa] text-pink-900 font-bold text-xs uppercase tracking-wider">
                             <tr>
-                                
-                                <th className="px-6 py-3">Platform</th>
-                                
-                                <th className="px-6 py-3">Account Name</th>
-                                
-                                <th className="px-6 py-3">Followers</th>
-                                
-                                <th className="px-6 py-3">Status</th>
-                                
-                                <th className="px-6 py-3">Last Sync</th>
-                                
-                                <th className="px-6 py-3">Actions</th>
-                                
-                                <th className="px-6 py-3 text-right">Actions</th>
+                                <th className="px-6 py-4">Platform</th>
+                                <th className="px-6 py-4">Account</th>
+                                <th className="px-6 py-4 text-center">Followers</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Instagram</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    @nextgen_store
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">24.5K</td>
-                                <td className="px-6 py-4 text-gray-600">Connected</td>
-                                <td className="px-6 py-4 text-gray-600">10 mins ago</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">Manage</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">Facebook</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    NextGen Smart Store
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">18.2K</td>
-                                <td className="px-6 py-4 text-gray-600">Connected</td>
-                                <td className="px-6 py-4 text-gray-600">15 mins ago</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">Manage</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <tr className="hover:bg-gray-50/50 transition-colors group">
-                                <td className="px-6 py-4 font-medium text-gray-900">TikTok</td>
-                                <td className="px-6 py-4 text-gray-600">
-                                    @nextgen.official
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">142K</td>
-                                <td className="px-6 py-4 text-gray-600">Disconnected</td>
-                                <td className="px-6 py-4 text-gray-600">2 days ago</td>
-                                <td className="px-6 py-4 text-gray-600 font-medium">Reconnect</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-brand transition-colors"><Edit2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                        <button className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"><MoreVertical size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                            
+                        <tbody className="divide-y divide-gray-50">
+                            {filtered.map(p => (
+                                <tr key={p.name} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4 font-bold text-gray-800">{p.name}</td>
+                                    <td className="px-6 py-4 text-gray-500 font-medium">{p.handle}</td>
+                                    <td className="px-6 py-4 text-center font-black text-gray-700">{p.followers}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${p.status === 'Connected' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${p.status === 'Connected' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                            {p.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="text-[10px] font-black uppercase text-pink-600 hover:text-pink-800 tracking-widest">Settings</button>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
-                <div className="p-4 border-t border-gray-100 text-sm text-gray-500 flex items-center justify-between">
-                    <span>Showing 3 entries</span>
-                    <div className="flex gap-1">
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled>Prev</button>
-                        <button className="px-3 py-1 bg-brand text-white rounded">1</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">Next</button>
-                    </div>
-                </div>
-                
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Order, OrderItem, Refund
+from .models import Order, OrderItem, Refund, OrderReport
 from apps.products.serializers import ProductSerializer
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -39,3 +39,8 @@ class RefundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Refund
         fields = ['id', 'order', 'order_id', 'customer_email', 'amount', 'reason', 'status', 'created_at', 'updated_at']
+
+class OrderReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderReport
+        fields = '__all__'

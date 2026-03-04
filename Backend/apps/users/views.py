@@ -52,15 +52,31 @@ class ProfileView(APIView):
         user = get_user_from_token(request)
         if not user:
             return Response({'error': 'Authentication required.'}, status=status.HTTP_401_UNAUTHORIZED)
-        allowed_fields = ['first_name', 'last_name', 'phone_number', 'address', 'username']
+        
+        # Regular fields
+        allowed_fields = ['first_name', 'last_name', 'phone_number', 'address', 'username', 'bio', 'date_of_birth']
         for field in allowed_fields:
             if field in request.data:
-                setattr(user, field, request.data[field])
+                val = request.data[field]
+                if field == 'date_of_birth' and val == '':
+                    val = None
+                setattr(user, field, val)
+        
+        # Avatar upload logic
+        if 'avatar' in request.FILES:
+            user.avatar = request.FILES['avatar']
+        
+        # Avatar delete logic (if explicitly requested by a flag)
+        if request.data.get('delete_avatar') == 'true':
+            user.avatar.delete(save=False)
+            user.avatar = None
+
         try:
             user.save()
             serializer = UserSerializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"ProfileUpdate failed: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Headset, Search, Download as ExportIcon, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight, ChevronDown, FileText } from 'lucide-react';
+import { Headset, Search, Download as ExportIcon, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight, ChevronDown, FileText, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import api from '../../../utils/api';
 import { exportToExcel, exportToPDF, exportToCSV } from '../../../utils/exportUtils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,6 +7,7 @@ import FilterDropdown from '../../../components/admin/common/FilterDropdown';
 
 const VendorSupport = () => {
     const [tickets, setTickets] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({
@@ -16,6 +17,18 @@ const VendorSupport = () => {
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({ count: 0, next: null, previous: null });
     const [showExportOptions, setShowExportOptions] = useState(false);
+    const [msg, setMsg] = useState({ type: '', text: '' });
+
+    // Modal States
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingTicket, setEditingTicket] = useState(null);
+    const [formData, setFormData] = useState({
+        subject: '',
+        description: '',
+        user: '',
+        priority: 'medium',
+        status: 'open'
+    });
 
     useEffect(() => {
         fetchTickets();
@@ -25,7 +38,7 @@ const VendorSupport = () => {
         setLoading(true);
         try {
             // Fetch support tickets
-            let url = `/api/v1/support/tickets/?page=${page}&search=${searchTerm}`;
+            let url = `support/tickets/?page=${page}&search=${searchTerm}`;
             if (filters.status) url += `&status=${filters.status}`;
             if (filters.priority) url += `&priority=${filters.priority}`;
 
@@ -40,6 +53,78 @@ const VendorSupport = () => {
             console.error("Failed to fetch vendor support tickets:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchUsers = async () => {
+        try {
+            const response = await api.get('users/');
+            setUsers(response.data.results || response.data);
+        } catch (error) {
+            console.error("Failed to fetch users:", error);
+        }
+    };
+
+    const handleOpenCreateModal = () => {
+        setEditingTicket(null);
+        setFormData({
+            subject: '',
+            description: '',
+            user: '',
+            priority: 'medium',
+            status: 'open'
+        });
+        setIsModalOpen(true);
+        fetchUsers();
+    };
+
+    const handleOpenEditModal = (ticket) => {
+        setEditingTicket(ticket);
+        setFormData({
+            subject: ticket.subject,
+            description: ticket.description,
+            user: ticket.user,
+            priority: ticket.priority,
+            status: ticket.status
+        });
+        setIsModalOpen(true);
+        fetchUsers();
+    };
+
+    const handleSaveTicket = async (e) => {
+        e.preventDefault();
+        if (!formData.user || !formData.subject || !formData.description) {
+            setMsg({ type: 'error', text: 'Please fill all required fields.' });
+            return;
+        }
+
+        try {
+            if (editingTicket) {
+                await api.put(`support/tickets/${editingTicket.id}/`, formData);
+                setMsg({ type: 'success', text: 'Ticket updated successfully!' });
+            } else {
+                await api.post('support/tickets/', formData);
+                setMsg({ type: 'success', text: 'Ticket created successfully!' });
+            }
+            setIsModalOpen(false);
+            fetchTickets();
+            setTimeout(() => setMsg({ type: '', text: '' }), 3000);
+        } catch (error) {
+            console.error("Failed to save ticket:", error);
+            setMsg({ type: 'error', text: 'Failed to save ticket.' });
+        }
+    };
+
+    const handleDeleteTicket = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this ticket?')) return;
+        try {
+            await api.delete(`support/tickets/${id}/`);
+            setTickets(prev => prev.filter(t => t.id !== id));
+            setMsg({ type: 'success', text: 'Ticket deleted successfully!' });
+            setTimeout(() => setMsg({ type: '', text: '' }), 3000);
+        } catch (error) {
+            console.error("Failed to delete ticket:", error);
+            alert("Failed to delete ticket.");
         }
     };
 
@@ -188,12 +273,22 @@ const VendorSupport = () => {
                             )}
                         </AnimatePresence>
                     </div>
-                    <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
+                    <button
+                        onClick={handleOpenCreateModal}
+                        className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm"
+                    >
                         <Plus size={16} />
                         Create New
                     </button>
                 </div>
             </div>
+
+            {msg.text && (
+                <div className={`p-4 rounded-lg flex items-center gap-3 font-bold text-sm ${msg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+                    {msg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                    {msg.text}
+                </div>
+            )}
 
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
@@ -246,7 +341,7 @@ const VendorSupport = () => {
                                         <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${ticket.status === 'open' ? 'bg-orange-50 text-orange-600 border-orange-100' :
                                                 ticket.status === 'in_progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                    'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                    'bg-emerald-50 text-emerald-700 border-emerald-100'
                                                 }`}>
                                                 <span className={`w-1 h-1 rounded-full ${ticket.status === 'open' ? 'bg-orange-600' :
                                                     ticket.status === 'in_progress' ? 'bg-blue-600' : 'bg-emerald-600'
@@ -254,7 +349,22 @@ const VendorSupport = () => {
                                                 {ticket.status.replace('_', ' ')}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right text-gray-400 font-bold">Actions</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2 text-gray-400">
+                                                <button
+                                                    onClick={() => handleOpenEditModal(ticket)}
+                                                    className="p-1.5 hover:bg-gray-100 rounded hover:text-brand transition-colors"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteTicket(ticket.id)}
+                                                    className="p-1.5 hover:bg-gray-100 rounded hover:text-red-600 transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
@@ -270,16 +380,140 @@ const VendorSupport = () => {
 
                 {!loading && tickets.length > 0 && (
                     <div className="p-4 border-t border-gray-100 text-sm text-gray-500 flex items-center justify-between">
-                        <span>Showing {tickets.length} entries</span>
+                        <span>Showing {tickets.length} entries of {pagination.count}</span>
                         <div className="flex gap-1">
-                            <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-400">Prev</button>
-                            <button className="px-3 py-1 bg-brand text-white rounded font-bold shadow-sm">1</button>
-                            <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
-                            <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">Next</button>
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={!pagination.previous || loading}
+                                className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
+                            >Prev</button>
+                            <button className="px-3 py-1 bg-brand text-white rounded font-bold shadow-sm">{page}</button>
+                            <button
+                                onClick={() => setPage(p => p + 1)}
+                                disabled={!pagination.next || loading}
+                                className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
+                            >Next</button>
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* Create/Edit Modal */}
+            <AnimatePresence>
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute inset-0 bg-brand-dark/20 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden"
+                        >
+                            <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <Headset size={20} className="text-brand" />
+                                    {editingTicket ? 'Edit Vendor Ticket' : 'Create Vendor Ticket'}
+                                </h3>
+                                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                                    <X size={20} className="text-gray-500" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSaveTicket} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Subject</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.subject}
+                                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                                        placeholder="Brief summary of the issue"
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand bg-gray-50/50"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Select Vendor</label>
+                                    <select
+                                        required
+                                        value={formData.user}
+                                        onChange={(e) => setFormData({ ...formData, user: e.target.value })}
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand bg-gray-50/50 font-medium"
+                                    >
+                                        <option value="">Select Vendor</option>
+                                        {users.map(u => (
+                                            <option key={u.id} value={u.id}>{u.username} ({u.email})</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Priority</label>
+                                        <select
+                                            value={formData.priority}
+                                            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand bg-gray-50/50"
+                                        >
+                                            <option value="low">Low</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="high">High</option>
+                                            <option value="urgent">Urgent</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                                        <select
+                                            value={formData.status}
+                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand bg-gray-50/50"
+                                        >
+                                            <option value="open">Open</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="resolved">Resolved</option>
+                                            <option value="closed">Closed</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                                    <textarea
+                                        required
+                                        rows="4"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder="Detailed description of the issue..."
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand bg-gray-50/50 resize-none"
+                                    ></textarea>
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="px-6 py-2 border border-gray-200 text-gray-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-6 py-2 bg-brand text-white font-bold rounded-lg hover:bg-brand-dark transition-colors text-sm shadow-md"
+                                    >
+                                        {editingTicket ? 'Update Ticket' : 'Create Ticket'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

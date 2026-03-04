@@ -7,7 +7,7 @@ const API_BASE_URL = 'http://localhost:8000/api/v1';
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    // Content-Type is automatically set by axios for FormData
   },
   timeout: 10000, // 10 seconds
 });

@@ -13,7 +13,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         model = VendorProfile
         fields = [
             'id', 'owner_email', 'owner_name', 'store_name', 'store_description', 
-            'status', 'balance', 'bank_name', 'account_holder', 'account_number', 
+            'status', 'balance', 'commission_rate', 'bank_name', 'account_holder', 'account_number', 
             'product_count', 'created_at'
         ]
 

@@ -5,6 +5,7 @@ from .views import TicketViewSet, KnowledgeBaseArticleViewSet, ChatSessionViewSe
 router = DefaultRouter()
 router.register(r'tickets', TicketViewSet)
 router.register(r'kb', KnowledgeBaseArticleViewSet)
+router.register(r'knowledge-base', KnowledgeBaseArticleViewSet, basename='knowledge-base')
 router.register(r'chat-sessions', ChatSessionViewSet)
 
 urlpatterns = [

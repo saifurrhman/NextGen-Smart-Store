@@ -22,3 +22,16 @@ class Delivery(models.Model):
 
     def __str__(self):
         return f"Delivery {self.tracking_id} for Order {self.order.id}"
+
+class DailyStatsLog(models.Model):
+    """Manual daily operation log entries."""
+    date = models.DateField()
+    total_orders = models.IntegerField(default=0)
+    packed = models.IntegerField(default=0)
+    shipped = models.IntegerField(default=0)
+    exceptions = models.IntegerField(default=0)
+    status = models.CharField(max_length=20, default='Active')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"DailyStats {self.date}"

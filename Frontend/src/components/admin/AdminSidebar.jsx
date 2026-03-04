@@ -9,6 +9,7 @@ import {
     Home, Bot, AlignLeft, X, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Tag } from 'lucide-react';
 
 const AdminSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user }) => {
     const location = useLocation();
@@ -18,6 +19,7 @@ const AdminSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user }
         { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { path: '/admin/orders/all', icon: Ticket, label: 'Orders' },
         { path: '/admin/products/all', icon: Store, label: 'Products' },
+        { path: '/admin/products/attributes', icon: Tag, label: 'Attributes' },
         { path: '/admin/users/all', icon: Users, label: 'Users' },
         { path: '/admin/vendors/all', icon: Store, label: 'Vendors' },
         { path: '/admin/finance/revenue', icon: DollarSign, label: 'Financials' },

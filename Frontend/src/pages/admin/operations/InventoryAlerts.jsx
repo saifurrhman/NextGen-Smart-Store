@@ -1,64 +1,82 @@
-import React, { useState } from 'react';
-import {
-    Package, AlertTriangle, ArrowUpRight,
-    Home, ChevronRight, Plus, RefreshCw, Search, MoreVertical, ChevronDown, Download as ExportIcon, FileText
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Download as ExportIcon, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, MoreVertical, Plus, ChevronDown, FileText } from 'lucide-react';
+import api from '../../../utils/api';
 import { exportToExcel, exportToPDF, exportToCSV } from '../../../utils/exportUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import FilterDropdown from '../../../components/admin/common/FilterDropdown';
 
 const InventoryAlerts = () => {
-    const initialAlerts = [
-        { id: 1, product: 'Wireless Headphones', sku: 'WH-001', stock: 5, minStock: 10, status: 'Low Stock', priority: 'High' },
-        { id: 2, product: 'Smart Watch Series 7', sku: 'SW-007', stock: 0, minStock: 5, status: 'Out of Stock', priority: 'Critical' },
-        { id: 3, product: 'Leather Wallet', sku: 'LW-099', stock: 8, minStock: 15, status: 'Low Stock', priority: 'Medium' },
-    ];
-    const [alerts, setAlerts] = useState(initialAlerts);
+    const [alerts, setAlerts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({
-        status: '',
-        priority: ''
+        priority: '',
+        category: ''
     });
     const [showExportOptions, setShowExportOptions] = useState(false);
-    const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [activeMenuId, setActiveMenuId] = useState(null);
 
-    const filterOptions = [
-        {
-            key: 'status',
-            label: 'Stock Status',
-            options: [
-                { label: 'All Status', value: '' },
-                { label: 'Low Stock', value: 'Low Stock' },
-                { label: 'Out of Stock', value: 'Out of Stock' },
-            ]
-        },
-        {
-            key: 'priority',
-            label: 'Priority Level',
-            options: [
-                { label: 'All Priorities', value: '' },
-                { label: 'Critical', value: 'Critical' },
-                { label: 'High', value: 'High' },
-                { label: 'Medium', value: 'Medium' },
-            ]
+    // Edit Threshold Modal State
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [newMinStock, setNewMinStock] = useState(0);
+    const [saveLoading, setSaveLoading] = useState(false);
+
+    useEffect(() => {
+        fetchAlerts();
+    }, []);
+
+    const fetchAlerts = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('operations/inventory-alerts/');
+            setAlerts(response.data);
+        } catch (error) {
+            console.error("Failed to fetch inventory alerts:", error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    const handleOpenEditModal = (product) => {
+        setEditingProduct(product);
+        setNewMinStock(product.min_stock);
+        setShowEditModal(true);
+        setActiveMenuId(null);
+    };
+
+    const handleSaveThreshold = async (e) => {
+        e.preventDefault();
+        setSaveLoading(true);
+        try {
+            await api.patch(`/api/v1/products/${editingProduct.id}/`, {
+                min_stock: parseInt(newMinStock)
+            });
+            fetchAlerts();
+            setShowEditModal(false);
+        } catch (error) {
+            console.error("Failed to update threshold:", error);
+            alert("Failed to update min stock threshold.");
+        } finally {
+            setSaveLoading(false);
+        }
+    };
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
     };
 
     const clearFilters = () => {
-        setFilters({ status: '', priority: '' });
+        setFilters({ priority: '', category: '' });
     };
 
     const handleExportExcel = () => {
-        const dataToExport = filteredAlerts.map(alert => ({
-            "Product": alert.product,
+        const dataToExport = alerts.map(alert => ({
+            "Product": alert.title,
             "SKU": alert.sku,
-            "Current Stock": alert.stock,
-            "Min Stock": alert.minStock,
+            "Stock": alert.stock,
+            "Min Stock": alert.min_stock,
+            "Category": alert.category_name,
             "Status": alert.status,
             "Priority": alert.priority
         }));
@@ -67,11 +85,12 @@ const InventoryAlerts = () => {
     };
 
     const handleExportCSV = () => {
-        const dataToExport = filteredAlerts.map(alert => ({
-            "Product": alert.product,
+        const dataToExport = alerts.map(alert => ({
+            "Product": alert.title,
             "SKU": alert.sku,
-            "Current Stock": alert.stock,
-            "Min Stock": alert.minStock,
+            "Stock": alert.stock,
+            "Min Stock": alert.min_stock,
+            "Category": alert.category_name,
             "Status": alert.status,
             "Priority": alert.priority
         }));
@@ -80,153 +99,97 @@ const InventoryAlerts = () => {
     };
 
     const handleExportPDF = () => {
-        const columns = ["Product", "SKU", "Stock", "Min Stock", "Status", "Priority"];
-        const dataToExport = filteredAlerts.map(alert => [
-            alert.product,
+        const columns = ["Product", "SKU", "Stock", "Min Stock", "Category", "Status", "Priority"];
+        const dataToExport = alerts.map(alert => [
+            alert.title,
             alert.sku,
             alert.stock,
-            alert.minStock,
+            alert.min_stock,
+            alert.category_name,
             alert.status,
             alert.priority
         ]);
-        exportToPDF(dataToExport, columns, "Inventory_Alerts_Report", "Inventory Stock Alerts Performance Summary");
+        exportToPDF(dataToExport, columns, "Inventory_Alerts_Report", "Inventory Alerts Summary");
         setShowExportOptions(false);
     };
 
     const filteredAlerts = alerts.filter(alert => {
-        const matchesSearch = alert.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             alert.sku.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filters.status === '' || alert.status === filters.status;
         const matchesPriority = filters.priority === '' || alert.priority === filters.priority;
-
-        return matchesSearch && matchesStatus && matchesPriority;
+        const matchesCategory = filters.category === '' || alert.category_name === filters.category;
+        return matchesSearch && matchesPriority && matchesCategory;
     });
 
+    const filterOptions = [
+        {
+            key: 'priority',
+            label: 'Priority',
+            options: [
+                { label: 'All Priority', value: '' },
+                { label: 'Critical', value: 'Critical' },
+                { label: 'High', value: 'High' },
+                { label: 'Medium', value: 'Medium' },
+            ]
+        }
+    ];
+
     return (
-        <div className="max-w-[1600px] mx-auto pb-10 space-y-6">
+        <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <AlertTriangle size={24} className="text-amber-500" />
-                        Inventory Stock Alerts
+                    <h2 className="text-xl font-semibold text-brand-dark flex items-center gap-2">
+                        <AlertTriangle size={22} className="text-red-500" />
+                        Inventory Alert System
                     </h2>
-                    <div className="flex items-center gap-2 text-sm text-gray-400 font-medium mt-1">
-                        <Home size={14} />
-                        <ChevronRight size={12} />
-                        <span>Operations</span>
-                        <ChevronRight size={12} />
-                        <span className="text-emerald-500 font-bold">Inventory Alerts</span>
-                    </div>
+                    <p className="text-sm text-gray-500 mt-1">Real-time low stock monitoring and restock triggers</p>
                 </div>
-                <div className="flex items-center gap-3 relative">
+                <div className="flex items-center gap-2 relative">
+                    <button
+                        onClick={fetchAlerts}
+                        disabled={loading}
+                        className="p-2.5 bg-white border border-gray-100 text-gray-600 rounded-xl hover:bg-gray-50 transition-all flex items-center gap-2 text-sm font-bold"
+                    >
+                        <RefreshCw size={18} className={`${loading ? 'animate-spin' : ''}`} />
+                        Refresh System
+                    </button>
                     <div className="relative">
                         <button
                             onClick={() => setShowExportOptions(!showExportOptions)}
-                            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                            className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-black hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200"
                         >
-                            <ExportIcon size={18} className="text-emerald-500" />
-                            Export
+                            <ExportIcon size={18} className="stroke-[3px]" />
+                            Download Report
                             <ChevronDown size={14} className={`transition-transform duration-200 ${showExportOptions ? 'rotate-180' : ''}`} />
                         </button>
-
                         <AnimatePresence>
                             {showExportOptions && (
                                 <>
-                                    <div
-                                        className="fixed inset-0 z-40"
-                                        onClick={() => setShowExportOptions(false)}
-                                    ></div>
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden"
-                                    >
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowExportOptions(false)}></div>
+                                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
                                         <div className="p-1">
-                                            <button
-                                                onClick={handleExportExcel}
-                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors border-none"
-                                            >
-                                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                                                    <ExportIcon size={14} className="text-emerald-500" />
-                                                </div>
-                                                Export Excel
-                                            </button>
-                                            <button
-                                                onClick={handleExportCSV}
-                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border-none"
-                                            >
-                                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                                                    <ExportIcon size={14} className="text-blue-500" />
-                                                </div>
-                                                Export CSV
-                                            </button>
-                                            <button
-                                                onClick={handleExportPDF}
-                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border-none"
-                                            >
-                                                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                                                    <FileText size={14} className="text-red-500" />
-                                                </div>
-                                                Export PDF
-                                            </button>
+                                            <button onClick={handleExportExcel} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors border-none"><div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0"><ExportIcon size={14} className="text-emerald-500" /></div>Export Excel</button>
+                                            <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border-none"><div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"><ExportIcon size={14} className="text-blue-500" /></div>Export CSV</button>
+                                            <button onClick={handleExportPDF} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border-none"><div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0"><FileText size={14} className="text-red-500" /></div>Export PDF</button>
                                         </div>
                                     </motion.div>
                                 </>
                             )}
                         </AnimatePresence>
                     </div>
-                    <button
-                        onClick={() => { setSelectedProduct(null); setIsRestockModalOpen(true); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg text-sm hover:bg-emerald-600 transition-all"
-                    >
-                        <Plus size={18} /> Create Restock Order
-                    </button>
                 </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                        <Package size={24} />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Out of Stock</p>
-                        <h4 className="text-xl font-bold text-gray-800">42 Products</h4>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                        <AlertTriangle size={24} />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Low Stock</p>
-                        <h4 className="text-xl font-bold text-gray-800">128 Products</h4>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                        <RefreshCw size={24} />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Restocked (7d)</p>
-                        <h4 className="text-xl font-bold text-gray-800">850 Items</h4>
-                    </div>
-                </div>
-            </div>
-
-            {/* Alerts Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/20">
-                    <div className="relative w-full md:w-96">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
+                    <div className="relative flex-1 w-full max-w-md">
                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search by Product name or SKU..."
+                            placeholder="Identify product by name or SKU..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 transition-all font-medium text-gray-700"
+                            className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
                         />
                     </div>
                     <FilterDropdown
@@ -237,150 +200,134 @@ const InventoryAlerts = () => {
                     />
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-[#eaf4f0] text-emerald-800 font-bold text-xs uppercase tracking-wider">
+                <div className="overflow-x-auto min-h-[300px]">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-red-50/50 text-red-800 font-black text-[10px] uppercase tracking-widest border-b border-red-50">
                             <tr>
-                                <th className="px-6 py-4">Product Information</th>
-                                <th className="px-6 py-4">Current Stock</th>
-                                <th className="px-6 py-4">Status & Priority</th>
+                                <th className="px-6 py-4">Product Unit</th>
+                                <th className="px-6 py-4">Inventory Metrics</th>
+                                <th className="px-6 py-4 text-center">Current Stock</th>
+                                <th className="px-6 py-4 text-center">Min threshold</th>
+                                <th className="px-6 py-4">Categorization</th>
+                                <th className="px-6 py-4 text-center">Alert Trigger</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredAlerts.length > 0 ? filteredAlerts.map(alert => (
-                                <tr key={alert.id} className="hover:bg-gray-50/30 transition-colors group text-sm">
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-gray-800">{alert.product}</span>
-                                            <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">SKU: {alert.sku}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1.5 min-w-[150px]">
-                                            <div className="flex justify-between items-center text-[10px] font-bold">
-                                                <span className="text-gray-500">{alert.stock} of {alert.minStock} (Min)</span>
-                                                <span className={alert.stock === 0 ? 'text-red-500' : 'text-amber-500'}>{alert.minStock > 0 ? Math.round((alert.stock / alert.minStock) * 100) : 0}%</span>
+                        <tbody className="divide-y divide-gray-100">
+                            {loading ? (
+                                Array.from({ length: 4 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse"><td colSpan="7" className="px-6 py-8"><div className="h-4 bg-gray-100 rounded-lg w-full"></div></td></tr>
+                                ))
+                            ) : filteredAlerts.length > 0 ? (
+                                filteredAlerts.map((alert, index) => (
+                                    <tr key={alert.id || index} className="hover:bg-red-50/30 transition-colors group border-l-4 border-l-transparent hover:border-l-red-500">
+                                        <td className="px-6 py-4">
+                                            <div className="font-black text-gray-900 text-xs">{alert.title}</div>
+                                            <div className="text-[10px] text-gray-400 font-black tracking-widest uppercase mt-0.5">{alert.sku}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tight ${alert.priority === 'Critical' ? 'bg-red-500 text-white' : alert.priority === 'High' ? 'bg-amber-500 text-white' : 'bg-blue-500 text-white'}`}>
+                                                {alert.priority} PRIORITY
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 font-black text-xs text-center">
+                                            <span className={alert.stock <= 0 ? 'text-red-600' : 'text-amber-600'}>{alert.stock} Units</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <button
+                                                onClick={() => handleOpenEditModal(alert)}
+                                                className="group inline-flex items-center gap-1.5 font-bold text-xs text-gray-400 hover:text-emerald-600 transition-colors"
+                                            >
+                                                {alert.min_stock} Units
+                                                <MoreVertical size={10} className="opacity-0 group-hover:opacity-100" />
+                                            </button>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest bg-gray-100 px-2 py-1 rounded inline-block">
+                                                {alert.category_name}
                                             </div>
-                                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-500 ${alert.stock === 0 ? 'bg-red-500 w-[0%]' : 'bg-amber-500'}`}
-                                                    style={{ width: `${alert.minStock > 0 ? Math.min((alert.stock / alert.minStock) * 100, 100) : 0}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${alert.stock === 0 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                                                }`}>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className={`flex items-center justify-center gap-1.5 font-black text-[10px] uppercase ${alert.status === 'Out of Stock' ? 'text-red-600' : 'text-amber-600'}`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${alert.status === 'Out of Stock' ? 'bg-red-600 animate-pulse' : 'bg-amber-600'}`}></div>
                                                 {alert.status}
-                                            </span>
-                                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${alert.priority === 'Critical' ? 'bg-red-500 text-white' :
-                                                alert.priority === 'High' ? 'bg-amber-600 text-white' :
-                                                    'bg-gray-100 text-gray-600'
-                                                }`}>
-                                                {alert.priority}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => { setSelectedProduct(alert); setIsRestockModalOpen(true); }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold hover:bg-emerald-500 hover:text-white transition-all border border-emerald-100"
-                                            >
-                                                <ArrowUpRight size={14} /> Restock
-                                            </button>
-                                            <button
-                                                onClick={() => alert(`Details for SKU ${alert.sku}`)}
-                                                className="p-2 text-gray-400 hover:text-gray-800 transition-colors"
-                                            >
-                                                <MoreVertical size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="4" className="px-6 py-20 text-center text-gray-400 font-bold italic">
-                                        No inventory alerts matching your filters.
-                                    </td>
-                                </tr>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleOpenEditModal(alert)}
+                                                    className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                    title="Edit Threshold"
+                                                >
+                                                    <Filter size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => alert(`Initiating restock for ${alert.title}`)}
+                                                    className="bg-brand-dark text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-sm"
+                                                >
+                                                    Restock
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr><td colSpan="7" className="py-24 text-center text-gray-400 font-bold italic tracking-tight">System Secure: All inventory units above threshold.</td></tr>
                             )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Restock Modal */}
-            <AnimatePresence>
-                {isRestockModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsRestockModalOpen(false)}
-                            className="absolute inset-0 bg-brand-dark/20 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden"
-                        >
-                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-800">Restock Request</h3>
-                                    <p className="text-xs text-gray-500 font-medium">Order more stock from vendors</p>
-                                </div>
-                                <button onClick={() => setIsRestockModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors font-bold text-gray-400">
-                                    <Plus size={20} className="rotate-45" />
-                                </button>
+            {/* Edit Threshold Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm animate-in fade-in transition-opacity" onClick={() => !saveLoading && setShowEditModal(false)}></div>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden"
+                    >
+                        <div className="p-6 bg-emerald-600 text-white">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <Plus size={20} /> Adjust Min Threshold
+                            </h3>
+                            <p className="text-emerald-50 text-xs mt-1 font-medium italic opacity-80">{editingProduct?.title}</p>
+                        </div>
+                        <form onSubmit={handleSaveThreshold} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Threshold Value (Units)</label>
+                                <input
+                                    type="number"
+                                    required
+                                    min="1"
+                                    value={newMinStock}
+                                    onChange={(e) => setNewMinStock(e.target.value)}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-black focus:outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all"
+                                />
                             </div>
-                            <div className="p-6 space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Product Information</label>
-                                    <div className="p-3 bg-gray-50 border border-gray-100 rounded-xl">
-                                        {selectedProduct ? (
-                                            <div>
-                                                <p className="font-bold text-gray-800">{selectedProduct.product}</p>
-                                                <p className="text-[10px] text-gray-400 font-bold">SKU: {selectedProduct.sku} | Current: {selectedProduct.stock}</p>
-                                            </div>
-                                        ) : (
-                                            <select className="w-full bg-transparent text-sm font-bold border-none focus:ring-0">
-                                                <option>Search Product...</option>
-                                                {alerts.map(a => <option key={a.id}>{a.product} ({a.sku})</option>)}
-                                            </select>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Order Quantity</label>
-                                        <input type="number" placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/10" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Expected Date</label>
-                                        <input type="date" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/10" />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Vendor Note</label>
-                                    <textarea placeholder="Urgent restock needed..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/10 h-24 resize-none"></textarea>
-                                </div>
+                            <div className="pt-2 flex gap-3">
                                 <button
-                                    onClick={() => { alert('Restock order placed successfully!'); setIsRestockModalOpen(false); }}
-                                    className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-600 transition-all mt-2"
+                                    type="button"
+                                    disabled={saveLoading}
+                                    onClick={() => setShowEditModal(false)}
+                                    className="flex-1 py-3 text-xs font-black text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest"
                                 >
-                                    Submit Purchase Order
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={saveLoading}
+                                    className="flex-1 py-3 bg-emerald-500 text-white text-xs font-black rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 uppercase tracking-widest"
+                                >
+                                    {saveLoading ? 'Saving...' : 'Update Limit'}
                                 </button>
                             </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 };

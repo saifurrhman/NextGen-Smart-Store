@@ -62,7 +62,7 @@ const Campaigns = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this campaign?')) {
             try {
-                await api.delete(`/api/v1/marketing/campaigns/${id}/`);
+                await api.delete(`marketing/campaigns/${id}/`);
                 fetchCampaigns();
             } catch (error) {
                 console.error("Failed to delete campaign:", error);
@@ -74,17 +74,26 @@ const Campaigns = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                budget: parseFloat(formData.budget) || 0,
+                spent: parseFloat(formData.spent) || 0,
+            };
+            console.log("Saving campaign payload:", payload);
             if (isEditing) {
-                await api.put(`/api/v1/marketing/campaigns/${selectedCampaign.id}/`, formData);
+                await api.put(`marketing/campaigns/${selectedCampaign.id}/`, payload);
             } else {
-                await api.post('/api/v1/marketing/campaigns/', formData);
+                await api.post('marketing/campaigns/', payload);
             }
             setIsModalOpen(false);
             resetForm();
             fetchCampaigns();
         } catch (error) {
-            console.error("Failed to save campaign:", error);
-            alert("Failed to save campaign. Please check all fields.");
+            console.error("Failed to save campaign:", error.response?.data || error.message);
+            const errorMsg = error.response?.data
+                ? Object.entries(error.response.data).map(([field, msg]) => `${field}: ${msg}`).join('\n')
+                : "Please check all fields and try again.";
+            alert(`Failed to save campaign:\n${errorMsg}`);
         }
     };
 
@@ -95,7 +104,7 @@ const Campaigns = () => {
     const fetchCampaigns = async () => {
         setLoading(true);
         try {
-            let url = `/api/v1/marketing/campaigns/?page=${page}&search=${searchTerm}`;
+            let url = `marketing/campaigns/?page=${page}&search=${searchTerm}`;
             if (filters.status) url += `&status=${filters.status}`;
             const response = await api.get(url);
             setCampaigns(response.data.results);

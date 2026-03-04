@@ -66,7 +66,7 @@ const Promotions = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this promotion?')) {
             try {
-                await api.delete(`/api/v1/marketing/promotions/${id}/`);
+                await api.delete(`marketing/promotions/${id}/`);
                 fetchPromotions();
             } catch (error) {
                 console.error("Failed to delete promotion:", error);
@@ -78,24 +78,32 @@ const Promotions = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                usage_limit: parseInt(formData.usage_limit) || 100,
+                redeemed: parseInt(formData.redeemed) || 0,
+            };
             if (isEditing) {
-                await api.put(`/api/v1/marketing/promotions/${selectedPromotion.id}/`, formData);
+                await api.put(`marketing/promotions/${selectedPromotion.id}/`, payload);
             } else {
-                await api.post('/api/v1/marketing/promotions/', formData);
+                await api.post('marketing/promotions/', payload);
             }
             setIsModalOpen(false);
             resetForm();
             fetchPromotions();
         } catch (error) {
-            console.error("Failed to save promotion:", error);
-            alert("Failed to save promotion. Please check all fields.");
+            console.error("Failed to save promotion:", error.response?.data || error.message);
+            const errorMsg = error.response?.data
+                ? Object.entries(error.response.data).map(([field, msg]) => `${field}: ${msg}`).join('\n')
+                : "Please check all fields and try again.";
+            alert(`Failed to save promotion:\n${errorMsg}`);
         }
     };
 
     const fetchPromotions = async () => {
         setLoading(true);
         try {
-            let url = `/api/v1/marketing/promotions/?page=${page}&search=${searchTerm}`;
+            let url = `marketing/promotions/?page=${page}&search=${searchTerm}`;
             if (filters.status) url += `&status=${filters.status}`;
             if (filters.type) url += `&type=${filters.type}`;
 

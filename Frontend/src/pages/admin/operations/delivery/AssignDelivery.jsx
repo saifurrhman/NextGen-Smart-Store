@@ -16,11 +16,11 @@ const AssignDelivery = () => {
         setLoading(true);
         try {
             // Fetch pending orders (status=pending or similar)
-            const ordersResponse = await api.get('/api/v1/orders/?status=pending');
+            const ordersResponse = await api.get('orders/?status=pending');
             setOrders(ordersResponse.data.results || []);
 
             // Fetch available delivery boys
-            const boysResponse = await api.get('/api/v1/users/?role=DELIVERY');
+            const boysResponse = await api.get('users/?role=DELIVERY');
             setDeliveryBoys(boysResponse.data.results || []);
         } catch (error) {
             console.error("Failed to fetch assignment data:", error);
@@ -32,7 +32,7 @@ const AssignDelivery = () => {
     const handleAssign = async (orderId, boyId) => {
         try {
             // In a real app, this would create a Delivery record
-            await api.post('/api/v1/operations/delivery/', {
+            await api.post('operations/delivery/', {
                 order_id: orderId,
                 delivery_boy: boyId,
                 tracking_id: `TRK${Math.random().toString(36).substring(2, 10).toUpperCase()}`,

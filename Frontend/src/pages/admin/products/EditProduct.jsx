@@ -28,6 +28,7 @@ const EditProduct = () => {
         barcode: '',
         category: '',
         attributes: [],
+        min_stock: 10,
         is_active: true
     });
 
@@ -57,6 +58,7 @@ const EditProduct = () => {
                     barcode: p.barcode || '',
                     category: p.category || (p.category_id || ''),
                     attributes: p.attributes || [],
+                    min_stock: p.min_stock || 10,
                     is_active: p.is_active ?? true
                 });
             } catch (err) {
@@ -249,6 +251,17 @@ const EditProduct = () => {
                                         onChange={handleChange}
                                         className="w-full px-4 py-2 bg-gray-50/50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500 font-bold"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Low Stock Threshold</label>
+                                    <input
+                                        type="number"
+                                        name="min_stock"
+                                        value={formData.min_stock}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 bg-blue-50/10 border border-blue-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 font-bold"
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">System triggers alert below this level</p>
                                 </div>
                             </div>
                         </div>

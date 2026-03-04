@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     BarChart2, Search, Filter, Download, Plus, Calendar,
     FileText, ChevronLeft, ChevronRight, X, TrendingUp, TrendingDown, Minus,
-    RefreshCw
+    RefreshCw, Trash2
 } from 'lucide-react';
 import api from '../../../utils/api';
 import { exportToExcel, exportToPDF, exportToCSV } from '../../../utils/exportUtils';
@@ -79,10 +79,20 @@ function MiniCalendar({ value, onChange, minDate, maxDate }) {
 }
 
 // ─── Date Range Picker Modal ────────────────────────────────
-function DateRangeModal({ isOpen, onClose, onApply, initialFrom, initialTo }) {
+function DateRangeModal({ isOpen, onClose, onApply, initialFrom, initialTo, initialLabel }) {
     const [from, setFrom] = useState(initialFrom || null);
     const [to, setTo] = useState(initialTo || null);
+    const [label, setLabel] = useState(initialLabel || '');
     const [step, setStep] = useState('from'); // 'from' | 'to'
+
+    useEffect(() => {
+        if (isOpen) {
+            setFrom(initialFrom || null);
+            setTo(initialTo || null);
+            setLabel(initialLabel || '');
+            setStep('from');
+        }
+    }, [isOpen, initialFrom, initialTo, initialLabel]);
 
     const PRESETS = [
         { label: 'Today', days: 0 },
@@ -122,7 +132,7 @@ function DateRangeModal({ isOpen, onClose, onApply, initialFrom, initialTo }) {
 
     const handleApply = () => {
         if (from && to) {
-            onApply({ from, to });
+            onApply({ from, to, label });
             onClose();
         }
     };
@@ -168,6 +178,18 @@ function DateRangeModal({ isOpen, onClose, onApply, initialFrom, initialTo }) {
 
                     {/* Calendars */}
                     <div className="flex-1 p-6">
+                        {/* Report Name Input */}
+                        <div className="mb-5">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Report Label (Optional)</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Q1 Sales, Holiday Season"
+                                value={label}
+                                onChange={(e) => setLabel(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 placeholder-gray-300 focus:outline-none focus:border-emerald-400 focus:bg-white transition-all"
+                            />
+                        </div>
+
                         {/* Selected range display */}
                         <div className="flex items-center gap-3 mb-5">
                             <div
@@ -217,7 +239,7 @@ function DateRangeModal({ isOpen, onClose, onApply, initialFrom, initialTo }) {
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
                     <button
-                        onClick={() => { setFrom(null); setTo(null); setStep('from'); }}
+                        onClick={() => { setFrom(null); setTo(null); setStep('from'); setLabel(''); }}
                         className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
                     >
                         Clear
@@ -231,7 +253,7 @@ function DateRangeModal({ isOpen, onClose, onApply, initialFrom, initialTo }) {
                             disabled={!from || !to}
                             className="px-6 py-2 bg-emerald-500 text-white text-sm font-bold rounded-xl hover:bg-emerald-600 transition-all shadow-md shadow-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                            Generate Report →
+                            Generate & Save →
                         </button>
                     </div>
                 </div>
@@ -244,40 +266,24 @@ function DateRangeModal({ isOpen, onClose, onApply, initialFrom, initialTo }) {
 const OrderReports = () => {
     const [allOrders, setAllOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [savedReports, setSavedReports] = useState([]);
 
-    // Preset report rows
-    const [reportRows, setReportRows] = useState([
-        { id: 'last7', label: 'Last 7 Days', days: 7, from: null, to: null, stats: null },
-        { id: 'last30', label: 'Last 30 Days', days: 30, from: null, to: null, stats: null },
-        { id: 'last90', label: 'Last 90 Days', days: 90, from: null, to: null, stats: null },
-    ]);
+    // Preset report rows (not saved to DB, always relative to TODAY)
+    const presetRows = [
+        { id: 'last7', label: 'Last 7 Days', days: 7, isPreset: true },
+        { id: 'last30', label: 'Last 30 Days', days: 30, isPreset: true },
+        { id: 'last90', label: 'Last 90 Days', days: 90, isPreset: true },
+    ];
+
+    const [reportRows, setReportRows] = useState([]);
 
     // Calendar modal state
     const [calendarOpen, setCalendarOpen] = useState(false);
-    const [editingRowId, setEditingRowId] = useState(null);
+    const [editingRow, setEditingRow] = useState(null);
 
     const [searchTerm, setSearchTerm] = useState('');
 
     const { selectedIds, toggleAll, toggleOne, isAllSelected, clearSelection } = useRowSelection('id');
-
-    // ── Fetch orders ──
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const res = await api.get('orders/');
-                const data = res.data;
-                const orders = Array.isArray(data) ? data : (data.results || []);
-                setAllOrders(orders);
-                initStats(orders);
-            } catch (err) {
-                console.error('Failed to fetch orders:', err.message);
-                initStats([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchOrders();
-    }, []);
 
     const calcStatsForRange = useCallback((orders, from, to) => {
         const filtered = orders.filter(o => {
@@ -293,11 +299,34 @@ const OrderReports = () => {
         return { total, revenue, avg, returns: returnPct, trend };
     }, []);
 
-    const initStats = useCallback((orders) => {
+    const fetchOrdersAndReports = async () => {
+        setLoading(true);
+        try {
+            const [ordersRes, reportsRes] = await Promise.all([
+                api.get('orders/'),
+                api.get('orders/reports/')
+            ]);
+
+            const orders = Array.isArray(ordersRes.data) ? ordersRes.data : (ordersRes.data.results || []);
+            setAllOrders(orders);
+
+            const reports = Array.isArray(reportsRes.data) ? reportsRes.data : (reportsRes.data.results || []);
+            setSavedReports(reports);
+
+            assembleRows(orders, reports);
+        } catch (err) {
+            console.error('Failed to fetch data:', err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const assembleRows = useCallback((orders, reports) => {
         const now = new Date();
         now.setHours(23, 59, 59, 999);
-        setReportRows(prev => prev.map(row => {
-            if (!row.days) return row;
+
+        // 1. Process Presets
+        const pRows = presetRows.map(row => {
             const from = new Date();
             from.setDate(from.getDate() - row.days);
             from.setHours(0, 0, 0, 0);
@@ -307,48 +336,71 @@ const OrderReports = () => {
                 to: now,
                 stats: calcStatsForRange(orders, from, now)
             };
-        }));
-    }, [calcStatsForRange]);
+        });
 
-    // When orders are loaded, also recompute any custom rows
-    useEffect(() => {
-        if (allOrders.length > 0) initStats(allOrders);
-    }, [allOrders, initStats]);
-
-    // ── Calendar apply ──
-    const handleDateRangeApply = ({ from, to }) => {
-        const stats = calcStatsForRange(allOrders, from, to);
-        const label = `${from.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} → ${to.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-
-        if (editingRowId === 'new') {
-            // Add a new custom row
-            setReportRows(prev => [...prev, {
-                id: `custom_${Date.now()}`,
-                label,
-                days: null,
+        // 2. Process Saved Reports
+        const sRows = reports.map(r => {
+            const from = new Date(r.start_date);
+            const to = new Date(r.end_date);
+            return {
+                id: r.id,
+                label: r.label,
                 from,
                 to,
-                stats,
                 isCustom: true,
-            }]);
-        } else {
-            // Update existing row
-            setReportRows(prev => prev.map(row =>
-                row.id === editingRowId ? { ...row, label, from, to, stats, isCustom: true } : row
-            ));
+                stats: calcStatsForRange(orders, from, to)
+            };
+        });
+
+        setReportRows([...pRows, ...sRows]);
+    }, [calcStatsForRange]);
+
+    useEffect(() => {
+        fetchOrdersAndReports();
+    }, []);
+
+    // ── Calendar apply ──
+    const handleDateRangeApply = async ({ from, to, label }) => {
+        const autoLabel = `${from.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} → ${to.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        const finalLabel = label || autoLabel;
+
+        const payload = {
+            label: finalLabel,
+            start_date: from.toISOString(),
+            end_date: to.toISOString(),
+        };
+
+        try {
+            if (editingRow && !editingRow.isPreset) {
+                // Update existing custom report
+                await api.put(`orders/reports/${editingRow.id}/`, payload);
+            } else {
+                // Create new report
+                await api.post('orders/reports/', payload);
+            }
+            fetchOrdersAndReports();
+        } catch (err) {
+            console.error('Failed to save report:', err.response?.data || err.message);
+            alert('Failed to save report: ' + JSON.stringify(err.response?.data || err.message));
         }
     };
 
-    const openCalendar = (rowId) => {
-        setEditingRowId(rowId);
+    const openCalendar = (row) => {
+        setEditingRow(row);
         setCalendarOpen(true);
     };
 
-    const deleteRow = (rowId) => {
-        setReportRows(prev => prev.filter(r => r.id !== rowId));
+    const deleteRow = async (rowId) => {
+        if (!window.confirm('Are you sure you want to delete this report range?')) return;
+        try {
+            await api.delete(`orders/reports/${rowId}/`);
+            fetchOrdersAndReports();
+        } catch (err) {
+            console.error('Delete failed:', err);
+            alert('Failed to delete report.');
+        }
     };
 
-    // ── Export helpers ──
     const buildExportData = (rows) => rows
         .filter(r => r.stats)
         .map(r => ({
@@ -422,7 +474,7 @@ const OrderReports = () => {
                         <BarChart2 size={24} className="text-emerald-500" />
                         Order Reports
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1 font-medium">Click any row's calendar icon to pick a custom date range</p>
+                    <p className="text-sm text-gray-500 mt-1 font-medium">Analyze sales performance and save custom report configurations.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -437,20 +489,19 @@ const OrderReports = () => {
                         </button>
                     </div>
                     <button
-                        onClick={() => openCalendar('new')}
+                        onClick={() => openCalendar(null)}
                         className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all shadow-md shadow-emerald-100"
                     >
-                        <Calendar size={16} /> Custom Range
+                        <Calendar size={16} /> New Report
                     </button>
                 </div>
             </div>
-
 
             {/* Main Table */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 {/* Toolbar */}
                 <div className="p-4 border-b border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
-                    <div className="relative flex-1 w-full max-w-md">
+                    <div className="relative flex-1 w-full max-md">
                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
@@ -460,12 +511,21 @@ const OrderReports = () => {
                             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 transition-all font-medium text-gray-700 shadow-sm"
                         />
                     </div>
-                    <button
-                        onClick={() => openCalendar('new')}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 rounded-xl transition-all shadow-sm"
-                    >
-                        <Plus size={16} /> Add Custom Range
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={fetchOrdersAndReports}
+                            className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                            title="Refresh Data"
+                        >
+                            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                        </button>
+                        <button
+                            onClick={() => openCalendar(null)}
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 rounded-xl transition-all shadow-sm"
+                        >
+                            <Plus size={16} /> Create Custom
+                        </button>
+                    </div>
                 </div>
 
                 {/* Table */}
@@ -473,43 +533,40 @@ const OrderReports = () => {
                     <table className="w-full text-left">
                         <thead className="bg-[#eaf4f0] text-emerald-800 font-bold text-xs uppercase tracking-wider">
                             <tr>
-                                {/* Select All checkbox */}
                                 <th className="pl-5 pr-2 py-4 w-10">
                                     <input
                                         type="checkbox"
                                         className="w-4 h-4 rounded border-gray-300 accent-emerald-500 cursor-pointer"
                                         checked={isAllSelected(visibleRows)}
                                         onChange={() => toggleAll(visibleRows)}
-                                        title="Select All"
                                     />
                                 </th>
-                                <th className="px-4 py-4">Date Range</th>
-                                <th className="px-6 py-4 text-center">Total Orders</th>
+                                <th className="px-4 py-4">Report Description</th>
+                                <th className="px-6 py-4 text-center">Orders</th>
                                 <th className="px-6 py-4 text-center">Revenue</th>
-                                <th className="px-6 py-4 text-center">Avg Order Value</th>
-                                <th className="px-6 py-4 text-center">Return Rate</th>
+                                <th className="px-6 py-4 text-center">Avg Value</th>
+                                <th className="px-6 py-4 text-center">Returns</th>
                                 <th className="px-6 py-4 text-center">Trend</th>
-                                <th className="px-6 py-4 text-right">Download</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {loading && (
+                            {loading && reportRows.length === 0 && (
                                 <tr>
                                     <td colSpan="8" className="px-6 py-12 text-center">
                                         <div className="flex items-center justify-center gap-3">
                                             <RefreshCw size={18} className="animate-spin text-emerald-500" />
-                                            <span className="text-gray-400 font-medium text-sm">Loading order data...</span>
+                                            <span className="text-gray-400 font-medium text-sm">Synchronizing data...</span>
                                         </div>
                                     </td>
                                 </tr>
                             )}
-                            {!loading && visibleRows.map((row) => (
+                            {reportRows.length > 0 && visibleRows.map((row) => (
                                 <tr
                                     key={row.id}
                                     className={`hover:bg-gray-50/60 transition-colors group ${selectedIds.includes(row.id) ? 'bg-emerald-50/40' : ''
                                         }`}
                                 >
-                                    {/* Individual checkbox */}
                                     <td className="pl-5 pr-2 py-4 w-10">
                                         <input
                                             type="checkbox"
@@ -518,33 +575,27 @@ const OrderReports = () => {
                                             onChange={() => toggleOne(row.id)}
                                         />
                                     </td>
-                                    {/* Date Range Cell */}
                                     <td className="px-4 py-4">
                                         <div className="flex items-center gap-3">
-                                            <button
-                                                onClick={() => openCalendar(row.id)}
-                                                className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex-shrink-0 border border-emerald-100 shadow-sm"
-                                                title="Click to change date range"
-                                            >
-                                                <Calendar size={15} />
-                                            </button>
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0 border shadow-sm ${row.isPreset ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-blue-50 text-blue-500 border-blue-100'}`}>
+                                                {row.isPreset ? <TrendingUp size={15} /> : <Calendar size={15} />}
+                                            </div>
                                             <div>
-                                                <p className="font-bold text-gray-800 text-sm">{row.label}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-gray-800 text-sm">{row.label}</p>
+                                                    {row.isCustom && (
+                                                        <span className="px-2 py-0.5 bg-blue-50 text-blue-500 text-[9px] font-black uppercase rounded-full border border-blue-100">Saved</span>
+                                                    )}
+                                                </div>
                                                 {row.from && row.to && (
                                                     <p className="text-[10px] text-gray-400 font-medium">
                                                         {row.from.toLocaleDateString()} – {row.to.toLocaleDateString()}
                                                     </p>
                                                 )}
                                             </div>
-                                            {row.isCustom && (
-                                                <span className="ml-1 px-2 py-0.5 bg-blue-50 text-blue-500 text-[9px] font-black uppercase rounded-full border border-blue-100">
-                                                    Custom
-                                                </span>
-                                            )}
                                         </div>
                                     </td>
 
-                                    {/* Stats */}
                                     <td className="px-6 py-4 text-center">
                                         <span className="text-lg font-black text-gray-800">{row.stats?.total ?? '—'}</span>
                                     </td>
@@ -574,7 +625,6 @@ const OrderReports = () => {
                                         )}
                                     </td>
 
-                                    {/* Per-row download actions */}
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1">
                                             <button
@@ -591,14 +641,23 @@ const OrderReports = () => {
                                             >
                                                 <FileText size={15} />
                                             </button>
-                                            {row.isCustom && (
-                                                <button
-                                                    onClick={() => deleteRow(row.id)}
-                                                    title="Remove range"
-                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <X size={15} />
-                                                </button>
+                                            {!row.isPreset && (
+                                                <>
+                                                    <button
+                                                        onClick={() => openCalendar(row)}
+                                                        title="Edit Config"
+                                                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-emerald-500 transition-all opacity-0 group-hover:opacity-100"
+                                                    >
+                                                        <RefreshCw size={15} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteRow(row.id)}
+                                                        title="Delete Report"
+                                                        className="p-2 hover:bg-red-50 rounded-lg text-red-400 transition-all opacity-0 group-hover:opacity-100"
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                     </td>
@@ -609,13 +668,7 @@ const OrderReports = () => {
                                 <tr>
                                     <td colSpan="8" className="px-6 py-16 text-center">
                                         <BarChart2 size={36} className="mx-auto mb-3 text-gray-200" />
-                                        <p className="text-gray-400 font-bold text-sm">No report ranges found.</p>
-                                        <button
-                                            onClick={() => openCalendar('new')}
-                                            className="mt-3 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold hover:bg-emerald-100 transition-colors"
-                                        >
-                                            + Add Custom Range
-                                        </button>
+                                        <p className="text-gray-400 font-bold text-sm">No match found.</p>
                                     </td>
                                 </tr>
                             )}
@@ -624,7 +677,6 @@ const OrderReports = () => {
                 </div>
             </div>
 
-            {/* ── Bulk Action Bar (appears when rows selected) ── */}
             <BulkActionBar
                 selectedIds={selectedIds}
                 onClear={clearSelection}
@@ -648,20 +700,28 @@ const OrderReports = () => {
                     exportToPDF(data, cols, 'Order_Reports_Selected', 'Order Performance Report');
                 }}
                 onDelete={() => {
-                    if (window.confirm(`Remove ${selectedIds.length} selected report ranges?`)) {
-                        setReportRows(prev => prev.filter(r => !selectedIds.includes(r.id)));
-                        clearSelection();
+                    const customIds = selectedIds.filter(id => !presetRows.find(p => p.id === id));
+                    if (customIds.length === 0) {
+                        alert("Preset ranges cannot be deleted.");
+                        return;
+                    }
+                    if (window.confirm(`Delete ${customIds.length} custom reports?`)) {
+                        Promise.all(customIds.map(id => api.delete(`orders/reports/${id}/`)))
+                            .then(() => {
+                                fetchOrdersAndReports();
+                                clearSelection();
+                            });
                     }
                 }}
             />
 
-            {/* Date Range Modal */}
             <DateRangeModal
                 isOpen={calendarOpen}
-                onClose={() => { setCalendarOpen(false); setEditingRowId(null); }}
+                onClose={() => { setCalendarOpen(false); setEditingRow(null); }}
                 onApply={handleDateRangeApply}
-                initialFrom={editingRowId && editingRowId !== 'new' ? reportRows.find(r => r.id === editingRowId)?.from : null}
-                initialTo={editingRowId && editingRowId !== 'new' ? reportRows.find(r => r.id === editingRowId)?.to : null}
+                initialFrom={editingRow?.from}
+                initialTo={editingRow?.to}
+                initialLabel={editingRow?.label}
             />
         </div>
     );

@@ -552,147 +552,151 @@ const AllUsers = () => {
             {/* Add User Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => !createLoading && setShowAddModal(false)}></div>
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" onClick={() => !createLoading && setShowAddModal(false)} />
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden">
+
                         {/* Modal Header */}
-                        <div className="bg-emerald-500 p-6 flex justify-between items-center text-white">
-                            <div>
-                                <h3 className="text-xl font-bold flex items-center gap-2">
-                                    <UserPlus size={20} /> Create New User
-                                </h3>
-                                <p className="text-emerald-50 text-xs mt-1 font-medium">Add a new staff, vendor, or customer account</p>
+                        <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100" style={{ background: 'linear-gradient(to right, #EAF8E7, white)' }}>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ background: '#4EA674', boxShadow: '0 4px 14px rgba(78,166,116,0.3)' }}>
+                                    <UserPlus size={20} className="text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black text-gray-900">Create New User</h3>
+                                    <p className="text-xs font-medium mt-0.5" style={{ color: '#4EA674' }}>Add a new staff, vendor, or customer account</p>
+                                </div>
                             </div>
-                            <button
-                                onClick={() => setShowAddModal(false)}
-                                className="p-2 hover:bg-white/20 rounded-xl transition-all"
-                            >
-                                <X size={20} />
+                            <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400 hover:text-gray-600">
+                                <X size={18} />
                             </button>
                         </div>
 
                         {/* Modal Body */}
-                        <form onSubmit={handleCreateUser} className="p-6 space-y-5">
-                            {msg.text && (
-                                <div className={`p-4 rounded-xl flex items-center gap-3 font-bold text-sm ${msg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-                                    {msg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-                                    {msg.text}
-                                </div>
-                            )}
+                        <form onSubmit={handleCreateUser}>
+                            <div className="px-7 py-5 space-y-5">
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="col-span-1">
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">First Name</label>
-                                    <div className="relative">
-                                        <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            name="first_name"
-                                            required
-                                            value={formData.first_name}
-                                            onChange={handleFormChange}
-                                            placeholder="John"
-                                            className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-gray-800"
-                                        />
+                                {msg.text && (
+                                    <div className={`p-4 rounded-xl flex items-center gap-3 font-bold text-sm ${msg.type === 'success' ? 'bg-[#EAF8E7] text-[#4EA674] border border-[#C1E6BA]' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+                                        {msg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                                        {msg.text}
                                     </div>
-                                </div>
-                                <div className="col-span-1">
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
-                                    <input
-                                        type="text"
-                                        name="last_name"
-                                        required
-                                        value={formData.last_name}
-                                        onChange={handleFormChange}
-                                        placeholder="Doe"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-gray-800"
-                                    />
-                                </div>
-                                <div className="col-span-2">
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
-                                    <div className="relative">
-                                        <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            required
-                                            value={formData.email}
-                                            onChange={handleFormChange}
-                                            placeholder="john.doe@example.com"
-                                            className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-gray-800"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-span-1">
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Password</label>
-                                    <div className="relative">
-                                        <Key size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            required
-                                            value={formData.password}
-                                            onChange={handleFormChange}
-                                            placeholder="••••••••"
-                                            className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-gray-800"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-span-1">
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Account Role</label>
-                                    <select
-                                        name="role"
-                                        value={formData.role}
-                                        onChange={handleFormChange}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-gray-800"
-                                    >
-                                        <option value="CUSTOMER">Customer</option>
-                                        <option value="VENDOR">Vendor</option>
-                                        <option value="SUPER_ADMIN">System Admin</option>
-                                    </select>
-                                </div>
+                                )}
 
-                                <div className="col-span-2">
-                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                        <div>
-                                            <p className="text-xs font-black text-gray-800 uppercase tracking-widest">Active Status</p>
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Allows user to login immediately</p>
-                                        </div>
-                                        <label className="flex items-center cursor-pointer relative">
+                                <div className="grid grid-cols-2 gap-4">
+                                    {/* First Name */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">First Name <span className="text-red-400">*</span></label>
+                                        <div className="relative">
+                                            <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
                                             <input
-                                                type="checkbox"
-                                                name="is_active"
-                                                checked={formData.is_active}
-                                                onChange={handleFormChange}
-                                                className="sr-only peer"
+                                                type="text" name="first_name" required
+                                                value={formData.first_name} onChange={handleFormChange}
+                                                placeholder="John"
+                                                className="w-full pl-9 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-medium focus:outline-none focus:bg-white transition-all text-gray-800"
+                                                style={{ '--tw-ring-color': '#4EA674' }}
+                                                onFocus={e => e.target.style.borderColor = '#4EA674'}
+                                                onBlur={e => e.target.style.borderColor = '#f3f4f6'}
                                             />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                                        </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Last Name */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Last Name <span className="text-red-400">*</span></label>
+                                        <input
+                                            type="text" name="last_name" required
+                                            value={formData.last_name} onChange={handleFormChange}
+                                            placeholder="Doe"
+                                            className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-medium focus:outline-none focus:bg-white transition-all text-gray-800"
+                                            onFocus={e => e.target.style.borderColor = '#4EA674'}
+                                            onBlur={e => e.target.style.borderColor = '#f3f4f6'}
+                                        />
+                                    </div>
+
+                                    {/* Email */}
+                                    <div className="col-span-2 space-y-1.5">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Email Address <span className="text-red-400">*</span></label>
+                                        <div className="relative">
+                                            <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+                                            <input
+                                                type="email" name="email" required
+                                                value={formData.email} onChange={handleFormChange}
+                                                placeholder="john.doe@example.com"
+                                                className="w-full pl-9 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-medium focus:outline-none focus:bg-white transition-all text-gray-800"
+                                                onFocus={e => e.target.style.borderColor = '#4EA674'}
+                                                onBlur={e => e.target.style.borderColor = '#f3f4f6'}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Password */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Password <span className="text-red-400">*</span></label>
+                                        <div className="relative">
+                                            <Key size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+                                            <input
+                                                type="password" name="password" required
+                                                value={formData.password} onChange={handleFormChange}
+                                                placeholder="••••••••"
+                                                className="w-full pl-9 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-medium focus:outline-none focus:bg-white transition-all text-gray-800"
+                                                onFocus={e => e.target.style.borderColor = '#4EA674'}
+                                                onBlur={e => e.target.style.borderColor = '#f3f4f6'}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Account Role */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Account Role</label>
+                                        <select
+                                            name="role" value={formData.role} onChange={handleFormChange}
+                                            className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-medium focus:outline-none focus:bg-white transition-all text-gray-800"
+                                            onFocus={e => e.target.style.borderColor = '#4EA674'}
+                                            onBlur={e => e.target.style.borderColor = '#f3f4f6'}
+                                        >
+                                            <option value="CUSTOMER">Customer</option>
+                                            <option value="VENDOR">Vendor</option>
+                                            <option value="SUPER_ADMIN">System Admin</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Active Status */}
+                                    <div className="col-span-2">
+                                        <div className="flex items-center justify-between p-4 rounded-xl border-2" style={{ background: '#EAF8E7', borderColor: '#C1E6BA' }}>
+                                            <div>
+                                                <p className="text-xs font-black text-gray-700">Active Status</p>
+                                                <p className="text-[10px] text-gray-400 font-medium mt-0.5">Allows user to login immediately</p>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleFormChange} className="sr-only peer" />
+                                                <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-[#4EA674] transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:shadow-sm after:transition-all peer-checked:after:translate-x-5" />
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Modal Footer */}
-                            <div className="flex gap-3 pt-2">
+                            {/* Footer */}
+                            <div className="flex gap-3 px-7 py-5 border-t border-gray-50 bg-gray-50/30">
                                 <button
-                                    type="button"
-                                    disabled={createLoading}
-                                    onClick={() => setShowAddModal(false)}
-                                    className="flex-1 py-3 text-sm font-black text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-2xl transition-all border border-transparent"
-                                >
-                                    Cancel
-                                </button>
+                                    type="button" disabled={createLoading} onClick={() => setShowAddModal(false)}
+                                    className="flex-1 py-3 text-sm font-bold text-gray-500 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-all"
+                                >Cancel</button>
                                 <button
-                                    type="submit"
-                                    disabled={createLoading}
-                                    className="flex-1 py-3 bg-emerald-500 text-white text-sm font-black rounded-2xl hover:bg-emerald-600 shadow-lg shadow-emerald-100 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    type="submit" disabled={createLoading}
+                                    className="flex-[2] py-3 text-white text-sm font-black rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
+                                    style={{ background: '#4EA674', boxShadow: '0 4px 14px rgba(78,166,116,0.25)' }}
                                 >
-                                    {createLoading ? 'Creating...' : <><UserPlus size={18} /> Create Account</>}
+                                    {createLoading
+                                        ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating...</>
+                                        : <><UserPlus size={16} /> Create Account</>}
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
+
 
         </div>
     );

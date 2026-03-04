@@ -10,12 +10,14 @@ const VendorPayouts = () => {
     const [pagination, setPagination] = useState({ count: 0, next: null, previous: null });
     const [showExportMenu, setShowExportMenu] = useState(false);
 
+    const [searchTerm, setSearchTerm] = useState('');
+
     useEffect(() => {
         const fetchPayouts = async () => {
             setLoading(true);
             try {
-                const response = await api.get(`/api/v1/finance/payouts/?page=${page}`);
-                setPayouts(response.data.results);
+                const response = await api.get(`finance/payouts/?page=${page}&search=${searchTerm}`);
+                setPayouts(response.data.results || response.data);
                 setPagination({
                     count: response.data.count,
                     next: response.data.next,
@@ -122,6 +124,8 @@ const VendorPayouts = () => {
                         <input
                             type="text"
                             placeholder="Search payouts..."
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 transition-all font-medium text-gray-700 shadow-sm"
                         />
                     </div>

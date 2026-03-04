@@ -48,3 +48,13 @@ class Refund(models.Model):
 
     def __str__(self):
         return f"Refund for Order {self.order.id} - {self.status}"
+
+class OrderReport(models.Model):
+    id = djongo_models.ObjectIdField(primary_key=True)
+    label = models.CharField(max_length=200)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.label

@@ -12,8 +12,9 @@ const DeliveryTeam = () => {
     const [pagination, setPagination] = useState({ count: 0, next: null, previous: null });
     const [showExportOptions, setShowExportOptions] = useState(false);
 
-    // Onboard Specialist Modal State
+    // Specialist Modal State
     const [showAddModal, setShowAddModal] = useState(false);
+    const [editingSpecialist, setEditingSpecialist] = useState(null);
     const [createLoading, setCreateLoading] = useState(false);
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [msg, setMsg] = useState({ type: '', text: '' });
@@ -38,29 +39,69 @@ const DeliveryTeam = () => {
         }));
     };
 
-    const handleOnboardSpecialist = async (e) => {
+    const handleOpenAddModal = () => {
+        setEditingSpecialist(null);
+        setFormData({ first_name: '', last_name: '', email: '', password: '', phone_number: '', is_active: true });
+        setMsg({ type: '', text: '' });
+        setShowAddModal(true);
+    };
+
+    const handleOpenEditModal = (member) => {
+        setEditingSpecialist(member);
+        setFormData({
+            first_name: member.first_name || '',
+            last_name: member.last_name || '',
+            email: member.email,
+            password: '', // Keep empty unless changing
+            phone_number: member.phone_number || '',
+            is_active: member.is_active
+        });
+        setMsg({ type: '', text: '' });
+        setShowAddModal(true);
+        setActiveMenuId(null);
+    };
+
+    const handleDeleteSpecialist = async (email) => {
+        if (!window.confirm(`Are you sure you want to delete specialist ${email}?`)) return;
+        try {
+            await api.delete(`/api/v1/users/${email}/`);
+            fetchTeam();
+            setActiveMenuId(null);
+        } catch (error) {
+            console.error("Failed to delete specialist:", error);
+            alert("Failed to delete specialist.");
+        }
+    };
+
+    const handleSaveSpecialist = async (e) => {
         e.preventDefault();
         setCreateLoading(true);
         setMsg({ type: '', text: '' });
         try {
-            await api.post('/api/v1/users/', {
-                ...formData,
-                username: formData.email,
-                role: 'DELIVERY'
-            });
-            setMsg({ type: 'success', text: 'Specialist account created successfully!' });
-            setFormData({ first_name: '', last_name: '', email: '', password: '', phone_number: '', is_active: true });
-            // Refresh list
+            if (editingSpecialist) {
+                const updateData = { ...formData };
+                if (!updateData.password) delete updateData.password;
+                await api.put(`/api/v1/users/${editingSpecialist.email}/`, updateData);
+                setMsg({ type: 'success', text: 'Specialist account updated successfully!' });
+            } else {
+                await api.post('/api/v1/users/', {
+                    ...formData,
+                    username: formData.email,
+                    role: 'DELIVERY'
+                });
+                setMsg({ type: 'success', text: 'Specialist account created successfully!' });
+            }
+
             fetchTeam();
             setTimeout(() => {
                 setShowAddModal(false);
                 setMsg({ type: '', text: '' });
             }, 1500);
         } catch (error) {
-            console.error("Failed to onboard specialist:", error);
+            console.error("Failed to save specialist:", error);
             const errorMsg = error.response?.data?.detail ||
                 (error.response?.data?.email ? error.response.data.email[0] : null) ||
-                'Failed to onboard specialist. Please check if email is unique.';
+                'Failed to save specialist. Please check your network or inputs.';
             setMsg({ type: 'error', text: errorMsg });
         } finally {
             setCreateLoading(false);
@@ -200,7 +241,7 @@ const DeliveryTeam = () => {
                         </AnimatePresence>
                     </div>
                     <button
-                        onClick={() => setShowAddModal(true)}
+                        onClick={handleOpenAddModal}
                         className="flex items-center gap-2 bg-emerald-500 text-white px-6 py-2.5 rounded-xl text-sm font-black hover:bg-emerald-600 transition-all shadow-[0_8px_30px_rgb(16,185,129,0.2)] hover:-translate-y-0.5 active:translate-y-0"
                     >
                         <Plus size={20} className="stroke-[3px]" />
@@ -248,23 +289,23 @@ const DeliveryTeam = () => {
                                             <div className="fixed inset-0 z-40" onClick={() => setActiveMenuId(null)}></div>
                                             <div className="absolute right-0 top-10 w-40 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 py-1.5 overflow-hidden">
                                                 <button
-                                                    onClick={() => alert(`Editing specialist: ${member.username}`)}
+                                                    onClick={() => handleOpenEditModal(member)}
                                                     className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors uppercase tracking-widest text-left"
                                                 >
-                                                    <User size={14} /> Profile
+                                                    <User size={14} /> Edit Profile
                                                 </button>
                                                 <button
-                                                    onClick={() => alert(`Reseting password for: ${member.username}`)}
+                                                    onClick={() => handleOpenEditModal(member)}
                                                     className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors uppercase tracking-widest text-left"
                                                 >
-                                                    <Key size={14} /> Reset Pass
+                                                    <Key size={14} /> Change Pass
                                                 </button>
                                                 <div className="h-px bg-gray-50 my-1"></div>
                                                 <button
-                                                    onClick={() => { if (window.confirm(`Deactivate ${member.username}?`)) alert('Deactivated.'); }}
+                                                    onClick={() => handleDeleteSpecialist(member.email)}
                                                     className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-red-600 hover:bg-red-50 transition-colors uppercase tracking-widest text-left"
                                                 >
-                                                    <XCircle size={14} /> Deactivate
+                                                    <XCircle size={14} /> Remove Agent
                                                 </button>
                                             </div>
                                         </>
@@ -277,8 +318,10 @@ const DeliveryTeam = () => {
                                     <div>
                                         <h3 className="font-black text-gray-900 tracking-tight">{member.username}</h3>
                                         <div className="flex items-center gap-1.5 mt-1">
-                                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                                            <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Active Specialist</p>
+                                            <div className={`w-2 h-2 ${member.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'} rounded-full`}></div>
+                                            <p className={`text-[10px] ${member.is_active ? 'text-emerald-600' : 'text-gray-400'} font-black uppercase tracking-widest`}>
+                                                {member.is_active ? 'Active Specialist' : 'Inactive'}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -328,7 +371,7 @@ const DeliveryTeam = () => {
                                 </p>
                             </div>
                             <button
-                                onClick={() => setShowAddModal(true)}
+                                onClick={handleOpenAddModal}
                                 className="mt-4 px-8 py-3 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm"
                             >
                                 add first specialist
@@ -337,7 +380,7 @@ const DeliveryTeam = () => {
                     )}
                 </div>
 
-                {/* Onboard Specialist Modal */}
+                {/* Onboard/Edit Specialist Modal */}
                 {showAddModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => !createLoading && setShowAddModal(false)}></div>
@@ -346,9 +389,9 @@ const DeliveryTeam = () => {
                             <div className="bg-emerald-600 p-6 flex justify-between items-center text-white">
                                 <div>
                                     <h3 className="text-xl font-bold flex items-center gap-2">
-                                        <UserPlus size={22} /> Onboard New Specialist
+                                        <UserPlus size={22} /> {editingSpecialist ? 'Update Specialist Data' : 'Onboard New Specialist'}
                                     </h3>
-                                    <p className="text-emerald-50 text-xs mt-1 font-medium">Create a delivery agent account</p>
+                                    <p className="text-emerald-50 text-xs mt-1 font-medium">{editingSpecialist ? 'Modify agent credentials and status' : 'Create a delivery agent account'}</p>
                                 </div>
                                 <button
                                     onClick={() => setShowAddModal(false)}
@@ -359,7 +402,7 @@ const DeliveryTeam = () => {
                             </div>
 
                             {/* Modal Body */}
-                            <form onSubmit={handleOnboardSpecialist} className="p-6 space-y-5">
+                            <form onSubmit={handleSaveSpecialist} className="p-6 space-y-5">
                                 {msg.text && (
                                     <div className={`p-4 rounded-xl flex items-center gap-3 font-bold text-sm ${msg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
                                         {msg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
@@ -400,10 +443,11 @@ const DeliveryTeam = () => {
                                                 type="email"
                                                 name="email"
                                                 required
+                                                disabled={editingSpecialist}
                                                 value={formData.email}
                                                 onChange={handleFormChange}
                                                 placeholder="delivery@example.com"
-                                                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-gray-800"
+                                                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-gray-800 disabled:opacity-50"
                                             />
                                         </div>
                                     </div>
@@ -428,10 +472,10 @@ const DeliveryTeam = () => {
                                             <input
                                                 type="password"
                                                 name="password"
-                                                required
+                                                required={!editingSpecialist}
                                                 value={formData.password}
                                                 onChange={handleFormChange}
-                                                placeholder="Minimum 8 characters"
+                                                placeholder={editingSpecialist ? "Leave blank to keep current" : "Minimum 8 characters"}
                                                 className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-gray-800"
                                             />
                                         </div>
@@ -471,7 +515,7 @@ const DeliveryTeam = () => {
                                         disabled={createLoading}
                                         className="flex-1 py-3 bg-emerald-500 text-white text-sm font-black rounded-2xl hover:bg-emerald-600 shadow-lg shadow-emerald-100 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
-                                        {createLoading ? 'Finalizing...' : <><Plus size={18} /> Onboard Specialist</>}
+                                        {createLoading ? 'Working...' : <>{editingSpecialist ? <CheckCircle2 size={18} /> : <Plus size={18} />} {editingSpecialist ? 'Update Record' : 'Onboard Agent'}</>}
                                     </button>
                                 </div>
                             </form>
@@ -504,5 +548,4 @@ const DeliveryTeam = () => {
         </div>
     );
 };
-
 export default DeliveryTeam;

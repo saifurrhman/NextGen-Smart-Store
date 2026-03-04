@@ -14,6 +14,22 @@ const ActiveSessions = () => {
     });
     const [showExportOptions, setShowExportOptions] = useState(false);
 
+    // Modal & CRUD State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingSession, setEditingSession] = useState(null);
+    const [users, setUsers] = useState([]);
+    const [agents, setAgents] = useState([]);
+    const [modalLoading, setModalLoading] = useState(false);
+    const [activeMenuId, setActiveMenuId] = useState(null);
+    const [formData, setFormData] = useState({
+        customer_name: '',
+        user: '',
+        topic: '',
+        agent: '',
+        status: 'waiting',
+        duration_seconds: 0
+    });
+
     useEffect(() => {
         fetchSessions();
     }, [searchTerm, filters]);
@@ -31,6 +47,79 @@ const ActiveSessions = () => {
             setLoading(false);
         }
     };
+
+    const fetchUsersAndAgents = async () => {
+        try {
+            const [usersRes, agentsRes] = await Promise.all([
+                api.get('/api/v1/users/?role=CUSTOMER'),
+                api.get('/api/v1/users/?role=ADMIN,SUB_ADMIN,SUPER_ADMIN')
+            ]);
+            setUsers(usersRes.data.results || usersRes.data);
+            setAgents(agentsRes.data.results || agentsRes.data);
+        } catch (error) {
+            console.error("Failed to fetch users/agents:", error);
+        }
+    };
+
+    const handleOpenCreateModal = () => {
+        setEditingSession(null);
+        setFormData({
+            customer_name: '',
+            user: '',
+            topic: '',
+            agent: '',
+            status: 'waiting',
+            duration_seconds: 0
+        });
+        fetchUsersAndAgents();
+        setIsModalOpen(true);
+    };
+
+    const handleOpenEditModal = (session) => {
+        setEditingSession(session);
+        setFormData({
+            customer_name: session.customer_name || '',
+            user: session.user || '',
+            topic: session.topic || '',
+            agent: session.agent || '',
+            status: session.status || 'waiting',
+            duration_seconds: session.duration_seconds || 0
+        });
+        fetchUsersAndAgents();
+        setIsModalOpen(true);
+        setActiveMenuId(null);
+    };
+
+    const handleDeleteSession = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this session?")) return;
+        try {
+            await api.delete(`/api/v1/support/chat-sessions/${id}/`);
+            fetchSessions();
+        } catch (error) {
+            console.error("Failed to delete session:", error);
+            alert("Failed to delete session.");
+        }
+    };
+
+    const handleSaveSession = async (e) => {
+        e.preventDefault();
+        setModalLoading(true);
+        try {
+            if (editingSession) {
+                await api.put(`/api/v1/support/chat-sessions/${editingSession.id}/`, formData);
+            } else {
+                await api.post('/api/v1/support/chat-sessions/', formData);
+            }
+            setIsModalOpen(false);
+            fetchSessions();
+        } catch (error) {
+            console.error("Failed to save session:", error);
+            alert("Failed to save session. Please check all fields.");
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
     };
@@ -166,7 +255,10 @@ const ActiveSessions = () => {
                             )}
                         </AnimatePresence>
                     </div>
-                    <button className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm">
+                    <button
+                        onClick={handleOpenCreateModal}
+                        className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shadow-sm"
+                    >
                         <Plus size={16} />
                         Create New
                     </button>
@@ -233,8 +325,32 @@ const ActiveSessions = () => {
                                                 {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="text-gray-400 hover:text-gray-600"><MoreVertical size={16} /></button>
+                                        <td className="px-6 py-4 text-right relative">
+                                            <button
+                                                onClick={() => setActiveMenuId(activeMenuId === session.id ? null : session.id)}
+                                                className="text-gray-400 hover:text-gray-600"
+                                            >
+                                                <MoreVertical size={16} />
+                                            </button>
+                                            {activeMenuId === session.id && (
+                                                <>
+                                                    <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)}></div>
+                                                    <div className="absolute right-6 top-10 w-32 bg-white rounded-lg shadow-xl border border-gray-100 z-20 py-1">
+                                                        <button
+                                                            onClick={() => handleOpenEditModal(session)}
+                                                            className="w-full px-4 py-2 text-left text-xs font-bold text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors"
+                                                        >
+                                                            Edit Session
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteSession(session.id)}
+                                                            className="w-full px-4 py-2 text-left text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -249,6 +365,102 @@ const ActiveSessions = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Create/Edit Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="bg-brand p-4 text-white">
+                            <h3 className="text-lg font-bold">{editingSession ? 'Edit Chat Session' : 'Create New Chat Session'}</h3>
+                        </div>
+                        <form onSubmit={handleSaveSession} className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Customer Name (Guest)</label>
+                                    <input
+                                        type="text"
+                                        value={formData.customer_name}
+                                        onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand"
+                                        placeholder="Enter guest name"
+                                    />
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Registered User</label>
+                                    <select
+                                        value={formData.user}
+                                        onChange={(e) => setFormData({ ...formData, user: e.target.value })}
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand"
+                                    >
+                                        <option value="">Select User</option>
+                                        {users.map(u => <option key={u.id} value={u.id}>{u.username} ({u.email})</option>)}
+                                    </select>
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Topic</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.topic}
+                                        onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand"
+                                        placeholder="Support/Sales"
+                                    />
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Assigned Agent</label>
+                                    <select
+                                        value={formData.agent}
+                                        onChange={(e) => setFormData({ ...formData, agent: e.target.value })}
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand"
+                                    >
+                                        <option value="">Assign Agent</option>
+                                        {agents.map(a => <option key={a.id} value={a.id}>{a.username}</option>)}
+                                    </select>
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Status</label>
+                                    <select
+                                        value={formData.status}
+                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand"
+                                    >
+                                        <option value="waiting">Waiting</option>
+                                        <option value="active">Active</option>
+                                        <option value="closed">Closed</option>
+                                    </select>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Duration (seconds)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.duration_seconds}
+                                        onChange={(e) => setFormData({ ...formData, duration_seconds: parseInt(e.target.value) })}
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-3 pt-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={modalLoading}
+                                    className="flex-1 py-2 bg-brand text-white text-sm font-bold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50"
+                                >
+                                    {modalLoading ? 'Saving...' : 'Save Session'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

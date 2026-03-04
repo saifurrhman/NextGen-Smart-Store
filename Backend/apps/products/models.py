@@ -11,16 +11,31 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     
     # Pricing
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    discount_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     discount_type = models.CharField(max_length=50, choices=[('NONE', 'No Discount'), ('PERCENTAGE', 'Percentage'), ('FIXED', 'Fixed Amount')], default='NONE')
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_value = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     is_tax_included = models.BooleanField(default=True)
+    currency = models.CharField(max_length=10, default='PKR')
+    
+    # Expiration / Sales Dates
+    sale_start_date = models.DateField(null=True, blank=True)
+    sale_end_date = models.DateField(null=True, blank=True)
     
     # Inventory
     stock = models.IntegerField(default=0)
+    min_stock = models.IntegerField(default=10)
+    is_unlimited = models.BooleanField(default=False)
+    stock_status = models.CharField(max_length=50, choices=[('IN_STOCK', 'In Stock'), ('OUT_OF_STOCK', 'Out of Stock'), ('ON_BACKORDER', 'On Backorder')], default='IN_STOCK')
     sku = models.CharField(max_length=100, unique=True, null=True, blank=True)
     barcode = models.CharField(max_length=100, null=True, blank=True)
+    
+    # Images
+    main_image = models.ImageField(upload_to='products/main/', null=True, blank=True)
+    
+    # Status & Tags
+    tag = models.CharField(max_length=100, blank=True, null=True)
+    highlight_featured = models.BooleanField(default=False)
     
     # Relations
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
@@ -40,3 +55,12 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+
+class ProductImage(models.Model):
+    id = djongo_models.ObjectIdField(primary_key=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='products/gallery/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for {self.product.title}"

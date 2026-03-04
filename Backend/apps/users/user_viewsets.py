@@ -2,7 +2,9 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.db.models import Q
+import pymongo
 from .serializers import UserSerializer
 from core.pagination import MongoPagination
 
@@ -16,11 +18,13 @@ class UserViewSet(viewsets.ModelViewSet):
     GET /api/v1/users/?search=xxx    -> search by name/email
     GET /api/v1/users/stats/         -> role-wise counts
     POST /api/v1/users/              -> create user
-    DELETE /api/v1/users/<id>/       -> delete user
+    DELETE /api/v1/users/<email>/    -> delete user
     """
     serializer_class = UserSerializer
     pagination_class = MongoPagination
     permission_classes = [permissions.AllowAny]
+    lookup_field = 'email'
+    lookup_value_regex = '[^/]+'  # allow @ and . in email URLs
 
     def get_queryset(self):
         qs = list(User.objects.all())
@@ -74,6 +78,30 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete user by email using raw PyMongo (Djongo ORM delete is broken with ObjectIdField)."""
+        email = kwargs.get('email') or kwargs.get('pk', '')
+
+        # Verify the user exists first
+        users_qs = list(User.objects.filter(email=email))
+        if not users_qs:
+            return Response({'detail': f'User "{email}" not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            db_config = settings.DATABASES['default']
+            mongo_uri = db_config['CLIENT']['host']
+            db_name = db_config['NAME']
+            client = pymongo.MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
+            db = client[db_name]
+            result = db['users_user'].delete_one({'email': email})
+            client.close()
+            if result.deleted_count == 0:
+                return Response({'detail': f'User "{email}" not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': f'Delete failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'], url_path='stats')
     def stats(self, request):

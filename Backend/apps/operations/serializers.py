@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from .models import Delivery
+from .models import Delivery, DailyStatsLog
 from apps.orders.models import Order
 from apps.users.serializers import UserSerializer
+from apps.products.models import Product
 
 class DeliverySerializer(serializers.ModelSerializer):
     delivery_boy_details = UserSerializer(source='delivery_boy', read_only=True)
@@ -17,3 +18,30 @@ class DeliverySerializer(serializers.ModelSerializer):
         if obj.order and obj.order.user:
             return obj.order.user.address
         return "Standard Protocol Vector"
+
+class DailyStatsLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailyStatsLog
+        fields = '__all__'
+
+class ProductStockSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    vendor_name = serializers.CharField(source='vendor.username', read_only=True)
+    status = serializers.SerializerMethodField()
+    priority = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'sku', 'stock', 'min_stock', 'category_name', 'vendor_name', 'status', 'priority']
+
+    def get_status(self, obj):
+        if obj.stock <= 0:
+            return "Out of Stock"
+        return "Low Stock"
+
+    def get_priority(self, obj):
+        if obj.stock <= 0:
+            return "Critical"
+        if obj.stock <= obj.min_stock / 2:
+            return "High"
+        return "Medium"

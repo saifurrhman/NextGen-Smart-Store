@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Transaction, Payout
+from .models import Transaction, Payout, FinancialReport
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -29,3 +29,15 @@ class PayoutSerializer(serializers.ModelSerializer):
             return obj.vendor.vendor_profile.store_name
         except:
             return "No Store"
+
+class FinancialReportSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    
+    class Meta:
+        model = FinancialReport
+        fields = [
+            'id', 'title', 'report_type', 'status', 
+            'start_date', 'end_date', 'data_snapshot', 
+            'file_url', 'created_at', 'created_by', 'created_by_name'
+        ]
+        read_only_fields = ['status', 'data_snapshot', 'file_url', 'created_at', 'created_by']

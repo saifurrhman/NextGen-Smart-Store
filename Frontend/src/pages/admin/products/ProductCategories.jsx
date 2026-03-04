@@ -192,13 +192,23 @@ const ProductCategories = () => {
         if (!window.confirm(`Delete ${selectedSlugs.length} categories? This action cannot be undone.`)) return;
         setBulkDeleteLoading(true);
         try {
-            await Promise.all(selectedSlugs.map(slug => api.delete(`categories/${slug}/`)));
-            setCategories(prev => prev.filter(c => !selectedSlugs.includes(c.slug)));
-            setPagination(prev => ({ ...prev, count: prev.count - selectedSlugs.length }));
-            clearSelection();
-            showMsg('success', 'Selected categories deleted successfully!');
-        } catch (error) {
-            showMsg('error', 'Failed to delete some categories.');
+            const results = await Promise.allSettled(selectedSlugs.map(slug => api.delete(`categories/${slug}/`)));
+            const successSlugs = selectedSlugs.filter((_, i) => results[i].status === 'fulfilled');
+            const failCount = results.length - successSlugs.length;
+
+            if (successSlugs.length > 0) {
+                setCategories(prev => prev.filter(c => !successSlugs.includes(c.slug)));
+                setPagination(prev => ({ ...prev, count: prev.count - successSlugs.length }));
+                setSelectedSlugs(prev => prev.filter(s => !successSlugs.includes(s)));
+            }
+
+            if (failCount === 0) {
+                showMsg('success', 'Selected categories deleted successfully!');
+            } else if (successSlugs.length > 0) {
+                showMsg('error', `${successSlugs.length} deleted, but ${failCount} could not be deleted.`);
+            } else {
+                showMsg('error', 'Failed to delete the selected categories. Please try again.');
+            }
         } finally {
             setBulkDeleteLoading(false);
         }

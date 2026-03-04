@@ -317,6 +317,7 @@ const AllProducts = () => {
                         <thead className="bg-[#eaf4f0] text-emerald-800 font-bold uppercase text-[10px] tracking-wider">
                             <tr>
                                 <th className="py-4 px-6 w-16">No.</th>
+                                <th className="py-4 px-3 w-16">Image</th>
                                 <th className="py-4 px-3">Product Name</th>
                                 <th className="py-4 px-3 text-center">Price</th>
                                 <th className="py-4 px-3 text-center">Stock</th>
@@ -338,6 +339,15 @@ const AllProducts = () => {
                                 <tr key={p.id} className="hover:bg-gray-50/50 transition-colors group">
                                     <td className="py-4 px-6">
                                         <span className="text-gray-400 font-bold">#{(page - 1) * 10 + idx + 1}</span>
+                                    </td>
+                                    <td className="py-4 px-3">
+                                        <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
+                                            {p.main_image ? (
+                                                <img src={p.main_image} alt={p.title} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Package className="text-gray-200" size={24} />
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="py-4 px-3">
                                         <div className="flex flex-col">

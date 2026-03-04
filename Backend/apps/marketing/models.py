@@ -5,9 +5,10 @@ class Campaign(models.Model):
         ('active', 'Active'),
         ('scheduled', 'Scheduled'),
         ('draft', 'Draft'),
+        ('ended', 'Ended'),
     ]
     name = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
     budget = models.DecimalField(max_digits=10, decimal_places=2)
     spent = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     start_date = models.DateField()
@@ -18,12 +19,19 @@ class Campaign(models.Model):
         return self.name
 
 class Promotion(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('expired', 'Expired'),
+        ('upcoming', 'Upcoming'),
+    ]
     name = models.CharField(max_length=255)
-    type = models.CharField(max_length=100)  # Conditional, BOGO, etc.
-    discount = models.CharField(max_length=100) # 100% Shipping, 50% Item
-    status = models.CharField(max_length=50)
-    usage_limit = models.CharField(max_length=50, default='Unlimited')
+    type = models.CharField(max_length=100)  # percentage, fixed, shipping
+    discount = models.CharField(max_length=100)  # e.g. 20%, PKR 500
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='active')
+    usage_limit = models.IntegerField(default=100)
     redeemed = models.IntegerField(default=0)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -46,8 +54,20 @@ class Coupon(models.Model):
         return self.code
 
 class Ad(models.Model):
+    PLATFORM_CHOICES = [
+        ('facebook', 'Facebook'),
+        ('instagram', 'Instagram'),
+        ('google', 'Google'),
+        ('tiktok', 'TikTok'),
+    ]
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('paused', 'Paused'),
+        ('ended', 'Ended'),
+    ]
     campaign_name = models.CharField(max_length=255)
-    platform = models.CharField(max_length=100) # Meta Ads, Google Ads
+    platform = models.CharField(max_length=100, choices=PLATFORM_CHOICES, default='facebook')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     spend = models.DecimalField(max_digits=10, decimal_places=2)
     impressions = models.IntegerField(default=0)
     clicks = models.IntegerField(default=0)

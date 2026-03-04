@@ -1,17 +1,17 @@
-from rest_framework import viewsets, views
+from rest_framework import viewsets, views, permissions, status
 from rest_framework.response import Response
-from .models import Delivery
-from .serializers import DeliverySerializer
+from .models import Delivery, DailyStatsLog
+from .serializers import DeliverySerializer, DailyStatsLogSerializer, ProductStockSerializer
 from apps.orders.models import Order
-from django.db.models import Count, Q
+from apps.products.models import Product
+from django.db.models import Count, Q, F
 from django.db.models.functions import TruncDate
-
 from rest_framework.decorators import action
-from rest_framework import status
 
 class DeliveryViewSet(viewsets.ModelViewSet):
     queryset = Delivery.objects.all().order_by('-created_at')
     serializer_class = DeliverySerializer
+    permission_classes = [permissions.AllowAny]
     filterset_fields = ['status', 'delivery_boy']
     search_fields = ['tracking_id', 'order__id']
 
@@ -44,26 +44,50 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-class DailyOperationsView(views.APIView):
-    def get(self, request):
-        # Aggregate stats by day
-        stats = Order.objects.annotate(date=TruncDate('created_at')).values('date').annotate(
-            total_orders=Count('id'),
-            packed=Count('id', filter=Q(status='processing')),
-            shipped=Count('id', filter=Q(status='shipped') | Q(status='delivered')),
-            exceptions=Count('id', filter=Q(status='canceled'))
-        ).order_by('-date')
-        
-        # Format for frontend
-        results = []
-        for s in stats:
-            results.append({
-                'date': s['date'].strftime('%b %d, %Y') if s['date'] else 'Unknown',
-                'total_orders': s['total_orders'],
-                'packed': s['packed'],
-                'shipped': s['shipped'],
-                'exceptions': s['exceptions'],
-                'status': 'Active' if s['date'] == stats[0]['date'] else 'Completed'
-            })
-            
+class DailyStatsLogViewSet(viewsets.ModelViewSet):
+    queryset = DailyStatsLog.objects.all().order_by('-date')
+    serializer_class = DailyStatsLogSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        # Merge manual logs with auto-generated order stats
+        manual_logs = self.get_queryset()
+        serializer = self.get_serializer(manual_logs, many=True)
+        results = [dict(item, source='manual') for item in serializer.data]
+
+        try:
+            stats = Order.objects.annotate(date_only=TruncDate('created_at')).values('date_only').annotate(
+                total_orders=Count('id'),
+                packed=Count('id', filter=Q(status='processing')),
+                shipped=Count('id', filter=Q(status='shipped') | Q(status='delivered')),
+                exceptions=Count('id', filter=Q(status='canceled'))
+            ).order_by('-date_only')
+
+            for s in stats:
+                results.append({
+                    'id': f"auto-{s['date_only']}",
+                    'date': s['date_only'].strftime('%Y-%m-%d') if s['date_only'] else 'Unknown',
+                    'total_orders': s['total_orders'],
+                    'packed': s['packed'],
+                    'shipped': s['shipped'],
+                    'exceptions': s['exceptions'],
+                    'status': 'Completed',
+                    'source': 'orders'
+                })
+        except Exception:
+            pass
+
         return Response(results)
+
+class InventoryAlertsView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # Fetch products where stock is less than or equal to min_stock
+        low_stock_products = Product.objects.filter(
+            Q(stock__lte=F('min_stock')) | Q(stock=0),
+            is_active=True
+        ).order_by('stock')
+        
+        serializer = ProductStockSerializer(low_stock_products, many=True)
+        return Response(serializer.data)

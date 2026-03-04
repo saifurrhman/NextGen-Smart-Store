@@ -1,3 +1,7 @@
 from django.urls import path
+from .views import ReviewListView, ReviewDetailView
 
-urlpatterns = []
+urlpatterns = [
+    path('', ReviewListView.as_view(), name='review-list'),
+    path('<str:pk>/', ReviewDetailView.as_view(), name='review-detail'),
+]

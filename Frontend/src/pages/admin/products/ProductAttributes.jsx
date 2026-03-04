@@ -32,7 +32,7 @@ const AddAttributePanel = ({ onCreated }) => {
         e.preventDefault();
         setLoading(true); setMsg({ type: '', text: '' });
         try {
-            await api.post('/api/v1/attributes/', form);
+            await api.post('attributes/', form);
             setMsg({ type: 'success', text: 'Attribute added!' });
             setForm({ name: '', slug: '', terms: '', type: 'select', is_active: true });
             onCreated();
@@ -45,11 +45,11 @@ const AddAttributePanel = ({ onCreated }) => {
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-sm font-black text-gray-800 uppercase tracking-wider mb-5 flex items-center gap-2">
-                <Plus size={14} className="text-emerald-500" /> Add New Attribute
+                <Plus size={14} className="text-brand" /> Add New Attribute
             </h2>
 
             {msg.text && (
-                <div className={`mb-4 p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${msg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                <div className={`mb-4 p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${msg.type === 'success' ? 'bg-brand/10 text-brand border border-brand/20' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                     {msg.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
                     {msg.text}
                 </div>
@@ -64,7 +64,7 @@ const AddAttributePanel = ({ onCreated }) => {
                     <input
                         name="name" required value={form.name} onChange={handleChange}
                         placeholder="e.g. Color, Size, Material"
-                        className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 placeholder-gray-300 focus:outline-none focus:border-emerald-400 focus:bg-white transition-all"
+                        className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 placeholder-gray-300 focus:outline-none focus:border-brand/40 focus:bg-white transition-all"
                     />
                     <p className="text-[10px] text-gray-400 font-medium">Unique name to identify this attribute. Used on the frontend.</p>
                 </div>
@@ -79,7 +79,7 @@ const AddAttributePanel = ({ onCreated }) => {
                         <input
                             name="slug" required value={form.slug} onChange={handleChange}
                             placeholder="color"
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-500 placeholder-gray-300 focus:outline-none focus:border-emerald-400 focus:bg-white transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-500 placeholder-gray-300 focus:outline-none focus:border-brand/40 focus:bg-white transition-all"
                         />
                     </div>
                     <p className="text-[10px] text-gray-400 font-medium">Auto-generated. Used in URLs and product variations.</p>
@@ -92,7 +92,7 @@ const AddAttributePanel = ({ onCreated }) => {
                     </label>
                     <select
                         name="type" value={form.type} onChange={handleChange}
-                        className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:border-emerald-400 focus:bg-white transition-all"
+                        className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:border-brand/40 focus:bg-white transition-all"
                     >
                         <option value="select">Select</option>
                         <option value="text">Text</option>
@@ -111,7 +111,7 @@ const AddAttributePanel = ({ onCreated }) => {
                     <input
                         name="terms" value={form.terms} onChange={handleChange}
                         placeholder="Red, Blue, Green, Black"
-                        className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 placeholder-gray-300 focus:outline-none focus:border-emerald-400 focus:bg-white transition-all"
+                        className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 placeholder-gray-300 focus:outline-none focus:border-brand/40 focus:bg-white transition-all"
                     />
                     <p className="text-[10px] text-gray-400 font-medium">Comma-separated terms. You can configure terms after saving.</p>
                 </div>
@@ -124,13 +124,13 @@ const AddAttributePanel = ({ onCreated }) => {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} className="sr-only peer" />
-                        <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-emerald-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:shadow-sm after:transition-all peer-checked:after:translate-x-5" />
+                        <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-brand transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:shadow-sm after:transition-all peer-checked:after:translate-x-5" />
                     </label>
                 </div>
 
                 <button
                     type="submit" disabled={loading}
-                    className="w-full py-3 bg-emerald-500 text-white text-sm font-black rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
+                    className="w-full py-3 bg-brand text-white text-sm font-black rounded-xl hover:bg-brand-dark transition-all shadow-lg shadow-brand/30 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
                 >
                     {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : <><Plus size={16} /> Add Attribute</>}
                 </button>
@@ -172,7 +172,7 @@ const EditModal = ({ attr, onClose, onUpdated }) => {
         e.preventDefault();
         setLoading(true); setMsg({ type: '', text: '' });
         try {
-            await api.patch(`/api/v1/attributes/${attr.id}/`, form);
+            await api.patch(`attributes/${attr.id}/`, form);
             setMsg({ type: 'success', text: 'Saved!' });
             onUpdated();
             setTimeout(onClose, 1200);
@@ -190,10 +190,10 @@ const EditModal = ({ attr, onClose, onUpdated }) => {
                 className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[90vh] flex flex-col"
             >
                 {/* Header */}
-                <div className="px-6 py-5 flex items-center justify-between border-b border-gray-100 shrink-0">
+                <div className="px-6 py-5 flex items-center justify-between border-b border-gray-100 shrink-0 bg-brand-accent/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <Edit2 size={18} className="text-blue-600" />
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                            <Edit2 size={18} className="text-brand" />
                         </div>
                         <div>
                             <h3 className="font-black text-gray-900">Edit Attribute: {attr.name}</h3>
@@ -203,9 +203,9 @@ const EditModal = ({ attr, onClose, onUpdated }) => {
                     <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400"><X size={18} /></button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+                <form className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                     {msg.text && (
-                        <div className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${msg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                        <div className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${msg.type === 'success' ? 'bg-brand/10 text-brand border border-brand/20' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                             {msg.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
                             {msg.text}
                         </div>
@@ -216,13 +216,13 @@ const EditModal = ({ attr, onClose, onUpdated }) => {
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Name *</label>
                             <input name="name" required value={form.name} onChange={handleChange}
-                                className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 focus:outline-none focus:border-blue-400 focus:bg-white transition-all" />
+                                className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 focus:outline-none focus:border-brand/40 focus:bg-white transition-all" />
                         </div>
                         {/* Slug */}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Slug *</label>
                             <input name="slug" required value={form.slug} onChange={handleChange}
-                                className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-500 focus:outline-none focus:border-blue-400 focus:bg-white transition-all" />
+                                className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-500 focus:outline-none focus:border-brand/40 focus:bg-white transition-all" />
                         </div>
                     </div>
 
@@ -230,7 +230,7 @@ const EditModal = ({ attr, onClose, onUpdated }) => {
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Type</label>
                         <select name="type" value={form.type} onChange={handleChange}
-                            className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:border-blue-400 focus:bg-white transition-all">
+                            className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:border-brand/40 focus:bg-white transition-all">
                             <option value="select">Select</option>
                             <option value="text">Text</option>
                             <option value="color">Color Swatch</option>
@@ -249,10 +249,10 @@ const EditModal = ({ attr, onClose, onUpdated }) => {
                             <input value={newTerm} onChange={e => setNewTerm(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTerm())}
                                 placeholder="Add a term (press Enter)"
-                                className="flex-1 px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 placeholder-gray-300 focus:outline-none focus:border-blue-400 focus:bg-white transition-all"
+                                className="flex-1 px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-800 placeholder-gray-300 focus:outline-none focus:border-brand/40 focus:bg-white transition-all"
                             />
                             <button type="button" onClick={addTerm}
-                                className="px-4 py-2.5 bg-blue-500 text-white text-xs font-black rounded-xl hover:bg-blue-600 transition-all">
+                                className="px-4 py-2.5 bg-brand text-white text-xs font-black rounded-xl hover:bg-brand-dark transition-all">
                                 Add
                             </button>
                         </div>
@@ -283,7 +283,7 @@ const EditModal = ({ attr, onClose, onUpdated }) => {
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} className="sr-only peer" />
-                            <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-blue-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:shadow-sm after:transition-all peer-checked:after:translate-x-5" />
+                            <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-brand transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:shadow-sm after:transition-all peer-checked:after:translate-x-5" />
                         </label>
                     </div>
                 </form>
@@ -293,8 +293,8 @@ const EditModal = ({ attr, onClose, onUpdated }) => {
                         className="flex-1 py-2.5 text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all">
                         Cancel
                     </button>
-                    <button onClick={handleSubmit} disabled={loading}
-                        className="flex-[2] py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-black rounded-xl shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                    <button type="button" onClick={handleSubmit} disabled={loading}
+                        className="flex-[2] py-2.5 bg-brand hover:bg-brand-dark text-white text-sm font-black rounded-xl shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                         {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : <><CheckCircle2 size={16} /> Save Changes</>}
                     </button>
                 </div>
@@ -310,11 +310,13 @@ const DeleteConfirm = ({ attr, onClose, onDeleted }) => {
     const handleDelete = async () => {
         setLoading(true);
         try {
-            await api.delete(`/api/v1/attributes/${attr.id}/`);
+            await api.delete(`attributes/${attr.id}/`);
             onDeleted(attr.id);
             onClose();
         } catch (err) {
-            alert('Delete failed. This attribute may be in use.');
+            console.error('Delete failed:', err.response?.data || err.message);
+            const errorMsg = err.response?.data?.detail || 'This attribute may be in use by products.';
+            alert(`Delete failed: ${errorMsg}`);
             setLoading(false);
         }
     };
@@ -368,7 +370,7 @@ const ProductAttributes = () => {
     const fetchAttributes = async () => {
         setLoading(true);
         try {
-            let url = `/api/v1/attributes/?page=${page}`;
+            let url = `attributes/?page=${page}`;
             if (searchTerm) url += `&search=${searchTerm}`;
             const res = await api.get(url);
             const data = res.data.results || res.data;
@@ -391,12 +393,12 @@ const ProductAttributes = () => {
             {/* Page Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Tag size={22} className="text-emerald-500" /> Product Attributes</h1>
+                    <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Tag size={22} className="text-brand" /> Product Attributes</h1>
                     <p className="text-sm text-gray-500 font-medium mt-1">Define global product attributes like Color, Size, Material for use in product variations.</p>
                 </div>
                 <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                     <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 border-r border-gray-100 transition-all">
-                        <Download size={15} className="text-emerald-600" /> Excel
+                        <Download size={15} className="text-brand" /> Excel
                     </button>
                     <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 border-r border-gray-100 transition-all">
                         <Download size={15} className="text-blue-500" /> CSV
@@ -426,7 +428,7 @@ const ProductAttributes = () => {
                                 <input
                                     type="text" placeholder="Search attributes..."
                                     value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 font-medium text-gray-700 shadow-sm transition-all"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand/40 font-medium text-gray-700 shadow-sm transition-all"
                                 />
                             </div>
                             <span className="text-xs text-gray-400 font-black ml-auto">{pagination.count} attribute{pagination.count !== 1 ? 's' : ''}</span>
@@ -435,7 +437,7 @@ const ProductAttributes = () => {
                         {/* Table */}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left whitespace-nowrap">
-                                <thead className="bg-[#eaf4f0] text-emerald-800 font-bold uppercase text-[10px] tracking-wider">
+                                <thead className="bg-brand-accent/50 text-brand-dark font-bold uppercase text-[10px] tracking-wider">
                                     <tr>
                                         <th className="px-5 py-4">Attribute</th>
                                         <th className="px-5 py-4 text-center">Slug</th>
@@ -462,11 +464,11 @@ const ProductAttributes = () => {
                                             <tr key={attr.id} className="hover:bg-gray-50/50 transition-colors group">
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 font-black text-xs border border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-all uppercase">
+                                                        <div className="w-9 h-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0 font-black text-xs border border-brand/20 group-hover:bg-brand group-hover:text-white transition-all uppercase">
                                                             {attr.name.slice(0, 2)}
                                                         </div>
                                                         <div>
-                                                            <p className="font-bold text-gray-800 text-sm group-hover:text-emerald-600 transition-colors">{attr.name}</p>
+                                                            <p className="font-bold text-gray-800 text-sm group-hover:text-brand transition-colors">{attr.name}</p>
                                                             <p className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                                                                 <ChevronRight size={10} /> Configure terms
                                                             </p>
@@ -482,7 +484,7 @@ const ProductAttributes = () => {
                                                 <td className="px-5 py-4">
                                                     <div className="flex flex-wrap gap-1">
                                                         {termsList.slice(0, 4).map((t, i) => (
-                                                            <span key={i} className="px-2 py-0.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-black rounded">{t}</span>
+                                                            <span key={i} className="px-2 py-0.5 bg-brand-accent border border-brand/20 text-brand-dark text-[10px] font-black rounded">{t}</span>
                                                         ))}
                                                         {termsList.length > 4 && (
                                                             <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-black rounded">+{termsList.length - 4}</span>
@@ -491,8 +493,8 @@ const ProductAttributes = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-5 py-4 text-center">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase rounded-full ${attr.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${attr.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase rounded-full ${attr.is_active ? 'bg-brand/10 text-brand' : 'bg-gray-100 text-gray-500'}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${attr.is_active ? 'bg-brand' : 'bg-gray-400'}`} />
                                                         {attr.is_active ? 'Active' : 'Inactive'}
                                                     </span>
                                                 </td>
@@ -500,7 +502,7 @@ const ProductAttributes = () => {
                                                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                                         <button
                                                             onClick={() => setEditingAttr(attr)}
-                                                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors border border-blue-50 bg-white shadow-sm"
+                                                            className="p-2 text-brand hover:bg-brand-accent rounded-lg transition-colors border border-brand/10 bg-white shadow-sm"
                                                             title="Edit / Configure Terms"
                                                         >
                                                             <Edit2 size={15} />
@@ -551,11 +553,11 @@ const ProductAttributes = () => {
                     </div>
 
                     {/* Info box */}
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl text-xs text-blue-700 font-bold flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center font-black text-[10px] shrink-0 mt-0.5">i</div>
+                    <div className="mt-4 p-4 bg-brand-accent/50 border border-brand/10 rounded-2xl text-xs text-brand-dark font-bold flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center font-black text-[10px] shrink-0 mt-0.5">i</div>
                         <div>
                             <p className="font-black">About Product Attributes</p>
-                            <p className="font-medium mt-0.5 text-blue-600">Attributes you define here can be used in product variations. For example, a "Color" attribute with terms "Red, Blue, Green" lets you create separate variations per color.</p>
+                            <p className="font-medium mt-0.5 opacity-80">Attributes you define here can be used in product variations. For example, a "Color" attribute with terms "Red, Blue, Green" lets you create separate variations per color.</p>
                         </div>
                     </div>
                 </div>
