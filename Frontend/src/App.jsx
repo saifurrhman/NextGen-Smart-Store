@@ -60,6 +60,7 @@ import MyVendorEarnings from './pages/vendor/MyEarnings';
 import MyVendorSettings from './pages/vendor/ShopSettings';
 import MyVendorReviews from './pages/vendor/Reviews';
 import AddVendorProduct from './pages/vendor/AddProduct';
+import RequestVendorProduct from './pages/vendor/RequestProduct';
 import EditVendorProduct from './pages/vendor/EditProduct';
 import SuperAdminDashboard from './pages/admin/Dashboard';
 import AdminProfile from './pages/admin/AdminProfile';
@@ -272,6 +273,7 @@ function App() {
           <Route path="reviews" element={<MyVendorReviews />} />
           <Route path="settings" element={<MyVendorSettings />} />
           <Route path="add-product" element={<AddVendorProduct />} />
+          <Route path="request-product" element={<RequestVendorProduct />} />
           <Route path="edit-product/:id" element={<EditVendorProduct />} />
         </Route>
 
