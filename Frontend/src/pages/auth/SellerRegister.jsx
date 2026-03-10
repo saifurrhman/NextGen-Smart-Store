@@ -48,12 +48,17 @@ const SellerRegister = () => {
                 }
             });
         } catch (err) {
-            setError(
-                err.response?.data?.error ||
-                err.response?.data?.detail ||
-                err.response?.data?.email?.[0] ||
-                'Initialization failed. Please check network connectivity.'
-            );
+            console.error('Seller Registration Error:', err);
+            if (!err.response) {
+                setError('Network Error: Cannot connect to the server. Please check if the backend is running at http://localhost:8000');
+            } else {
+                setError(
+                    err.response?.data?.error ||
+                    err.response?.data?.detail ||
+                    err.response?.data?.email?.[0] ||
+                    'Registration failed. Please check your business details.'
+                );
+            }
         } finally {
             setLoading(false);
         }

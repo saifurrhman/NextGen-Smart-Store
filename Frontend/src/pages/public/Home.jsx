@@ -163,7 +163,7 @@ const Home = () => {
                     ) : (
                         <div className="text-center py-12 bg-white rounded-xl shadow-sm">
                             <p className="text-text-sub">No products found. Be the first to add one!</p>
-                            <Link to="/login" className="mt-4 inline-block text-brand font-bold hover:underline">
+                            <Link to="/customer/login" className="mt-4 inline-block text-brand font-bold hover:underline">
                                 Login as Vendor to Add Products
                             </Link>
                         </div>

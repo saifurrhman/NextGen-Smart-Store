@@ -4,6 +4,7 @@ from .models import Delivery, DailyStatsLog
 from .serializers import DeliverySerializer, DailyStatsLogSerializer, ProductStockSerializer
 from apps.orders.models import Order
 from apps.products.models import Product
+from apps.authentication.tokens import get_user_from_token
 from django.db.models import Count, Q, F
 from django.db.models.functions import TruncDate
 from rest_framework.decorators import action
@@ -30,11 +31,12 @@ class DeliveryViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='my-tasks')
     def my_tasks(self, request):
-        if not request.user.is_authenticated or request.user.role != 'DELIVERY':
+        user = get_user_from_token(request)
+        if not user or user.role != 'DELIVERY':
             return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
         
         include_history = request.query_params.get('include_history') == 'true'
-        queryset = Delivery.objects.filter(delivery_boy=request.user).order_by('-created_at')
+        queryset = Delivery.objects.filter(delivery_boy=user).order_by('-created_at')
         
         if not include_history:
             queryset = queryset.exclude(status='delivered')

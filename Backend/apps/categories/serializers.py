@@ -7,7 +7,7 @@ from .models import Category
 
 def slug_exists_in_mongo(slug):
     """Check if a slug already exists using ORM."""
-    return Category.objects.filter(slug=slug).exists()
+    return Category.objects.filter(slug=slug).count() > 0
 
 
 class CategorySerializer(serializers.ModelSerializer):

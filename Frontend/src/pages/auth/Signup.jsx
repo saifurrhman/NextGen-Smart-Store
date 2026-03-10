@@ -22,7 +22,7 @@ const Signup = () => {
 
             // Simulating Backend route for now
             console.log(`Registering as ${isVendor ? 'Vendor' : 'User'}`, formData);
-            navigate('/login');
+            navigate('/customer/login');
         } catch (err) {
             setError('Registration failed. Please try again.');
         } finally {
@@ -106,7 +106,7 @@ const Signup = () => {
 
                 <div className="text-center text-sm text-gray-500">
                     Already have an account?{' '}
-                    <Link to="/login" className="font-medium text-action hover:text-action-hover">
+                    <Link to="/customer/login" className="font-medium text-action hover:text-action-hover">
                         Log in
                     </Link>
                 </div>

@@ -63,7 +63,7 @@ class UserViewSet(viewsets.ModelViewSet):
         email = data.get('email', '').lower().strip()
         if not email or not password:
             return Response({'detail': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(email=email).count() > 0:
             return Response({'detail': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.create_user(

@@ -34,7 +34,7 @@ const DashboardTopbar = ({ pageTitle, user, role, onMobileToggle, onToggleSideba
         const fetchNotifications = async () => {
             setLoading(true);
             try {
-                const token = localStorage.getItem('access_token');
+                const token = localStorage.getItem('authToken');
                 if (!token) {
                     setLoading(false);
                     return;
@@ -92,9 +92,18 @@ const DashboardTopbar = ({ pageTitle, user, role, onMobileToggle, onToggleSideba
     const initials = (user?.username || user?.email || 'A').charAt(0).toUpperCase();
 
     const handleSignOut = () => {
+        const role = localStorage.getItem('role')?.toUpperCase();
         localStorage.clear();
-        const loginPath = role === 'ADMIN' ? '/admin/login' : role === 'VENDOR' ? '/vendor/login' : '/login';
-        navigate(loginPath);
+
+        if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+            navigate('/admin/login');
+        } else if (role === 'VENDOR') {
+            navigate('/vendor/login');
+        } else if (role === 'DELIVERY') {
+            navigate('/delivery/login');
+        } else {
+            navigate('/login');
+        }
     };
 
     return (

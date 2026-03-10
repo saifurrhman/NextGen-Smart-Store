@@ -11,16 +11,33 @@ const AdminLayout = () => {
     const [user, setUser] = useState({ username: 'Admin', email: '', role: 'ADMIN' });
 
     useEffect(() => {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('authToken');
         const userRole = localStorage.getItem('role');
+        const userObjStr = localStorage.getItem('user');
 
         if (!token) {
-            window.location.href = '/admin/login';
+            navigate('/admin/login');
             return;
         }
 
-        if (userRole !== 'SUPER_ADMIN' && userRole !== 'SUB_ADMIN' && userRole !== 'ADMIN') {
-            window.location.href = '/';
+        // Try to get role from 'role' or nested in 'user' object
+        let currentRole = userRole;
+        if (!currentRole || currentRole === 'UNDEFINED') {
+            try {
+                const userData = JSON.parse(userObjStr || '{}');
+                currentRole = userData.role || userData.user_role;
+            } catch (e) { }
+        }
+
+        const normalizedRole = currentRole?.toString().trim().toUpperCase();
+        const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN'].includes(normalizedRole);
+
+        if (!isAdmin) {
+            console.warn('AdminLayout: Unauthorized role detected:', normalizedRole);
+            // If it's a vendor or delivery, they should go to their place, otherwise home
+            if (['VENDOR', 'SELLER'].includes(normalizedRole)) navigate('/vendor/dashboard');
+            else if (normalizedRole === 'DELIVERY') navigate('/delivery/dashboard');
+            else navigate('/');
             return;
         }
 
@@ -35,7 +52,7 @@ const AdminLayout = () => {
         }
         // Close mobile sidebar on navigation
         setIsMobileOpen(false);
-    }, [location, navigate]);
+    }, [location.pathname, navigate]);
 
     // Get current page title from path
     const getPageTitle = () => {

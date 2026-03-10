@@ -3,17 +3,28 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 
 const CustomerLayout = () => {
     const location = useLocation();
-    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-    const userRole = localStorage.getItem('user_role') || localStorage.getItem('role');
+    const token = localStorage.getItem('authToken');
+    const normalizedRole = (localStorage.getItem('role') || localStorage.getItem('user_role'))?.toUpperCase();
 
     // Not logged in → redirect to customer login
     if (!token) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to="/customer/login" state={{ from: location }} replace />;
     }
 
-    // Logged in as wrong role (admin/seller) → redirect to their respective login
-    if (userRole && userRole !== 'customer' && userRole !== 'user') {
-        return <Navigate to="/login" replace />;
+    // Role-based protection: Redirect non-customers to their own portals
+    const isCustomer = !normalizedRole || normalizedRole === 'CUSTOMER' || normalizedRole === 'USER';
+    if (!isCustomer) {
+        const dashboardMap = {
+            'ADMIN': '/admin/dashboard',
+            'SUPER_ADMIN': '/admin/dashboard',
+            'SUPERADMIN': '/admin/dashboard',
+            'SUB_ADMIN': '/admin/dashboard',
+            'SUBADMIN': '/admin/dashboard',
+            'VENDOR': '/vendor/dashboard',
+            'SELLER': '/vendor/dashboard',
+            'DELIVERY': '/delivery/dashboard'
+        };
+        return <Navigate to={dashboardMap[normalizedRole] || '/'} replace />;
     }
 
     return <Outlet />;

@@ -9,7 +9,7 @@ const DashboardLayout = () => {
   const [role, setRole] = useState('vendor'); // Default
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const userRole = localStorage.getItem('role');
 
     if (!token) {

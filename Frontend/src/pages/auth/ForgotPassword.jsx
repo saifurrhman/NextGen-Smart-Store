@@ -1,42 +1,38 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, ArrowLeft, Mail, AlertCircle, Sparkles, ShieldQuestion, Fingerprint } from 'lucide-react';
+import { Mail, AlertCircle, ArrowRight, ShieldCheck, Fingerprint, ShieldAlert, User, ArrowLeft, ShieldQuestion } from 'lucide-react';
+import AuthField from '../../components/auth/AuthField';
 import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
 import { authAPI } from '../../services/api';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const role = location.state?.role || 'customer';
-
-    const loginUrl = { admin: '/admin/login', seller: '/seller/login', customer: '/login' };
-    const loginLink = loginUrl[role] || '/login';
-
-    const roleBadgeMap = {
-        admin: 'Secure Admin Recovery',
-        seller: 'Partner Identity Restore',
-        customer: 'Customer Access Recovery'
-    };
+    const { role } = location.state || { role: 'customer' };
 
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const loginLink = role === 'admin' ? '/admin/login' :
+        role === 'vendor' ? '/vendor/login' :
+            role === 'delivery' ? '/delivery/login' : '/customer/login';
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
+        setError('');
         try {
-            await authAPI.sendOTP({ email: email.trim().toLowerCase(), purpose: 'password_reset' });
+            await authAPI.forgotPassword({ email: email.trim().toLowerCase() });
             navigate('/verify-otp', {
-                state: { email: email.trim().toLowerCase(), purpose: 'password_reset', role }
+                state: {
+                    email: email.trim().toLowerCase(),
+                    purpose: 'password_reset',
+                    role: role
+                }
             });
         } catch (err) {
-            setError(
-                err.response?.data?.error ||
-                err.response?.data?.detail ||
-                'Initialization failed. Identity could not be verified.'
-            );
+            setError(err.response?.data?.error || err.response?.data?.detail || 'Protocol failure. Verification signal could not be transmitted.');
         } finally {
             setLoading(false);
         }
@@ -46,8 +42,8 @@ const ForgotPassword = () => {
         <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
             <div className="text-center mb-6">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">Recover Access</h2>
-                <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Initialization of secure reset protocol</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight uppercase leading-none">Reset Password</h2>
+                <p className="mt-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-center">We will send a code to your email</p>
             </div>
 
             {/* Main Card */}
@@ -61,27 +57,23 @@ const ForgotPassword = () => {
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verification Channel (Email)</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <Mail className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input
-                                type="email" required
-                                value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                                className="block w-full pl-14 pr-6 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
-                                placeholder="IDENTIFIER@DOMAIN.COM"
-                            />
-                        </div>
-                    </div>
+                    <AuthField
+                        label="Email Address"
+                        name="email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="email@example.com"
+                        icon={Mail}
+                    />
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] text-sm font-black text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest relative overflow-hidden group/btn"
+                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-lg shadow-emerald-500/20 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
                     >
-                        {loading ? 'TRANSMITTING CODE...' : 'ISSUE RECOVERY TOKEN'}
+                        {loading ? 'Sending...' : 'Send Reset Code'}
                     </button>
                 </form>
 
@@ -98,7 +90,7 @@ const ForgotPassword = () => {
                     <div className="text-center">
                         <Link to={loginLink} className="w-full inline-flex justify-center items-center gap-3 py-3.5 px-6 border border-gray-100 rounded-[2rem] bg-white text-[10px] font-black text-gray-900 hover:bg-gray-50 transition-all uppercase tracking-widest group/reg">
                             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-                            Return to Secure Login
+                            Return to Secure Portal
                         </Link>
                     </div>
 

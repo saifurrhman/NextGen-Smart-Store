@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, AlertCircle, Building2, Eye, EyeOff, ArrowRight, BarChart3, Rocket } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Building2, ArrowRight, BarChart3, Rocket, User, Store, MapPin, Phone } from 'lucide-react';
 import { authAPI } from '../../services/api';
+import AuthField from '../../components/auth/AuthField';
 
 const VendorRegister = () => {
     const navigate = useNavigate();
@@ -10,6 +11,9 @@ const VendorRegister = () => {
         email: '',
         password: '',
         confirmPassword: '',
+        businessName: '',
+        businessAddress: '',
+        phone: '',
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -42,7 +46,7 @@ const VendorRegister = () => {
                 email: formData.email.trim().toLowerCase(),
                 purpose: 'register',
             });
-            navigate('/verify-otp', {
+            navigate('/vendor/register/verify-otp', {
                 state: {
                     email: formData.email.trim().toLowerCase(),
                     purpose: 'register',
@@ -51,6 +55,9 @@ const VendorRegister = () => {
                         username: formData.username,
                         email: formData.email.trim().toLowerCase(),
                         password: formData.password,
+                        first_name: formData.businessName,
+                        address: formData.businessAddress,
+                        phone: formData.phone,
                         role: 'VENDOR',
                     },
                 }
@@ -67,31 +74,11 @@ const VendorRegister = () => {
         }
     };
 
-    const Field = ({ label, name, type = 'text', placeholder, icon: Icon, required = false, passwordToggle, showPw, onToggle }) => (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">{label}</label>
-            <div className="relative group/input">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Icon className="h-4 w-4 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                </div>
-                <input name={name} type={passwordToggle ? (showPw ? 'text' : 'password') : type} required={required}
-                    value={formData[name]} onChange={handleChange}
-                    className="block w-full pl-11 pr-9 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500/30 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm font-semibold placeholder-gray-300 text-gray-800"
-                    placeholder={placeholder} />
-                {passwordToggle && (
-                    <button type="button" onClick={onToggle} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-300 hover:text-emerald-600 transition-colors">
-                        {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-
     return (
         <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-5">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase">Vendor Enterprise Join</h2>
-                <p className="mt-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Connect your supply chain to the future</p>
+            <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight uppercase">Vendor Partner Join</h2>
+                <p className="mt-1 text-xs font-semibold text-gray-400 uppercase tracking-widest leading-relaxed">Join our global retail partner network</p>
             </div>
 
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-7">
@@ -102,19 +89,31 @@ const VendorRegister = () => {
                             <span className="text-xs font-bold text-rose-600 uppercase tracking-tight">{error}</span>
                         </div>
                     )}
-                    <div className="grid grid-cols-2 gap-4">
-                        <Field label="Business Name" name="username" placeholder="BUSINESS ENTITY" icon={Building2} required />
-                        <Field label="Official Email" name="email" type="email" placeholder="ENTITY@EMAIL.COM" icon={Mail} required />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <AuthField label="Username" name="username" placeholder="vendor_alias" icon={User} required value={formData.username} onChange={handleChange} />
+                        <AuthField label="Business Email" name="email" type="email" placeholder="vendor@business.com" icon={Mail} required value={formData.email} onChange={handleChange} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <Field label="Secure Key" name="password" placeholder="8+ CHARS" icon={Lock} required
+                    <div className="grid grid-cols-1">
+                        <AuthField label="Business Name" name="businessName" placeholder="NextGen Retail Ltd." icon={Store} required value={formData.businessName} onChange={handleChange} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <AuthField label="Business Address" name="businessAddress" placeholder="City, Country" icon={MapPin} required value={formData.businessAddress} onChange={handleChange} />
+                        <AuthField label="Phone Number" name="phone" placeholder="+123 4567 890" icon={Phone} required value={formData.phone} onChange={handleChange} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <AuthField label="Password" name="password" placeholder="8+ characters" icon={Lock} required value={formData.password} onChange={handleChange}
                             passwordToggle showPw={showPassword} onToggle={() => setShowPassword(!showPassword)} />
-                        <Field label="Verify Key" name="confirmPassword" placeholder="REPEAT" icon={Lock} required
+                        <AuthField label="Confirm Password" name="confirmPassword" placeholder="Repeat password" icon={Lock} required value={formData.confirmPassword} onChange={handleChange}
                             passwordToggle showPw={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
                     </div>
                     <button type="submit" disabled={loading}
-                        className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black uppercase tracking-widest shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50">
-                        {loading ? 'PROCESSING...' : 'REGISTER PARTNER ACCOUNT'}
+                        className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                        {loading ? 'Processing...' : (
+                            <>
+                                <Store size={18} strokeWidth={2.5} />
+                                <span>Register Account</span>
+                            </>
+                        )}
                     </button>
                 </form>
 

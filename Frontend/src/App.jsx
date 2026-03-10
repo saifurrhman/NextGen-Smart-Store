@@ -42,8 +42,6 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import AdminLogin from './pages/auth/AdminLogin';
 import AdminRegister from './pages/auth/AdminRegister';
-import SellerLogin from './pages/auth/SellerLogin';
-import SellerRegister from './pages/auth/SellerRegister';
 import DeliveryLogin from './pages/auth/DeliveryLogin';
 import DeliveryRegister from './pages/auth/DeliveryRegister';
 import VendorLogin from './pages/auth/VendorLogin';
@@ -238,25 +236,39 @@ function App() {
 
         {/* Auth Routes wrapped in AuthLayout */}
         <Route element={<AuthLayout />}>
+          {/* Default Redirects to Customer Auth */}
+          <Route path="/login" element={<Navigate to="/customer/login" replace />} />
+          <Route path="/register" element={<Navigate to="/customer/register" replace />} />
+          <Route path="/verify-otp" element={<Navigate to="/customer/verify-otp" replace />} />
+
           {/* Customer Auth */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/customer/profile/login" element={<Login />} />
-          <Route path="/customer/profile/signup" element={<Register />} />
+          <Route path="/customer/login" element={<Login />} />
+          <Route path="/customer/register" element={<Register />} />
+          <Route path="/customer/verify-otp" element={<VerifyOTP />} />
+          <Route path="/customer/profile/login" element={<Navigate to="/customer/login" replace />} />
+          <Route path="/customer/profile/signup" element={<Navigate to="/customer/register" replace />} />
+
           {/* Admin Auth */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/register" element={<AdminRegister />} />
-          {/* Seller Auth */}
-          <Route path="/seller/login" element={<SellerLogin />} />
-          <Route path="/seller/register" element={<SellerRegister />} />
-          <Route path="/delivery/login" element={<DeliveryLogin />} />
-          <Route path="/delivery/register" element={<DeliveryRegister />} />
+          <Route path="/admin/register/verify-otp" element={<VerifyOTP />} />
+
+          {/* Legacy Seller Auth (Redirect to Vendor) */}
+          <Route path="/seller/login" element={<Navigate to="/vendor/login" replace />} />
+          <Route path="/seller/register" element={<Navigate to="/vendor/register" replace />} />
+
           {/* Vendor Auth */}
           <Route path="/vendor/login" element={<VendorLogin />} />
           <Route path="/vendor/register" element={<VendorRegister />} />
-          {/* Forgot Password & OTP */}
+          <Route path="/vendor/register/verify-otp" element={<VerifyOTP />} />
+
+          {/* Delivery Auth */}
+          <Route path="/delivery/login" element={<DeliveryLogin />} />
+          <Route path="/delivery/register" element={<DeliveryRegister />} />
+          <Route path="/delivery/register/verify-otp" element={<VerifyOTP />} />
+
+          {/* Universal Auth Pages */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Lock, Mail, AlertCircle, Eye, EyeOff, Sparkles, ShoppingBag } from 'lucide-react';
 import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
 import { authAPI } from '../../services/api';
+import AuthField from '../../components/auth/AuthField';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -22,19 +23,35 @@ const Login = () => {
         setError('');
         try {
             const response = await authAPI.login({ username: formData.username, password: formData.password });
-            const { access, refresh, user } = response.data;
-            const role = user?.role?.toUpperCase();
+            const { access, refresh, user, role: backendRole } = response.data;
+            const role = (backendRole || user?.role || 'customer').toUpperCase();
 
-            localStorage.setItem('access_token', access);
+            localStorage.setItem('authToken', access);
             localStorage.setItem('refresh_token', refresh);
             localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('role', role);
 
-            if (role === 'ADMIN' || role === 'SUPERADMIN') navigate('/admin/dashboard');
-            else if (role === 'VENDOR' || role === 'SELLER') navigate('/vendor/dashboard');
-            else if (role === 'DELIVERY') navigate('/delivery/dashboard');
-            else navigate('/');
+            // Smart Redirection based on role
+            const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN'].includes(role);
+            const isVendor = ['VENDOR', 'SELLER'].includes(role);
+            const isDelivery = role === 'DELIVERY';
+
+            if (isAdmin) {
+                navigate('/admin/dashboard');
+            } else if (isVendor) {
+                navigate('/vendor/dashboard');
+            } else if (isDelivery) {
+                navigate('/delivery/dashboard');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
-            setError(err.response?.data?.detail || 'Identity verification failed. Please try again.');
+            console.error('Login Error:', err);
+            if (!err.response) {
+                setError('Network Error: Cannot connect to the server. Please check if the backend is running at http://localhost:8000');
+            } else {
+                setError(err.response?.data?.detail || 'Portal access failed. Please verify your credentials.');
+            }
         } finally {
             setLoading(false);
         }
@@ -42,9 +59,9 @@ const Login = () => {
 
     return (
         <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-5">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase">Access NextGen</h2>
-                <p className="mt-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Connect to your shopping experience</p>
+            <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight uppercase">Shopping Portal</h2>
+                <p className="mt-1 text-xs font-semibold text-gray-400 uppercase tracking-widest leading-relaxed">Sign in to your shopping dashboard</p>
             </div>
 
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-7">
@@ -56,42 +73,40 @@ const Login = () => {
                         </div>
                     )}
 
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Secure Identifier</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Mail className="h-4 w-4 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input name="username" type="email" required
-                                value={formData.username} onChange={handleChange}
-                                className="block w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500/30 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm font-semibold placeholder-gray-300 text-gray-800"
-                                placeholder="YOUR@EMAIL.COM" />
-                        </div>
-                    </div>
+                    <AuthField
+                        label="Email Address"
+                        name="username"
+                        type="email"
+                        required
+                        value={formData.username}
+                        onChange={handleChange}
+                        placeholder="email@example.com"
+                        icon={Mail}
+                    />
 
-                    <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between ml-1">
-                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em]">Access Key</label>
-                            <Link to="/forgot-password" state={{ role: 'customer' }} className="text-[10px] font-black text-emerald-600 hover:opacity-70 uppercase tracking-widest">Lost Key?</Link>
-                        </div>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Lock className="h-4 w-4 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input name="password" type={showPassword ? 'text' : 'password'} required
-                                value={formData.password} onChange={handleChange}
-                                className="block w-full pl-11 pr-11 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500/30 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm font-semibold placeholder-gray-300 text-gray-800"
-                                placeholder="••••••••" />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-300 hover:text-emerald-600 transition-colors">
-                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                        </div>
-                    </div>
+                    <AuthField
+                        label="Password"
+                        name="password"
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        icon={Lock}
+                        passwordToggle
+                        showPw={showPassword}
+                        onToggle={() => setShowPassword(!showPassword)}
+                        forgotPasswordLink="/forgot-password"
+                        forgotPasswordState={{ role: 'customer' }}
+                    />
 
                     <button type="submit" disabled={loading}
-                        className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black uppercase tracking-widest shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50">
-                        {loading ? 'AUTHENTICATING...' : 'ENTER NEXTGEN'}
+                        className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                        {loading ? 'Authenticating...' : (
+                            <>
+                                <ShoppingBag size={18} strokeWidth={2.5} />
+                                <span>Sign In</span>
+                            </>
+                        )}
                     </button>
                 </form>
 
@@ -101,7 +116,7 @@ const Login = () => {
                         <span className="px-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">New to NextGen?</span>
                         <div className="flex-1 border-t border-gray-100" />
                     </div>
-                    <Link to="/register" className="w-full flex justify-center items-center gap-2 py-3 border border-gray-100 rounded-2xl bg-gray-50 hover:bg-gray-100 text-xs font-black text-gray-700 uppercase tracking-widest transition-all group">
+                    <Link to="/customer/register" className="w-full flex justify-center items-center gap-2 py-3 border border-gray-100 rounded-2xl bg-gray-50 hover:bg-gray-100 text-xs font-black text-gray-700 uppercase tracking-widest transition-all group">
                         <Sparkles size={13} className="group-hover:translate-x-0.5 transition-transform" />
                         Initialize Customer Account
                     </Link>

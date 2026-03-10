@@ -151,9 +151,18 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
     const { topLinks, subLinks, adminLinks, footerLabel, footerUrl } = getNavLinks(role);
 
     const handleLogout = () => {
+        const currentRole = localStorage.getItem('role')?.toUpperCase() || role;
         localStorage.clear();
-        const loginPath = role === 'ADMIN' ? '/admin/login' : role === 'VENDOR' ? '/vendor/login' : '/login';
-        navigate(loginPath);
+
+        if (currentRole === 'ADMIN' || currentRole === 'SUPER_ADMIN') {
+            navigate('/admin/login');
+        } else if (currentRole === 'VENDOR') {
+            navigate('/vendor/login');
+        } else if (currentRole === 'DELIVERY') {
+            navigate('/delivery/login');
+        } else {
+            navigate('/login');
+        }
     };
 
     const renderLink = (link) => {

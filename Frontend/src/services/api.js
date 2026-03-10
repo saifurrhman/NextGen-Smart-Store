@@ -15,8 +15,12 @@ const api = axios.create({
 // Request interceptor - Add JWT token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
+    const token = localStorage.getItem('authToken');
+
+    // Skip adding token for public auth endpoints to avoid 401s on invalid/expired tokens
+    const isPublicAuth = config.url?.includes('/auth/') && !config.url?.includes('/auth/logout');
+
+    if (token && !isPublicAuth) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -30,11 +34,29 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired - redirect to login
-      localStorage.removeItem('access_token');
+    const isAuthRequest = error.config?.url?.includes('/auth/login') ||
+      error.config?.url?.includes('/auth/register') ||
+      error.config?.url?.includes('/auth/otp');
+
+    if (error.response?.status === 401 && !isAuthRequest) {
+      const role = localStorage.getItem('role')?.toUpperCase();
+
+      // Clear all auth data
+      localStorage.removeItem('authToken');
       localStorage.removeItem('refresh_token');
-      window.location.href = '/login';
+      localStorage.removeItem('role');
+      localStorage.removeItem('user');
+
+      // Role-based redirection
+      if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+        window.location.href = '/admin/login';
+      } else if (role === 'VENDOR') {
+        window.location.href = '/vendor/login';
+      } else if (role === 'DELIVERY') {
+        window.location.href = '/delivery/login';
+      } else {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

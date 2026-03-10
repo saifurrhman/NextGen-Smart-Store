@@ -34,7 +34,7 @@ def track_visit(request):
         ip_address=ip, 
         source=source, 
         created_at__gte=timezone.now() - timedelta(hours=24)
-    ).exists()
+    ).count() > 0
     
     if not recent_visit:
         country = None

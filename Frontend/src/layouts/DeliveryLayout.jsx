@@ -12,9 +12,26 @@ const DeliveryLayout = () => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        const userRole = localStorage.getItem('role');
+
+        if (!token) {
+            navigate('/delivery/login');
+            return;
+        }
+
+        const normalizedRole = userRole?.toUpperCase();
+        const isDelivery = normalizedRole === 'DELIVERY';
+        const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN'].includes(normalizedRole);
+
+        if (!isDelivery && !isAdmin) {
+            navigate('/');
+            return;
+        }
+
         const userData = localStorage.getItem('user');
         if (userData) setUser(JSON.parse(userData));
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         setIsMobileOpen(false);

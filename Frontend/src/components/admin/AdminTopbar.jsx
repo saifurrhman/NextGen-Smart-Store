@@ -26,7 +26,7 @@ const AdminTopbar = ({ pageTitle, user, onMobileToggle, onToggleSidebar }) => {
         const fetchRealData = async () => {
             setLoading(true);
             try {
-                const token = localStorage.getItem('access_token');
+                const token = localStorage.getItem('authToken');
                 const config = {
                     headers: { Authorization: `Bearer ${token}` }
                 };

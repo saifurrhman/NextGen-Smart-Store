@@ -11,7 +11,7 @@ const VendorLayout = () => {
     const [user, setUser] = useState({ username: 'Merchant', email: '', role: 'VENDOR' });
 
     useEffect(() => {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('authToken');
         const userRole = localStorage.getItem('role');
 
         if (!token) {
@@ -19,7 +19,11 @@ const VendorLayout = () => {
             return;
         }
 
-        if (userRole !== 'VENDOR' && userRole !== 'SELLER' && userRole !== 'SUPER_ADMIN') {
+        const normalizedRole = userRole?.toUpperCase();
+        const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN'].includes(normalizedRole);
+        const isVendor = ['VENDOR', 'SELLER'].includes(normalizedRole);
+
+        if (!isVendor && !isAdmin) {
             navigate('/');
             return;
         }

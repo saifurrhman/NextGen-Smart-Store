@@ -59,7 +59,7 @@ const AcceptInvite = () => {
                 confirm_password: form.confirm_password,
             });
             // Store tokens and redirect to admin
-            localStorage.setItem('access_token', res.data.access);
+            localStorage.setItem('authToken', res.data.access);
             localStorage.setItem('refresh_token', res.data.refresh);
             localStorage.setItem('role', res.data.role);
             localStorage.setItem('user', JSON.stringify(res.data.user));

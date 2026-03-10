@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Lock, AlertCircle, UserCircle2, Eye, EyeOff, ShieldCheck, Terminal, BarChart3, Rocket } from 'lucide-react';
 import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
 import { authAPI } from '../../services/api';
+import AuthField from '../../components/auth/AuthField';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
@@ -22,20 +23,30 @@ const AdminLogin = () => {
         setError('');
         try {
             const response = await authAPI.login(formData);
-            const { access, refresh, user } = response.data;
-            const role = user?.role?.toUpperCase();
-            if (role !== 'ADMIN' && role !== 'SUPERADMIN' && role !== 'SUPER_ADMIN' && role !== 'SUB_ADMIN') {
-                setError('Access Denied. Unauthorized authorization level detected.');
-                setLoading(false);
-                return;
-            }
-            localStorage.setItem('access_token', access);
+            const { access, refresh, user, role: backendRole } = response.data;
+            const role = (backendRole || user?.role || 'customer').toUpperCase();
+
+            localStorage.setItem('authToken', access);
             localStorage.setItem('refresh_token', refresh);
-            localStorage.setItem('role', role);
             localStorage.setItem('user', JSON.stringify(user));
-            navigate('/admin/dashboard');
+            localStorage.setItem('role', role);
+
+            // Smart Redirection based on role
+            const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN'].includes(role);
+            const isVendor = ['VENDOR', 'SELLER'].includes(role);
+            const isDelivery = role === 'DELIVERY';
+
+            if (isAdmin) {
+                navigate('/admin/dashboard');
+            } else if (isVendor) {
+                navigate('/vendor/dashboard');
+            } else if (isDelivery) {
+                navigate('/delivery/dashboard');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
-            setError(err.response?.data?.detail || 'Authentication failed. Please check credentials.');
+            setError(err.response?.data?.detail || 'Portal access failed. Please verify your credentials.');
         } finally {
             setLoading(false);
         }
@@ -43,9 +54,9 @@ const AdminLogin = () => {
 
     return (
         <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-5">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase">Admin Terminal</h2>
-                <p className="mt-1 text-xs font-bold text-gray-400 uppercase tracking-widest">Authorized personnel only beyond this point</p>
+            <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight uppercase">Admin Portal</h2>
+                <p className="mt-1 text-xs font-semibold text-gray-400 uppercase tracking-widest leading-relaxed">Sign in to your administration dashboard</p>
             </div>
 
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-7">
@@ -57,42 +68,40 @@ const AdminLogin = () => {
                         </div>
                     )}
 
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ml-1">Admin Identifier</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <UserCircle2 className="h-4 w-4 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input name="username" type="email" required
-                                value={formData.username} onChange={handleChange}
-                                className="block w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500/30 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm font-semibold placeholder-gray-300 text-gray-800"
-                                placeholder="ADMIN@NEXTGEN.COM" />
-                        </div>
-                    </div>
+                    <AuthField
+                        label="Email Address"
+                        name="username"
+                        type="email"
+                        required
+                        value={formData.username}
+                        onChange={handleChange}
+                        placeholder="admin@nextgen.com"
+                        icon={UserCircle2}
+                    />
 
-                    <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between ml-1">
-                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em]">Security Key</label>
-                            <Link to="/forgot-password" state={{ role: 'admin' }} className="text-[10px] font-black text-emerald-600 hover:opacity-70 uppercase tracking-widest">Forgot?</Link>
-                        </div>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Lock className="h-4 w-4 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input name="password" type={showPassword ? 'text' : 'password'} required
-                                value={formData.password} onChange={handleChange}
-                                className="block w-full pl-11 pr-11 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500/30 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm font-semibold placeholder-gray-300 text-gray-800"
-                                placeholder="••••••••" />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-300 hover:text-gray-900 transition-colors">
-                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                        </div>
-                    </div>
+                    <AuthField
+                        label="Password"
+                        name="password"
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        icon={Lock}
+                        passwordToggle
+                        showPw={showPassword}
+                        onToggle={() => setShowPassword(!showPassword)}
+                        forgotPasswordLink="/forgot-password"
+                        forgotPasswordState={{ role: 'admin' }}
+                    />
 
                     <button type="submit" disabled={loading}
-                        className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black uppercase tracking-widest shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50">
-                        {loading ? 'AUTHORIZING...' : 'INITIALIZE SESSION'}
+                        className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                        {loading ? 'Authenticating...' : (
+                            <>
+                                <ShieldCheck size={18} strokeWidth={2.5} />
+                                <span>Sign In</span>
+                            </>
+                        )}
                     </button>
                 </form>
 

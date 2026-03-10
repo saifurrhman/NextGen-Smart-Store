@@ -11,11 +11,14 @@ const VerifyOTP = () => {
     const location = useLocation();
     const { email, purpose, formData, role } = location.state || {};
 
-    const loginUrl = { admin: '/admin/login', seller: '/seller/login', customer: '/login', delivery: '/login' };
-    const registerUrl = { admin: '/admin/register', seller: '/seller/register', customer: '/register', delivery: '/delivery/register' };
+    const loginUrl = { admin: '/admin/login', vendor: '/vendor/login', customer: '/customer/login', delivery: '/delivery/login' };
+    const registerUrl = { admin: '/admin/register', vendor: '/vendor/register', customer: '/customer/register', delivery: '/delivery/register' };
+    const dashboardUrl = { admin: '/admin/dashboard', vendor: '/vendor/dashboard', customer: '/', delivery: '/delivery/dashboard' };
+
     const resolvedRole = role || 'customer';
     const loginLink = loginUrl[resolvedRole] || '/login';
     const registerLink = registerUrl[resolvedRole] || '/register';
+    const dashboardLink = dashboardUrl[resolvedRole] || '/';
 
     const [digits, setDigits] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
@@ -67,9 +70,19 @@ const VerifyOTP = () => {
         try {
             await authAPI.verifyOTP({ email, code, purpose });
             if (purpose === 'register') {
-                await authAPI.registerWithOTP({ ...formData, email, code });
-                setSuccess('Identity Secured. Redirecting to Portal...');
-                setTimeout(() => navigate(loginLink, { replace: true }), 1500);
+                const response = await authAPI.registerWithOTP({ ...formData, email, code });
+                const { access, refresh, user: userData } = response.data;
+
+                // Save session for automatic login
+                if (access && refresh) {
+                    localStorage.setItem('authToken', access);
+                    localStorage.setItem('refresh_token', refresh);
+                    localStorage.setItem('role', userData?.role?.toUpperCase() || resolvedRole.toUpperCase());
+                    localStorage.setItem('user', JSON.stringify(userData));
+                }
+
+                setSuccess('Identity Secured. Redirecting to Dashboard...');
+                setTimeout(() => navigate(dashboardLink, { replace: true }), 1500);
             } else {
                 navigate('/reset-password', { state: { email, code, role: resolvedRole }, replace: true });
             }
@@ -104,8 +117,8 @@ const VerifyOTP = () => {
         <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
             <div className="text-center mb-6">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">Identity Verification</h2>
-                <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Multi-factor authorization required</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight uppercase leading-none">Verify Your Identity</h2>
+                <p className="mt-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Multi-factor authorization required</p>
             </div>
 
             {/* Main Card */}
@@ -126,7 +139,7 @@ const VerifyOTP = () => {
                     )}
 
                     {/* OTP Boxes */}
-                    <div className="flex justify-center gap-3 sm:gap-4" onPaste={handlePaste}>
+                    <div className="flex justify-center gap-2 sm:gap-4" onPaste={handlePaste}>
                         {digits.map((digit, i) => (
                             <input
                                 key={i}
@@ -137,7 +150,7 @@ const VerifyOTP = () => {
                                 value={digit}
                                 onChange={e => handleDigitChange(i, e.target.value)}
                                 onKeyDown={e => handleKeyDown(i, e)}
-                                className={`w-12 h-16 sm:w-14 sm:h-20 text-center text-2xl font-black rounded-2xl border-2 transition-all focus:outline-none focus:ring-8 focus:ring-emerald-600/5
+                                className={`w-10 h-14 sm:w-14 sm:h-20 text-center text-2xl font-bold rounded-2xl border-2 transition-all focus:outline-none focus:ring-8 focus:ring-emerald-600/5
                                     ${digit ? 'border-emerald-600 bg-emerald-600/5 text-gray-900 shadow-lg shadow-emerald-600/10' : 'border-gray-100 bg-gray-50 text-gray-400'}
                                     ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 disabled={loading}
@@ -148,9 +161,9 @@ const VerifyOTP = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] text-sm font-black text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest relative overflow-hidden group/btn"
+                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-lg shadow-emerald-500/20 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
                     >
-                        {loading ? 'AUTHENTICATING...' : 'AUTHORIZE ACCESS'}
+                        {loading ? 'Processing...' : 'Verify Now'}
                     </button>
 
                     <div className="text-center">
@@ -158,10 +171,10 @@ const VerifyOTP = () => {
                             type="button"
                             onClick={handleResend}
                             disabled={resendCooldown > 0 || resending}
-                            className="w-full h-16 flex items-center justify-center gap-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black uppercase tracking-widest shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group/btn relative overflow-hidden"
+                            className="w-full h-14 flex items-center justify-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                         >
                             <RefreshCw className={`h-4 w-4 ${resending ? 'animate-spin' : ''}`} />
-                            {resendCooldown > 0 ? `Retry in ${resendCooldown}S` : resending ? 'Transmitting...' : 'Request New Token'}
+                            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : resending ? 'Sending...' : 'Request New Code'}
                         </button>
                     </div>
                 </div>

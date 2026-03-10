@@ -1,5 +1,4 @@
-import React from 'react';
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, Menu } from 'lucide-react';
 
 const DashboardNavbar = ({ role = 'Vendor' }) => {
     return (

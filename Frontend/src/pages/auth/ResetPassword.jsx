@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, AlertCircle, Eye, EyeOff, Sparkles, CheckCircle2, ShieldAlert, Fingerprint } from 'lucide-react';
 import logoDark from '../../assets/Next Gen Smart Store (Dark ).png';
 import { authAPI } from '../../services/api';
+import AuthField from '../../components/auth/AuthField';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
@@ -48,10 +49,10 @@ const ResetPassword = () => {
                     </div>
                     <div className="inline-flex items-center gap-2 bg-emerald-600/5 px-4 py-1.5 rounded-full border border-emerald-600/10 mb-4">
                         <CheckCircle2 size={14} className="text-emerald-600" />
-                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Protocol Accomplished</span>
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">Success</span>
                     </div>
-                    <h2 className="text-4xl font-black text-gray-900 tracking-tighter leading-none uppercase">Key Rotated</h2>
-                    <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Your identity has been successfully secured</p>
+                    <h2 className="text-3xl font-bold text-gray-900 tracking-tight leading-none uppercase">Password Updated</h2>
+                    <p className="mt-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-center">Your account is now secure</p>
                 </div>
 
                 <div className="bg-white py-12 px-8 sm:px-12 shadow-2xl shadow-emerald-600/10 rounded-[3.5rem] border border-gray-100 relative overflow-hidden text-center">
@@ -60,14 +61,14 @@ const ResetPassword = () => {
                             <ShieldAlert className="h-12 w-12 text-emerald-600" />
                         </div>
                     </div>
-                    <p className="text-xs font-black text-gray-900 uppercase tracking-widest leading-relaxed mb-10">
-                        New security credentials have been deployed. Authenticate via the portal to resume operations.
+                    <p className="text-xs font-semibold text-gray-900 uppercase tracking-widest leading-relaxed mb-10">
+                        Your password has been changed successfully. You can now log in with your new credentials.
                     </p>
                     <Link
-                        to="/login"
+                        to="/customer/login"
                         className="w-full flex justify-center items-center gap-3 py-5 px-6 rounded-[2rem] shadow-xl shadow-emerald-600/20 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-8 focus:ring-emerald-600/10 transition-all transform hover:-translate-y-1 active:scale-95 uppercase tracking-[0.2em]"
                     >
-                        Return to Secure Portal
+                        Return to Login Portal
                     </Link>
                 </div>
             </div>
@@ -78,8 +79,8 @@ const ResetPassword = () => {
         <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
             <div className="text-center mb-6">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">Sync Access</h2>
-                <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Establish new operational credentials</p>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight uppercase leading-none">New Password</h2>
+                <p className="mt-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Set a strong password for your account</p>
             </div>
 
             {/* Main Card */}
@@ -93,50 +94,38 @@ const ResetPassword = () => {
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">New Access Key</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <Lock className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input
-                                type={showPassword ? 'text' : 'password'} required
-                                value={password} onChange={e => { setPassword(e.target.value); setError(''); }}
-                                className="block w-full pl-14 pr-14 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
-                                placeholder="8+ CHARACTERS"
-                            />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-300 hover:text-emerald-600 transition-colors">
-                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                            </button>
-                        </div>
-                    </div>
+                    <AuthField
+                        label="New Password"
+                        name="password"
+                        required
+                        value={password}
+                        onChange={e => { setPassword(e.target.value); setError(''); }}
+                        placeholder="8+ characters"
+                        icon={Lock}
+                        passwordToggle
+                        showPw={showPassword}
+                        onToggle={() => setShowPassword(!showPassword)}
+                    />
 
-                    <div className="space-y-2">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verify New Key</label>
-                        <div className="relative group/input">
-                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <Lock className="h-5 w-5 text-gray-300 group-focus-within/input:text-emerald-600 transition-colors" />
-                            </div>
-                            <input
-                                type={showConfirm ? 'text' : 'password'} required
-                                value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setError(''); }}
-                                className="block w-full pl-14 pr-14 py-3.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:border-emerald-600/20 focus:ring-8 focus:ring-emerald-600/5 transition-all text-sm font-black placeholder-gray-300"
-                                placeholder="REPEAT NEW KEY"
-                            />
-                            <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                                className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-300 hover:text-emerald-600 transition-colors">
-                                {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                            </button>
-                        </div>
-                    </div>
+                    <AuthField
+                        label="Confirm New Password"
+                        name="confirmPassword"
+                        required
+                        value={confirmPassword}
+                        onChange={e => { setConfirmPassword(e.target.value); setError(''); }}
+                        placeholder="Repeat new password"
+                        icon={Lock}
+                        passwordToggle
+                        showPw={showConfirm}
+                        onToggle={() => setShowConfirm(!showConfirm)}
+                    />
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] text-sm font-black text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest relative overflow-hidden group/btn"
+                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-lg shadow-emerald-500/20 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
                     >
-                        {loading ? 'RE-ENCRYPTING...' : 'FINALIZE KEY ROTATION'}
+                        {loading ? 'Updating...' : 'Update Password'}
                     </button>
                 </form>
 

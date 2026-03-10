@@ -29,7 +29,7 @@ const SellerLogin = () => {
                 setLoading(false);
                 return;
             }
-            localStorage.setItem('access_token', access);
+            localStorage.setItem('authToken', access);
             localStorage.setItem('refresh_token', refresh);
             localStorage.setItem('user', JSON.stringify(user));
             navigate('/vendor/dashboard');

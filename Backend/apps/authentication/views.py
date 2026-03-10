@@ -161,12 +161,12 @@ class SendOTPView(APIView):
 
         # For password_reset: check email exists
         if purpose == OTPCode.PURPOSE_PASSWORD_RESET:
-            if not User.objects.filter(email=email).exists():
+            if User.objects.filter(email=email).count() == 0:
                 return Response({'error': 'No account found with this email.'}, status=status.HTTP_404_NOT_FOUND)
 
         # For register: check email not already taken
         if purpose == OTPCode.PURPOSE_REGISTER:
-            if User.objects.filter(email=email).exists():
+            if User.objects.filter(email=email).count() > 0:
                 return Response({'error': 'An account with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Create OTP
@@ -267,7 +267,7 @@ class RegisterWithOTPView(APIView):
         if not otp.is_valid():
             return Response({'error': 'Code expired. Please register again.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        ALLOWED_ROLES = ['CUSTOMER', 'VENDOR', 'SUB_ADMIN', 'DELIVERY']
+        ALLOWED_ROLES = ['CUSTOMER', 'VENDOR', 'SUB_ADMIN', 'DELIVERY', 'ADMIN', 'SUPER_ADMIN']
         role = request.data.get('role', 'CUSTOMER').upper()
         if role not in ALLOWED_ROLES:
             role = 'CUSTOMER'
@@ -289,10 +289,20 @@ class RegisterWithOTPView(APIView):
             logger.info(f"RegisterWithOTP: password hash = {user.password[:40] if user.password else 'EMPTY!'}")
             logger.info(f"RegisterWithOTP: check_password = {user.check_password(raw_password)}")
 
+            # Build JWT tokens manually (bypass djongo bugs)
+            refresh = RefreshToken()
+            refresh['user_id'] = str(user.email)
+
             otp.is_used = True
             otp.save()
+            
             serializer = UserSerializer(user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'role': user.role,
+                'user': serializer.data,
+            }, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(f"RegisterWithOTP: create_user failed: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
