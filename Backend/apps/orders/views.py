@@ -5,6 +5,7 @@ from .serializers import OrderSerializer, RefundSerializer, OrderReportSerialize
 from rest_framework.response import Response
 from apps.products.models import Product, ProductImage
 from core.utils import get_mongo_db
+from core.permissions import IsAdminRole
 from bson import ObjectId
 
 
@@ -124,14 +125,15 @@ class VendorBulkOrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.is_staff:
+        user = self.request.user
+        if user.is_staff or getattr(user, 'role', '') in ('SUPER_ADMIN', 'SUB_ADMIN', 'ADMIN'):
             return VendorBulkOrder.objects.all()
-        return VendorBulkOrder.objects.filter(vendor=self.request.user)
+        return VendorBulkOrder.objects.filter(vendor=user)
 
     def perform_create(self, serializer):
         serializer.save(vendor=self.request.user)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminRole])
     def approve(self, request, pk=None):
         order = self.get_object()
         if order.status == 'shipped':

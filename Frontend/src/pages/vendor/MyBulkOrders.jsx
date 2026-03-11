@@ -12,7 +12,8 @@ import {
     Filter,
     Loader2,
     Calendar,
-    Hash
+    Hash,
+    Info
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -47,7 +48,8 @@ const MyBulkOrders = () => {
     };
 
     const getStatusColor = (status) => {
-        switch (status.toLowerCase()) {
+        const s = (status || 'pending').toLowerCase();
+        switch (s) {
             case 'pending': return 'bg-amber-50 text-amber-600 border-amber-100';
             case 'approved': return 'bg-blue-50 text-blue-600 border-blue-100';
             case 'shipped': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
@@ -57,7 +59,8 @@ const MyBulkOrders = () => {
     };
 
     const getStatusIcon = (status) => {
-        switch (status.toLowerCase()) {
+        const s = (status || 'pending').toLowerCase();
+        switch (s) {
             case 'pending': return Clock;
             case 'approved': return CreditCard;
             case 'shipped': return CheckCircle2;
@@ -126,11 +129,11 @@ const MyBulkOrders = () => {
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Order ID</span>
-                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded font-mono text-xs font-bold tracking-tight">#{order.id.toString().slice(-8).toUpperCase()}</span>
+                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded font-mono text-xs font-bold tracking-tight">#{order.id ? order.id.toString().slice(-8).toUpperCase() : 'N/A'}</span>
                                                 </div>
-                                                <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                                                    Status: {order.status}
-                                                    <div className={`w-1.5 h-1.5 rounded-full ${order.status === 'shipped' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                                                <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 text-capitalize">
+                                                    Status: {order.status || 'Pending'}
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${(order.status || '').toLowerCase() === 'shipped' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
                                                 </h3>
                                             </div>
                                         </div>
@@ -138,7 +141,7 @@ const MyBulkOrders = () => {
                                         <div className="flex items-center gap-8 text-right">
                                             <div>
                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
-                                                <p className="text-lg font-bold text-gray-800 tracking-tight">PKR {parseFloat(order.total_amount).toLocaleString()}</p>
+                                                <p className="text-lg font-bold text-gray-800 tracking-tight">PKR {order.total_amount ? parseFloat(order.total_amount).toLocaleString() : '0'}</p>
                                             </div>
                                             <div className="hidden sm:block">
                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date</p>
@@ -178,7 +181,7 @@ const MyBulkOrders = () => {
                                         </div>
                                     </div>
 
-                                    {order.status.toLowerCase() === 'pending' && (
+                                    {(order.status || '').toLowerCase() === 'pending' && (
                                         <div className="mt-6 flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
                                             <Info size={16} className="text-amber-500 shrink-0" />
                                             <p className="text-[10px] font-bold text-amber-800/70 uppercase tracking-widest leading-relaxed">
@@ -186,7 +189,7 @@ const MyBulkOrders = () => {
                                             </p>
                                         </div>
                                     )}
-                                    {order.status.toLowerCase() === 'shipped' && (
+                                    {(order.status || '').toLowerCase() === 'shipped' && (
                                         <div className="mt-6 flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
                                             <Truck size={16} className="text-emerald-500 shrink-0" />
                                             <p className="text-[10px] font-bold text-emerald-800/70 uppercase tracking-widest leading-relaxed">

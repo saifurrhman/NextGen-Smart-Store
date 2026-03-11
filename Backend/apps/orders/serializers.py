@@ -80,13 +80,17 @@ class VendorBulkOrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
+        vendor = validated_data.pop('vendor', None)
         
         try:
             # Calculate total amount
             total_amount = sum(item['price'] * item['quantity'] for item in items_data)
-            validated_data['total_amount'] = total_amount
             
-            # Vendor is set from request context in perform_create
+            # Set total and vendor explicitly to avoid Unsaved Object errors in Djongo
+            validated_data['total_amount'] = total_amount
+            if vendor:
+                validated_data['vendor_id'] = vendor.pk
+            
             bulk_order = VendorBulkOrder.objects.create(**validated_data)
             
             for item_data in items_data:
