@@ -131,7 +131,7 @@ const AdminBulkOrders = () => {
                                                     <span className="text-xs font-bold text-gray-400">#{order.id.toString().toUpperCase()}</span>
                                                 </div>
                                                 <h3 className="text-base font-bold text-gray-900">
-                                                    Vendor: {order.vendor_email}
+                                                    Vendor: {order.vendor_email || <span className="text-red-500 italic text-xs">Missing/Invalid Vendor</span>}
                                                 </h3>
                                             </div>
                                         </div>

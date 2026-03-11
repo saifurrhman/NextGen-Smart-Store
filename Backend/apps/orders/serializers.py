@@ -86,7 +86,7 @@ class VendorBulkOrderSerializer(serializers.ModelSerializer):
             # Calculate total amount
             total_amount = sum(item['price'] * item['quantity'] for item in items_data)
             
-            # Set total and vendor explicitly to avoid Unsaved Object errors in Djongo
+            # Set total and vendor explicitly
             validated_data['total_amount'] = total_amount
             if vendor:
                 validated_data['vendor_id'] = vendor.pk
