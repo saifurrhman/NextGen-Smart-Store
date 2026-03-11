@@ -1,7 +1,9 @@
 from rest_framework import generics, permissions, viewsets, status
-from .models import Order, Refund, OrderReport
-from .serializers import OrderSerializer, RefundSerializer, OrderReportSerializer
+from rest_framework.decorators import action
+from .models import Order, Refund, OrderReport, VendorBulkOrder, VendorBulkOrderItem
+from .serializers import OrderSerializer, RefundSerializer, OrderReportSerializer, VendorBulkOrderSerializer
 from rest_framework.response import Response
+from apps.products.models import Product, ProductImage
 from core.utils import get_mongo_db
 from bson import ObjectId
 
@@ -62,9 +64,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         except Exception as e:
             # Fallback: plain ORM without ordering
             try:
-                qs = list(Order.objects.all())
+                qs = Order.objects.all()
                 serializer = self.get_serializer(qs, many=True)
-                return Response({'count': len(qs), 'results': serializer.data})
+                return Response({'count': qs.count(), 'results': serializer.data})
             except Exception as e2:
                 return Response({'count': 0, 'results': [], 'error': str(e2)})
 
@@ -114,3 +116,60 @@ class OrderReportViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class VendorBulkOrderViewSet(viewsets.ModelViewSet):
+    queryset = VendorBulkOrder.objects.all()
+    serializer_class = VendorBulkOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return VendorBulkOrder.objects.all()
+        return VendorBulkOrder.objects.filter(vendor=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(vendor=self.request.user)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def approve(self, request, pk=None):
+        order = self.get_object()
+        if order.status == 'shipped':
+            return Response({'detail': 'Order already fulfillment'}, status=400)
+        
+        # Critical Logic: Allocate inventory to Vendor
+        for item in order.items.all():
+            m_product = item.master_product
+            
+            # Check if vendor already has a product linked to this master product
+            # For simplicity, we create a NEW product entry for each bulk order fulfillment
+            # Or we could find existing one and update stock. 
+            # Users often want to sell the same item multiple times or manage it as one entry.
+            # Let's search by title + vendor as a semi-unique check.
+            existing_prod = Product.objects.filter(vendor=order.vendor, title=m_product.title).first()
+            
+            if existing_prod:
+                existing_prod.stock += item.quantity
+                existing_prod.save()
+            else:
+                # Create duplicate entry
+                new_prod = Product.objects.create(
+                    title=m_product.title,
+                    description=m_product.description,
+                    price=m_product.price, # Default to master price
+                    category=m_product.category,
+                    main_image=m_product.main_image,
+                    stock=item.quantity,
+                    is_active=True,
+                    vendor=order.vendor,
+                    sku=f"{m_product.sku}-{order.vendor.id}"[:100] if m_product.sku else None
+                )
+                
+                # Copy gallery images if possible
+                for img_obj in m_product.images.all():
+                    ProductImage.objects.create(product=new_prod, image=img_obj.image)
+
+        order.status = 'shipped'
+        order.save()
+        
+        return Response({'status': 'Approved & Inventory Allocated'})

@@ -1,11 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Camera, ArrowRight, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Camera, ArrowRight, Truck, ShieldCheck, RefreshCw, Grid } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import api from '../../utils/api'; // Use centralized API
+import api from '../../utils/api';
+
+const getMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/media/')) return `http://localhost:8000${url}`;
+    return `http://localhost:8000/media/${url.startsWith('/') ? url.slice(1) : url}`;
+};
+
+const CAT_COLORS = [
+    { bg: '#EAF8E7', color: '#4EA674' }, { bg: '#EFF6FF', color: '#3B82F6' },
+    { bg: '#FEF3C7', color: '#D97706' }, { bg: '#FDF2F8', color: '#EC4899' },
+    { bg: '#EDE9FE', color: '#7C3AED' }, { bg: '#FFF1F2', color: '#E11D48' },
+    { bg: '#F0F9FF', color: '#0284C7' }, { bg: '#F0FDF4', color: '#16A34A' },
+];
 
 const Home = () => {
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [heroData, setHeroData] = useState({
         title: "Discover the Latest",
@@ -22,7 +37,12 @@ const Home = () => {
                 const prodResponse = await api.get('products/?limit=4');
                 setProducts(prodResponse.data.results || prodResponse.data);
 
-                // 2. Fetch Hero Banner (If API exists)
+                // 2. Fetch Live Categories
+                const catResponse = await api.get('categories/?page=1');
+                const cats = catResponse.data.results || catResponse.data;
+                setCategories(cats.filter(c => c.is_active));
+
+                // 3. Fetch Hero Banner (If API exists)
                 try {
                     const bannerResponse = await api.get('hero-banner/');
                     if (bannerResponse.data) {
@@ -117,6 +137,55 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* ── SHOP BY CATEGORY ── */}
+            {(loading || categories.length > 0) && (
+                <section className="py-20 bg-white">
+                    <div className="container mx-auto px-4">
+                        <div className="flex justify-between items-end mb-12">
+                            <div>
+                                <span className="text-brand font-bold uppercase tracking-wider text-sm">Browse</span>
+                                <h2 className="text-3xl font-bold text-brand-dark mt-2">Shop by Category</h2>
+                            </div>
+                            <Link to="/products" className="text-brand hover:text-brand-dark font-medium flex items-center gap-1">
+                                View All <ArrowRight size={16} />
+                            </Link>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {loading ? Array(8).fill(null).map((_, i) => (
+                                <div key={i} className="rounded-2xl border border-gray-100 p-5 animate-pulse">
+                                    <div className="w-12 h-12 bg-gray-100 rounded-xl mb-3" />
+                                    <div className="h-3 bg-gray-100 rounded w-2/3 mb-2" />
+                                    <div className="h-2 bg-gray-50 rounded w-1/3" />
+                                </div>
+                            )) : categories.map((cat, idx) => {
+                                const palette = CAT_COLORS[idx % CAT_COLORS.length];
+                                const imgUrl = getMediaUrl(cat.icon) || getMediaUrl(cat.image);
+                                return (
+                                    <Link
+                                        key={cat.slug}
+                                        to={`/products?category=${cat.slug}`}
+                                        className="group flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-2xl hover:border-brand hover:shadow-lg transition-all duration-300"
+                                    >
+                                        <div className="shrink-0 w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-110"
+                                            style={{ background: palette.bg }}>
+                                            {imgUrl ? (
+                                                <img src={imgUrl} alt={cat.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Grid size={24} style={{ color: palette.color }} />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-black text-brand-dark truncate group-hover:text-brand transition-colors">{cat.name}</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Explore →</p>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* Trending Section */}
             <section className="py-20 bg-gray-50">
                 <div className="container mx-auto px-4">
@@ -141,7 +210,7 @@ const Home = () => {
                                 <div key={product.id} className="bg-white rounded-2xl p-4 hover:shadow-xl transition-all group">
                                     <div className="relative bg-gray-100 rounded-xl h-64 overflow-hidden mb-4">
                                         <img
-                                            src={product.images?.[0]?.image || 'https://via.placeholder.com/500'}
+                                            src={getMediaUrl(product.images?.[0]?.image) || 'https://via.placeholder.com/500'}
                                             alt={product.name}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                         />

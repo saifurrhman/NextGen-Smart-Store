@@ -22,7 +22,7 @@ const AdminLayout = () => {
 
         // Try to get role from 'role' or nested in 'user' object
         let currentRole = userRole;
-        if (!currentRole || currentRole === 'UNDEFINED') {
+        if (!currentRole || currentRole === 'UNDEFINED' || currentRole === 'null') {
             try {
                 const userData = JSON.parse(userObjStr || '{}');
                 currentRole = userData.role || userData.user_role;
@@ -30,14 +30,24 @@ const AdminLayout = () => {
         }
 
         const normalizedRole = currentRole?.toString().trim().toUpperCase();
-        const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN'].includes(normalizedRole);
+        const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN'];
+        const isAdmin = ADMIN_ROLES.includes(normalizedRole);
+
+        console.log('[AdminLayout] Security Check:', { role: normalizedRole, isAdmin });
 
         if (!isAdmin) {
-            console.warn('AdminLayout: Unauthorized role detected:', normalizedRole);
-            // If it's a vendor or delivery, they should go to their place, otherwise home
-            if (['VENDOR', 'SELLER'].includes(normalizedRole)) navigate('/vendor/dashboard');
-            else if (normalizedRole === 'DELIVERY') navigate('/delivery/dashboard');
-            else navigate('/');
+            console.warn('[AdminLayout] Unauthorized access attempt by:', normalizedRole);
+            // ONLY redirect if we are SURE it's not an admin. 
+            // If role is somehow missing but token exists, we stay (safer than bouncing to vendor)
+            if (normalizedRole) {
+                if (['VENDOR', 'SELLER'].includes(normalizedRole)) {
+                    navigate('/vendor/dashboard');
+                } else if (normalizedRole === 'DELIVERY') {
+                    navigate('/delivery/dashboard');
+                } else {
+                    navigate('/');
+                }
+            }
             return;
         }
 

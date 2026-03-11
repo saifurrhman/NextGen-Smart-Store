@@ -22,8 +22,10 @@ const VendorSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user 
 
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/vendor/dashboard' },
-        { icon: ShoppingBag, label: 'My Products', path: '/vendor/products' },
-        { icon: Package, label: 'Manage Orders', path: '/vendor/orders' },
+        { icon: ShoppingBag, label: 'My Inventory', path: '/vendor/products' },
+        { icon: Store, label: 'Wholesale Catalog', path: '/vendor/wholesale-catalog' },
+        { icon: Package, label: 'Bulk Orders', path: '/vendor/bulk-orders' },
+        { icon: MessageSquare, label: 'Product Request', path: '/vendor/request-product' },
         { icon: Wallet, label: 'My Earnings', path: '/vendor/earnings' },
         { icon: MessageSquare, label: 'Shop Reviews', path: '/vendor/reviews' },
         { icon: Settings, label: 'Shop Settings', path: '/vendor/settings' },

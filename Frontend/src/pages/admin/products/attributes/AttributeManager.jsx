@@ -17,7 +17,7 @@ const AttributeManager = ({ type, title, placeholder }) => {
         const fetchAttributes = async () => {
             setLoading(true);
             try {
-                const response = await api.get('/api/v1/attributes/');
+                const response = await api.get('attributes/');
                 const allAttrs = response.data.results || response.data;
                 // Find the specific attribute by name (case insensitive)
                 const target = allAttrs.find(a => a.name.toLowerCase() === type.toLowerCase());
@@ -33,33 +33,55 @@ const AttributeManager = ({ type, title, placeholder }) => {
         fetchAttributes();
     }, [type]);
 
+    // Save current terms list to backend (find by name → PATCH or POST)
+    const saveToBackend = async (updatedTerms) => {
+        try {
+            const res = await api.get('attributes/');
+            const all = res.data.results || res.data;
+            const target = all.find(a => a.name.toLowerCase() === type.toLowerCase());
+            const termsStr = updatedTerms.join(',');
+            if (target) {
+                await api.patch(`attributes/${target.id}/`, { terms: termsStr });
+            } else {
+                await api.post('attributes/', { name: title, terms: termsStr });
+            }
+        } catch (err) {
+            console.error('Backend sync error:', err);
+            throw err;
+        }
+    };
+
     const handleAdd = async (e) => {
         e.preventDefault();
         if (!newValue.trim()) return;
         if (terms.includes(newValue.trim())) {
-            setMsg({ type: 'error', text: `${title} already exists!` });
+            setMsg({ type: 'error', text: `"${newValue.trim()}" already exists!` });
             return;
         }
-
         setIsSubmitting(true);
         try {
-            // In a real app, you'd update the attribute terms on the server
-            // For now, we simulate update and show success
             const updatedTerms = [...terms, newValue.trim()];
+            await saveToBackend(updatedTerms);
             setTerms(updatedTerms);
             setNewValue('');
-            setMsg({ type: 'success', text: `${title} added successfully!` });
-            setTimeout(() => setMsg({ type: '', text: '' }), 2000);
+            setMsg({ type: 'success', text: `"${newValue.trim()}" added and saved!` });
+            setTimeout(() => setMsg({ type: '', text: '' }), 2500);
         } catch (err) {
-            setMsg({ type: 'error', text: 'Failed to add. Please try again.' });
+            setMsg({ type: 'error', text: 'Failed to save. Check backend connection.' });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleDelete = (termToDelete) => {
-        setTerms(terms.filter(t => t !== termToDelete));
-        setMsg({ type: 'success', text: 'Term removed.' });
+    const handleDelete = async (termToDelete) => {
+        const updatedTerms = terms.filter(t => t !== termToDelete);
+        setTerms(updatedTerms);
+        try {
+            await saveToBackend(updatedTerms);
+            setMsg({ type: 'success', text: `"${termToDelete}" removed.` });
+        } catch {
+            setMsg({ type: 'error', text: 'Removed locally but failed to sync to server.' });
+        }
         setTimeout(() => setMsg({ type: '', text: '' }), 2000);
     };
 

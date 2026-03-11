@@ -28,7 +28,11 @@ def sanitize_mongo_doc(doc):
     """
     if isinstance(doc, dict):
         if '_id' in doc:
-            doc['id'] = str(doc.pop('_id'))
+            # Only map _id to id if id doesn't already exist (legacy docs have real integer ids)
+            if 'id' not in doc:
+                doc['id'] = str(doc.pop('_id'))
+            else:
+                doc['_id'] = str(doc.pop('_id'))
         for k, v in doc.items():
             doc[k] = sanitize_mongo_doc(v)
         return doc

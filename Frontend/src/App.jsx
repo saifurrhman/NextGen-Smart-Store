@@ -60,6 +60,11 @@ import MyVendorReviews from './pages/vendor/Reviews';
 import AddVendorProduct from './pages/vendor/AddProduct';
 import RequestVendorProduct from './pages/vendor/RequestProduct';
 import EditVendorProduct from './pages/vendor/EditProduct';
+import WholesaleCatalog from './pages/vendor/WholesaleCatalog';
+import WholesaleProductDetail from './pages/vendor/WholesaleProductDetail';
+import MyBulkOrders from './pages/vendor/MyBulkOrders';
+import AdminBulkOrders from './pages/admin/bulk-orders/AdminBulkOrders';
+import AdminProductRequests from './pages/admin/product-requests/AdminProductRequests';
 import SuperAdminDashboard from './pages/admin/Dashboard';
 import AdminProfile from './pages/admin/AdminProfile';
 import ControlAuthority from './pages/admin/ControlAuthority';
@@ -168,6 +173,8 @@ import AddProduct from './pages/admin/products/AddProduct';
 import EditProduct from './pages/admin/products/EditProduct';
 import FeaturedProducts from './pages/admin/products/FeaturedProducts';
 import ProductCategories from './pages/admin/products/ProductCategories';
+import CreateCategory from './pages/admin/products/CreateCategory';
+import EditCategory from './pages/admin/products/EditCategory';
 import ProductAttributes from './pages/admin/products/ProductAttributes';
 import SizeManagement from './pages/admin/products/attributes/SizeManagement';
 import ColorManagement from './pages/admin/products/attributes/ColorManagement';
@@ -287,6 +294,9 @@ function App() {
           <Route path="add-product" element={<AddVendorProduct />} />
           <Route path="request-product" element={<RequestVendorProduct />} />
           <Route path="edit-product/:id" element={<EditVendorProduct />} />
+          <Route path="wholesale-catalog" element={<WholesaleCatalog />} />
+          <Route path="wholesale-catalog/:id" element={<WholesaleProductDetail />} />
+          <Route path="bulk-orders" element={<MyBulkOrders />} />
         </Route>
 
         {/* Delivery Portal Routes */}
@@ -341,11 +351,15 @@ function App() {
           <Route path="orders/details" element={<OrderDetails />} />
           <Route path="orders/reports" element={<OrderReports />} />
           <Route path="orders/refunds" element={<RefundsReturns />} />
+          <Route path="bulk-orders" element={<AdminBulkOrders />} />
+          <Route path="product-requests" element={<AdminProductRequests />} />
           <Route path="products/all" element={<AllProducts />} />
           <Route path="products/add" element={<AddProduct />} />
           <Route path="products/edit/:id" element={<EditProduct />} />
           <Route path="products/featured" element={<FeaturedProducts />} />
           <Route path="products/categories" element={<ProductCategories />} />
+          <Route path="products/categories/create" element={<CreateCategory />} />
+          <Route path="products/categories/edit/:slug" element={<EditCategory />} />
           <Route path="products/attributes" element={<ProductAttributes />} />
           <Route path="products/attributes/size" element={<SizeManagement />} />
           <Route path="products/attributes/color" element={<ColorManagement />} />

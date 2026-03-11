@@ -6,7 +6,7 @@ import {
     FileText, DollarSign, Megaphone, Boxes, HeadphonesIcon,
     ChevronDown, Image, BookOpen, FolderOpen, Navigation, Search,
     TrendingUp, CreditCard, Wallet, Map, Flag, Ticket, Users, BarChart2, Truck,
-    Home, Bot, AlignLeft, X, ShieldAlert
+    Home, Bot, AlignLeft, X, ShieldAlert, Package, MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tag } from 'lucide-react';
@@ -17,8 +17,10 @@ const AdminSidebar = ({ collapsed, onToggle, isMobileOpen, onMobileClose, user }
 
     const menuItems = [
         { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/admin/orders/all', icon: Ticket, label: 'Orders' },
+        { path: '/admin/orders/all', icon: Ticket, label: 'B2C Orders' },
+        { path: '/admin/bulk-orders', icon: Package, label: 'Bulk Orders' },
         { path: '/admin/products/all', icon: Store, label: 'Products' },
+        { path: '/admin/product-requests', icon: MessageSquare, label: 'Add Requests' },
         { path: '/admin/products/attributes', icon: Tag, label: 'Attributes' },
         { path: '/admin/users/all', icon: Users, label: 'Users' },
         { path: '/admin/vendors/all', icon: Store, label: 'Vendors' },

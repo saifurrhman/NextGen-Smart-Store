@@ -84,6 +84,14 @@ export const productsAPI = {
   create: (data) => api.post('/products/', data),
   update: (id, data) => api.put(`/products/${id}/`, data),
   delete: (id) => api.delete(`/products/${id}/`),
+  getMasterCatalog: (params) => api.get('/products/master-catalog/', { params }),
+  // Product Requests
+  getRequests: () => api.get('/products/requests/'),
+  submitRequest: (data) => api.post('/products/requests/', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  approveRequest: (id, notes) => api.post(`/products/requests/${id}/approve/`, { notes }),
+  rejectRequest: (id, notes) => api.post(`/products/requests/${id}/reject/`, { notes }),
 };
 
 export const cartAPI = {
@@ -97,6 +105,13 @@ export const ordersAPI = {
   getAll: () => api.get('/orders/'),
   getById: (id) => api.get(`/orders/${id}/`),
   create: (data) => api.post('/orders/', data),
+};
+
+export const bulkOrdersAPI = {
+  getAll: () => api.get('/orders/bulk-orders/'),
+  getById: (id) => api.get(`/orders/bulk-orders/${id}/`),
+  create: (data) => api.post('/orders/bulk-orders/', data),
+  approve: (id) => api.post(`/orders/bulk-orders/${id}/approve/`),
 };
 
 export const profileAPI = {

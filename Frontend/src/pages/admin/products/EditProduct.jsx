@@ -6,6 +6,13 @@ import {
 } from 'lucide-react';
 import api from '../../../utils/api';
 
+const getMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/media/')) return `http://localhost:8000${url}`;
+    return `http://localhost:8000/media/${url.startsWith('/') ? url.slice(1) : url}`;
+};
+
 const EditProduct = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -59,7 +66,8 @@ const EditProduct = () => {
                     category: p.category || (p.category_id || ''),
                     attributes: p.attributes || [],
                     min_stock: p.min_stock || 10,
-                    is_active: p.is_active ?? true
+                    is_active: p.is_active ?? true,
+                    main_image: p.main_image || null
                 });
             } catch (err) {
                 console.error("Fetch error:", err);
@@ -96,12 +104,17 @@ const EditProduct = () => {
         setMsg({ type: '', text: '' });
 
         try {
-            await api.put(`products/${id}/`, formData);
+            // Create a payload without the main_image URL string, 
+            // as Django ImageField will reject a URL string in JSON PUT request.
+            const payload = { ...formData };
+            delete payload.main_image;
+
+            await api.put(`products/${id}/`, payload);
             setMsg({ type: 'success', text: 'Product updated successfully!' });
             setTimeout(() => navigate('/admin/products/all'), 1500);
         } catch (err) {
             console.error("Submit error:", err);
-            setMsg({ type: 'error', text: err.response?.data?.detail || 'Failed to update product.' });
+            setMsg({ type: 'error', text: err.response?.data?.detail || JSON.stringify(err.response?.data) || 'Failed to update product.' });
         } finally {
             setSubmitting(false);
         }
@@ -331,8 +344,18 @@ const EditProduct = () => {
                         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
                             <h3 className="text-sm font-bold text-gray-800 mb-4">Product Thumbnail</h3>
                             <div className="relative aspect-square rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden group hover:border-emerald-400 transition-colors cursor-pointer">
-                                <ImageIcon size={28} className="text-gray-300 mb-2 group-hover:scale-110 transition-transform" />
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Image</span>
+                                {formData.main_image ? (
+                                    <img
+                                        src={getMediaUrl(formData.main_image)}
+                                        alt="Product"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <>
+                                        <ImageIcon size={28} className="text-gray-300 mb-2 group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Image</span>
+                                    </>
+                                )}
                             </div>
                             <p className="text-[10px] text-gray-400 mt-3 text-center leading-relaxed italic">Click to upload a new thumbnail. Previous image will be replaced.</p>
                         </div>

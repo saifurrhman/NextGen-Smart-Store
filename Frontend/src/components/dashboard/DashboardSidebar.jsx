@@ -33,9 +33,15 @@ const getNavLinks = (role) => {
                         group: 'Products', icon: Store, items: [
                             { path: '/admin/products/all', label: 'All Products' },
                             { path: '/admin/products/add', label: 'Add Product' },
+                            { path: '/admin/product-requests', label: 'Vendor Requests' },
                             { path: '/admin/products/categories', label: 'Categories' },
                             { path: '/admin/products/attributes', label: 'Attributes' },
                             { path: '/admin/products/import', label: 'Bulk Import' },
+                        ]
+                    },
+                    {
+                        group: 'B2B Wholesale', icon: Package, items: [
+                            { path: '/admin/bulk-orders', label: 'Bulk Orders' },
                         ]
                     },
                     {
@@ -114,8 +120,10 @@ const getNavLinks = (role) => {
             return {
                 topLinks: [
                     { path: '/vendor/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-                    { path: '/vendor/products', icon: ShoppingBag, label: 'My Products' },
-                    { path: '/vendor/orders', icon: Package, label: 'Manage Orders' },
+                    { path: '/vendor/wholesale-catalog', icon: Store, label: 'Wholesale Catalog' },
+                    { path: '/vendor/bulk-orders', icon: Package, label: 'My Bulk Orders' },
+                    { path: '/vendor/products', icon: ShoppingBag, label: 'My Inventory' },
+                    { path: '/vendor/request-product', icon: MessageSquare, label: 'Product Request' },
                     { path: '/vendor/earnings', icon: Wallet, label: 'My Earnings' },
                     { path: '/vendor/reviews', icon: MessageSquare, label: 'Shop Reviews' },
                     { path: '/vendor/settings', icon: Settings, label: 'Shop Settings' },

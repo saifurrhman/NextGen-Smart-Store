@@ -8,6 +8,13 @@ import api from '../../../utils/api';
 import FilterDropdown from '../../../components/admin/common/FilterDropdown';
 import { exportToExcel, exportToPDF, exportToCSV } from '../../../utils/exportUtils';
 
+const getMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/media/')) return `http://localhost:8000${url}`;
+    return `http://localhost:8000/media/${url.startsWith('/') ? url.slice(1) : url}`;
+};
+
 const AllProducts = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -341,9 +348,13 @@ const AllProducts = () => {
                                         <span className="text-gray-400 font-bold">#{(page - 1) * 10 + idx + 1}</span>
                                     </td>
                                     <td className="py-4 px-3">
-                                        <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
+                                        <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center p-1">
                                             {p.main_image ? (
-                                                <img src={p.main_image} alt={p.title} className="w-full h-full object-cover" />
+                                                <img
+                                                    src={getMediaUrl(p.main_image)}
+                                                    alt={p.title}
+                                                    className="w-full h-full object-contain"
+                                                />
                                             ) : (
                                                 <Package className="text-gray-200" size={24} />
                                             )}

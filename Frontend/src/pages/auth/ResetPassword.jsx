@@ -40,6 +40,11 @@ const ResetPassword = () => {
         }
     };
 
+    const role = location.state?.role || 'customer';
+    const loginLink = role === 'admin' ? '/admin/login' :
+        role === 'vendor' ? '/vendor/login' :
+            role === 'delivery' ? '/delivery/login' : '/customer/login';
+
     if (done) {
         return (
             <div className="w-full animate-in fade-in zoom-in duration-700">
@@ -65,7 +70,7 @@ const ResetPassword = () => {
                         Your password has been changed successfully. You can now log in with your new credentials.
                     </p>
                     <Link
-                        to="/customer/login"
+                        to={loginLink}
                         className="w-full flex justify-center items-center gap-3 py-5 px-6 rounded-[2rem] shadow-xl shadow-emerald-600/20 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-8 focus:ring-emerald-600/10 transition-all transform hover:-translate-y-1 active:scale-95 uppercase tracking-[0.2em]"
                     >
                         Return to Login Portal

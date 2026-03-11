@@ -14,6 +14,13 @@ import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { useCurrency } from '../../context/CurrencyContext';
 
+const getMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/media/')) return `http://localhost:8000${url}`;
+    return `http://localhost:8000/media/${url.startsWith('/') ? url.slice(1) : url}`;
+};
+
 const MyProducts = () => {
     const { formatCurrency } = useCurrency();
     const [searchQuery, setSearchQuery] = useState('');
@@ -123,7 +130,7 @@ const MyProducts = () => {
                                 <div className="aspect-[4/3] relative bg-gray-50 border-b border-gray-100">
                                     {product.image ? (
                                         <img
-                                            src={product.image}
+                                            src={getMediaUrl(product.image)}
                                             alt={product.name}
                                             className="w-full h-full object-contain p-4"
                                         />
