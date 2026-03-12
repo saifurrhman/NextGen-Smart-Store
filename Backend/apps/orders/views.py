@@ -127,7 +127,14 @@ class VendorBulkOrderViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """Use raw PyMongo to avoid timeouts and Djongo relationship crashes."""
         try:
+            from core.utils import get_mongo_db
+            from django.conf import settings
             db = get_mongo_db()
+            print(f">>> Server DB Name: {db.name}")
+            print(f">>> Server DB Host: {settings.DATABASES['default']['CLIENT']['host']}")
+            print(f">>> ORM Count: {VendorBulkOrder.objects.count()}")
+            print(f">>> PyMongo Count: {db['orders_vendorbulkorder'].count_documents({})}")
+            
             collection = db['orders_vendorbulkorder']
             
             user = request.user
@@ -205,27 +212,57 @@ class VendorBulkOrderViewSet(viewsets.ModelViewSet):
 
     def get_robust_object(self, pk):
         """
-        Attempts to find a VendorBulkOrder by pk, handling both ObjectId and integer lookups.
+        Robustly find a VendorBulkOrder, bypassing Djongo ORM lookup issues for ObjectIds.
         """
         try:
-            # Try standard lookup
-            return VendorBulkOrder.objects.get(pk=pk)
-        except Exception:
+            from core.utils import get_mongo_db
+            from bson import ObjectId
+            
+            db = get_mongo_db()
+            coll = db['orders_vendorbulkorder']
+            
+            # 1. Try PyMongo lookup first (most reliable)
+            doc = None
             try:
-                from bson import ObjectId
-                # Explicitly try ObjectId conversion for hex strings
-                return VendorBulkOrder.objects.get(pk=ObjectId(str(pk)))
+                doc = coll.find_one({'_id': ObjectId(str(pk))})
             except Exception:
+                pass
+            
+            if not doc:
                 try:
-                    # Fallback to integer lookup for legacy items
-                    return VendorBulkOrder.objects.get(pk=int(str(pk)))
+                    # Try as integer
+                    doc = coll.find_one({'_id': int(str(pk))})
                 except Exception:
-                    return None
+                    pass
+            
+            if doc:
+                # 2. Try to get ORM object using the confirmed ID
+                confirmed_id = doc['_id']
+                try:
+                    return VendorBulkOrder.objects.get(pk=confirmed_id)
+                except Exception:
+                    # 3. Last resort: Return the model manually populated from the dict 
+                    # Note: related fields like 'items' might still fail if ORM is partially broken
+                    obj = VendorBulkOrder()
+                    for key, val in doc.items():
+                        if key == '_id':
+                            obj.id = val
+                        elif hasattr(obj, key):
+                            setattr(obj, key, val)
+                    return obj
+            
+            return None
+        except Exception as e:
+            print(f">>> CRITICAL ERROR in get_robust_object: {e}")
+            return None
+
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdminRole])
     def approve(self, request, pk=None):
         try:
+            print(f">>> Reached approve action for order {pk}")
             order = self.get_robust_object(pk)
+            print(f">>> get_robust_object returned: {order}")
             if not order:
                 return Response({'detail': f'Bulk order {pk} not found.'}, status=404)
 
@@ -253,9 +290,46 @@ class VendorBulkOrderViewSet(viewsets.ModelViewSet):
             if not vendor:
                 return Response({'error': f'Cannot approve: order {pk} has no valid vendor (Raw ID: {vendor_id}).'}, status=400)
             
+            # Robust Item Lookup: Fallback to PyMongo if ORM relationship fails
+            items = []
+            try:
+                items = list(order.items.all())
+            except Exception:
+                pass
+            
+            if not items:
+                try:
+                    from core.utils import get_mongo_db
+                    db = get_mongo_db()
+                    item_docs = list(db['orders_vendorbulkitem'].find({'bulk_order_id': order.id}))
+                    for idoc in item_docs:
+                        # Construct a mock item object
+                        from .models import VendorBulkOrderItem
+                        from apps.products.models import Product
+                        
+                        m_item = VendorBulkOrderItem(
+                            id=idoc['_id'],
+                            quantity=idoc.get('quantity', 0),
+                            price=idoc.get('price', 0)
+                        )
+                        # Fetch master product manually
+                        mp_id = idoc.get('master_product_id')
+                        if mp_id:
+                            try:
+                                m_item.master_product = Product.objects.get(pk=mp_id)
+                            except Exception:
+                                pass
+                        items.append(m_item)
+                except Exception as e:
+                    print(f">>> ERROR fetching items via PyMongo: {e}")
+
+            if not items:
+                return Response({'error': f'Order {pk} has no items or they could not be loaded.'}, status=400)
+
             # Critical Logic: Allocate inventory to Vendor
-            for item in order.items.all():
+            for item in items:
                 m_product = item.master_product
+
                 if not m_product:
                     continue
 
@@ -289,9 +363,24 @@ class VendorBulkOrderViewSet(viewsets.ModelViewSet):
                     for img_obj in m_product.images.all():
                         ProductImage.objects.create(product=new_prod, image=img_obj.image)
 
-            order.status = 'shipped'
-            order.save()
+            # Final Update: Set status to shipped
+            try:
+                order.status = 'shipped'
+                order.save()
+            except Exception as e:
+                print(f">>> ORM save failed, using PyMongo fallback: {e}")
+                try:
+                    from core.utils import get_mongo_db
+                    db = get_mongo_db()
+                    db['orders_vendorbulkorder'].update_one(
+                        {'_id': order.id},
+                        {'$set': {'status': 'shipped', 'updated_at': datetime.now()}}
+                    )
+                except Exception as e2:
+                    return Response({'error': f'Failed to update order status: {e2}'}, status=500)
+
             return Response({'status': 'Approved & Inventory Allocated'})
+
             
         except Exception as e:
             import traceback

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/api';
 import {
     Search, Bell, Moon, Sun, AlignLeft, X, Settings,
     User, LogOut, ChevronDown, Check, ShoppingBag, RotateCcw
@@ -39,13 +39,10 @@ const DashboardTopbar = ({ pageTitle, user, role, onMobileToggle, onToggleSideba
                     setLoading(false);
                     return;
                 }
-                const config = {
-                    headers: { Authorization: `Bearer ${token}` }
-                };
 
                 // For Admin, fetch orders and refunds
                 if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-                    const ordersRes = await axios.get('http://127.0.0.1:8000/api/v1/orders/', config);
+                    const ordersRes = await api.get('/orders/');
                     const orders = (ordersRes.data?.results || ordersRes.data || []).slice(0, 5).map(order => ({
                         id: `order-${order.id}`,
                         title: 'New order received',

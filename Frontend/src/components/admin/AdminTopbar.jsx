@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/api';
 import {
     Search, Bell, Moon, Sun, Menu, X, Settings,
     User, LogOut, ChevronDown, Check, ShoppingBag, RotateCcw,
@@ -26,13 +26,8 @@ const AdminTopbar = ({ pageTitle, user, onMobileToggle, onToggleSidebar }) => {
         const fetchRealData = async () => {
             setLoading(true);
             try {
-                const token = localStorage.getItem('authToken');
-                const config = {
-                    headers: { Authorization: `Bearer ${token}` }
-                };
-
-                const ordersRes = await axios.get('http://127.0.0.1:8000/api/v1/orders/', config);
-                const refundsRes = await axios.get('http://127.0.0.1:8000/api/v1/orders/refunds/', config);
+                const ordersRes = await api.get('/orders/');
+                const refundsRes = await api.get('/orders/refunds/');
 
                 const recentOrders = (ordersRes.data?.results || ordersRes.data || [])
                     .slice(0, 3)

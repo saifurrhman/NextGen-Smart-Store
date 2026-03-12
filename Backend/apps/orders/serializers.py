@@ -89,7 +89,7 @@ class VendorBulkOrderSerializer(serializers.ModelSerializer):
             # Set total and vendor explicitly
             validated_data['total_amount'] = total_amount
             if vendor:
-                validated_data['vendor_id'] = vendor.pk
+                validated_data['vendor'] = vendor
             
             bulk_order = VendorBulkOrder.objects.create(**validated_data)
             

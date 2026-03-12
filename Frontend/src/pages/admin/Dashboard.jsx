@@ -57,7 +57,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const response = await api.get('/api/v1/analytics/dashboard/', { params: { time_filter: timeFilter } });
+                const response = await api.get('/analytics/dashboard/', { params: { time_filter: timeFilter } });
                 setDashboardStats(response.data);
             } catch (error) {
                 console.error("Failed to fetch dashboard stats:", error);
@@ -66,7 +66,7 @@ const Dashboard = () => {
 
         const fetchTraffic = async () => {
             try {
-                const response = await api.get('/api/v1/analytics/traffic_stats/');
+                const response = await api.get('/analytics/traffic_stats/');
                 setTrafficStats(response.data);
             } catch (error) {
                 console.error("Failed to fetch traffic stats:", error);

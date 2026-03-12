@@ -10,7 +10,7 @@ const VendorApproval = () => {
         const fetchPending = async () => {
             setLoading(true);
             try {
-                const response = await api.get('/api/v1/vendors/');
+                const response = await api.get('/vendors/');
                 // Filter pending vendors on frontend or backend (better on backend)
                 setPendingVendors(response.data.results.filter(v => v.status === 'pending'));
             } catch (error) {
@@ -24,7 +24,7 @@ const VendorApproval = () => {
 
     const handleAction = async (id, action) => {
         try {
-            await api.post(`/api/v1/vendors/${id}/${action}/`);
+            await api.post(`/vendors/${id}/${action}/`);
             setPendingVendors(prev => prev.filter(v => v.id !== id));
         } catch (error) {
             alert(`Failed to ${action} vendor`);
