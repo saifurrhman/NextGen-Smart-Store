@@ -14,7 +14,7 @@ const OrderProcessing = () => {
     const fetchProcessingOrders = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/api/v1/orders/?status=processing');
+            const response = await api.get('/orders/?status=processing');
             setOrders(response.data.results || response.data);
         } catch (error) {
             console.error("Failed to fetch processing orders:", error);

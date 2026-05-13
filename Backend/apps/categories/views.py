@@ -78,6 +78,22 @@ class CategoryViewSet(viewsets.ModelViewSet):
             except Exception as e2:
                 return Response({'count': 0, 'results': [], 'error': str(e2)})
 
+    def create(self, request, *args, **kwargs):
+        slug = request.data.get('slug')
+        if slug:
+            try:
+                db = get_mongo_db()
+                if db['categories_category'].count_documents({'slug': slug}) > 0:
+                    # Return error in 'name' field so the frontend shows it properly in the toast
+                    return Response({'name': [f'A category with the slug "{slug}" already exists. Please choose a different name.']}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception:
+                pass
+                
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            return Response({'detail': f'Failed to create category: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
     def retrieve(self, request, slug=None, *args, **kwargs):
         obj, err = self._get_by_slug(slug or kwargs.get('slug'))
         if err:

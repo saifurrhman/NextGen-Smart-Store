@@ -35,7 +35,7 @@ const DeliveryReports = () => {
         setLoading(true);
         try {
             // Simulated report data based on delivery history
-            const response = await api.get(`/api/v1/operations/delivery/report/?range=${filters.timeRange}`);
+            const response = await api.get(`/operations/delivery/report/?range=${filters.timeRange}`);
             setReports(response.data.results || []);
         } catch (error) {
             console.error("Failed to fetch delivery reports:", error);

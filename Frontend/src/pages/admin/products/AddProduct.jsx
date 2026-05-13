@@ -13,34 +13,64 @@ import api from '../../../utils/api';
 // ── 360° Spinner (live preview from uploaded frames) ─────────────────────────
 const Spinner360 = ({ images }) => {
     const [frame, setFrame] = useState(0);
-    const [dragging, setDragging] = useState(false);
-    const startXRef = useRef(0);
+    const [isHovering, setIsHovering] = useState(false);
     const frameCount = images.length;
     const autoRef = useRef(null);
+    const containerRef = useRef(null);
+    const lastXRef = useRef(null);
 
+    // Auto-spin when not hovering
     const startAuto = () => {
         clearInterval(autoRef.current);
-        autoRef.current = setInterval(() => setFrame(p => (p + 1) % frameCount), 100);
+        autoRef.current = setInterval(() => setFrame(p => (p + 1) % frameCount), 80);
     };
     const stopAuto = () => clearInterval(autoRef.current);
 
-    useEffect(() => { if (frameCount > 1) startAuto(); return stopAuto; }, [frameCount]);
-
-    const onDown = (e) => { stopAuto(); setDragging(true); startXRef.current = e.clientX || e.touches?.[0]?.clientX || 0; };
-    const onMove = useCallback((e) => {
-        if (!dragging) return;
-        const x = e.clientX || e.touches?.[0]?.clientX || 0;
-        const delta = x - startXRef.current;
-        startXRef.current = x;
-        setFrame(p => ((p - Math.round(delta / 2)) % frameCount + frameCount) % frameCount);
-    }, [dragging, frameCount]);
-    const onUp = () => setDragging(false);
-
     useEffect(() => {
-        window.addEventListener('mouseup', onUp);
-        window.addEventListener('touchend', onUp);
-        return () => { window.removeEventListener('mouseup', onUp); window.removeEventListener('touchend', onUp); };
-    }, []);
+        if (frameCount > 1 && !isHovering) startAuto();
+        return stopAuto;
+    }, [frameCount, isHovering]);
+
+    // Mouse move over image → rotate frame
+    const onMouseMove = useCallback((e) => {
+        if (!frameCount) return;
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const x = e.clientX - rect.left;
+        if (lastXRef.current === null) { lastXRef.current = x; return; }
+
+        const delta = x - lastXRef.current;
+        lastXRef.current = x;
+
+        if (Math.abs(delta) > 1) {
+            setFrame(p => ((p - Math.round(delta / 3)) % frameCount + frameCount) % frameCount);
+        }
+    }, [frameCount]);
+
+    const onMouseEnter = () => {
+        stopAuto();
+        setIsHovering(true);
+        lastXRef.current = null;
+    };
+
+    const onMouseLeave = () => {
+        setIsHovering(false);
+        lastXRef.current = null;
+    };
+
+    // Touch support
+    const onTouchMove = useCallback((e) => {
+        if (!frameCount) return;
+        const x = e.touches?.[0]?.clientX;
+        if (x === undefined) return;
+        if (lastXRef.current === null) { lastXRef.current = x; return; }
+        const delta = x - lastXRef.current;
+        lastXRef.current = x;
+        if (Math.abs(delta) > 1) {
+            setFrame(p => ((p - Math.round(delta / 3)) % frameCount + frameCount) % frameCount);
+        }
+    }, [frameCount]);
 
     if (!frameCount) return (
         <div className="aspect-[4/3] w-full bg-gray-50 border-2 border-dashed border-gray-100 rounded-2xl flex flex-col items-center justify-center text-gray-300">
@@ -50,16 +80,30 @@ const Spinner360 = ({ images }) => {
     );
 
     return (
-        <div className="relative aspect-[4/3] w-full bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden select-none"
-            onMouseDown={onDown} onMouseMove={onMove}
-            onTouchStart={onDown} onTouchMove={onMove}
-            style={{ cursor: dragging ? 'grabbing' : 'grab' }}>
+        <div
+            ref={containerRef}
+            className="relative aspect-[4/3] w-full bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden select-none"
+            onMouseMove={onMouseMove}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+            onTouchStart={(e) => { lastXRef.current = e.touches?.[0]?.clientX ?? null; }}
+            onTouchMove={onTouchMove}
+            style={{ cursor: isHovering ? 'ew-resize' : 'default' }}
+        >
             {images.map((src, idx) => (
                 <img key={idx} src={src} alt={`frame-${idx}`} draggable={false}
                     className={`absolute inset-0 w-full h-full object-contain p-3 transition-opacity duration-75 ${idx === frame ? 'opacity-100' : 'opacity-0'}`} />
             ))}
-            <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 bg-black/50 text-white text-[10px] font-bold rounded-full backdrop-blur-sm transition-opacity ${dragging ? 'opacity-0' : 'opacity-100'}`}>
-                <RotateCcw size={11} /> Drag to rotate · {frame + 1}/{frameCount}
+
+            {/* Top badge */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/50 text-white text-[9px] font-bold rounded-full backdrop-blur-sm">
+                <RotateCcw size={9} className={!isHovering ? 'animate-spin' : ''} />
+                {isHovering ? `Frame ${frame + 1}/${frameCount}` : 'Auto-spinning…'}
+            </div>
+
+            {/* Bottom hint */}
+            <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 bg-black/50 text-white text-[10px] font-bold rounded-full backdrop-blur-sm transition-opacity duration-300 ${isHovering ? 'opacity-0' : 'opacity-100'}`}>
+                🖱️ Move mouse to rotate 360°
             </div>
         </div>
     );

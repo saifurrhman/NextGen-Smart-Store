@@ -16,7 +16,7 @@ const LiveChat = () => {
             setLoading(true);
             try {
                 // Fetch unresolved tickets as active chats
-                const response = await api.get('/api/v1/support/tickets/?status=open');
+                const response = await api.get('/support/tickets/?status=open');
                 setActiveChats(response.data.results);
                 if (response.data.results.length > 0) {
                     setSelectedChat(response.data.results[0]);

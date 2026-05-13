@@ -1,58 +1,46 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { CheckCircle, Package, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { CheckCircle, Package, MapPin, ArrowRight } from 'lucide-react';
+import { useTheme, themes } from '../../context/ThemeContext';
 
 const OrderSuccess = () => {
-    const location = useLocation();
-    // In a real app, we'd get the order ID from state passed via navigation
-    const orderId = location.state?.orderId || 'ORD-' + Math.floor(Math.random() * 100000);
+  const { activeTheme } = useTheme();
+  const p = themes[activeTheme] || themes.green;
+  const orderId = `NG${Date.now().toString().slice(-8)}`;
 
-    return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg text-center">
-                <div className="flex justify-center mb-6">
-                    <CheckCircle className="text-green-500 h-20 w-20" />
-                </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Order Confirmed!</h2>
-                <p className="text-gray-600 mb-8">
-                    Thank you for your purchase. Your order <span className="font-bold text-gray-900">#{orderId}</span> has been placed successfully.
-                </p>
-
-                <div className="bg-gray-50 rounded-lg p-4 mb-8 text-left border border-gray-200">
-                    <h3 className="font-semibold text-gray-900 mb-2">What's Next?</h3>
-                    <ul className="text-sm text-gray-600 space-y-2">
-                        <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></span>
-                            You will receive an email confirmation shortly.
-                        </li>
-                        <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></span>
-                            We are processing your order for delivery.
-                        </li>
-                        <li className="flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></span>
-                            Estimated Delivery: 3-5 Business Days.
-                        </li>
-                    </ul>
-                </div>
-
-                <div className="space-y-3">
-                    <Link
-                        to="/profile"
-                        className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:text-base"
-                    >
-                        <Package className="mr-2 h-5 w-5" /> Track Order
-                    </Link>
-                    <Link
-                        to="/"
-                        className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 md:text-base"
-                    >
-                        Continue Shopping <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-16">
+      <div className="text-center max-w-md mx-auto px-4">
+        <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl" style={{ background: p.primary }}>
+          <CheckCircle size={48} className="text-white" />
         </div>
-    );
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Order Placed! 🎉</h1>
+        <p className="text-gray-500 mb-6">Your order has been confirmed and will be delivered soon.</p>
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-8 text-left space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500">Order ID</span>
+            <span className="font-black text-sm" style={{ color: p.primary }}>#{orderId}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500">Estimated Delivery</span>
+            <span className="font-bold text-sm text-gray-900">3–5 Business Days</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500">Payment</span>
+            <span className="font-bold text-sm text-green-600">Confirmed ✓</span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <Link to="/order-tracking" className="w-full py-3 font-black text-white rounded-xl flex items-center justify-center gap-2" style={{ background: p.primary }}>
+            <MapPin size={18} /> Track My Order
+          </Link>
+          <Link to="/products" className="w-full py-3 font-black text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 flex items-center justify-center gap-2 transition-all">
+            Continue Shopping <ArrowRight size={18} />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default OrderSuccess;

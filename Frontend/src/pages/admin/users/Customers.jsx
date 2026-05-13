@@ -57,7 +57,7 @@ const Customers = () => {
     const handleDeleteCustomer = async (customerId) => {
         if (!window.confirm('Are you sure you want to delete this customer account?')) return;
         try {
-            await api.delete(`/api/v1/users/${customerId}/`);
+            await api.delete(`/users/${customerId}/`);
             setCustomers(prev => prev.filter(c => c.id !== customerId));
             setMsg({ type: 'success', text: 'Customer deleted successfully!' });
             setTimeout(() => setMsg({ type: '', text: '' }), 3000);
@@ -120,7 +120,7 @@ const Customers = () => {
         try {
             // In a real app, you'd have a bulk delete endpoint
             // For now, we'll delete them one by one or simulate it
-            await Promise.all(selectedIds.map(id => api.delete(`/api/v1/users/${id}/`)));
+            await Promise.all(selectedIds.map(id => api.delete(`/users/${id}/`)));
             setCustomers(prev => prev.filter(c => !selectedIds.includes(c.id)));
             setMsg({ type: 'success', text: `${selectedIds.length} customers deleted successfully!` });
             clearSelection();

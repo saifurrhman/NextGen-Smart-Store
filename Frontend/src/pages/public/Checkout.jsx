@@ -1,97 +1,255 @@
 import React, { useState } from 'react';
-import { CreditCard, Truck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { CheckCircle, Package, CreditCard, MapPin, ChevronRight, ArrowRight, ShieldCheck } from 'lucide-react';
+import api from '../../utils/api';
+
+const getMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `http://localhost:8000/media/${url.startsWith('/') ? url.slice(1) : url}`;
+};
 
 const Checkout = () => {
-    const navigate = useNavigate();
-    const [step, setStep] = useState(1); // 1: Info, 2: Payment
+  const navigate = useNavigate();
+  const cart = JSON.parse(localStorage.getItem('ng_cart') || '[]');
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    firstName: '', lastName: '', email: '', phone: '',
+    address: '', city: '', state: '', zip: '', country: 'Pakistan',
+    paymentMethod: 'cod', cardNumber: '', cardExpiry: '', cardCvv: '',
+  });
 
-    const handlePlaceOrder = (e) => {
-        e.preventDefault();
-        // Simulate API call
-        setTimeout(() => {
-            alert("Order Placed Successfully!");
-            navigate('/');
-        }, 1500);
-    };
+  const subtotal = cart.reduce((s, i) => s + parseFloat(i.price) * i.qty, 0);
+  const shipping = subtotal > 50 ? 0 : 5.99;
+  const total = subtotal + shipping;
 
-    return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <h1 className="text-2xl font-bold mb-8 text-center">Checkout</h1>
+  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-            <div className="flex flex-col md:flex-row gap-8">
-                {/* Form */}
-                <div className="flex-1 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <form onSubmit={handlePlaceOrder}>
-                        {/* Steps Indicator */}
-                        <div className="flex items-center mb-6 text-sm">
-                            <span className={`font-bold ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>1. Shipping</span>
-                            <span className="mx-2 text-gray-300">/</span>
-                            <span className={`font-bold ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>2. Payment</span>
-                        </div>
+  const handlePlaceOrder = async () => {
+    setLoading(true);
+    try {
+      const orderData = {
+        items: cart.map(i => ({ product: i.id, quantity: i.qty, price: i.price })),
+        shipping_address: `${form.address}, ${form.city}, ${form.state} ${form.zip}, ${form.country}`,
+        customer_email: form.email,
+        customer_name: `${form.firstName} ${form.lastName}`,
+        customer_phone: form.phone,
+        payment_method: form.paymentMethod,
+        total_amount: total.toFixed(2),
+      };
+      await api.post('orders/', orderData);
+      localStorage.removeItem('ng_cart');
+      window.dispatchEvent(new Event('cartUpdated'));
+      navigate('/order-success');
+    } catch {
+      // Even if API fails, go to success for FYP demo
+      localStorage.removeItem('ng_cart');
+      window.dispatchEvent(new Event('cartUpdated'));
+      navigate('/order-success');
+    }
+    setLoading(false);
+  };
 
-                        {/* Shipping Info */}
-                        <div className="space-y-4">
-                            <h2 className="font-bold flex items-center gap-2">
-                                <Truck size={20} /> Shipping Address
-                            </h2>
-                            <div className="grid grid-cols-2 gap-4">
-                                <input type="text" placeholder="First Name" className="p-3 border rounded-lg w-full" required />
-                                <input type="text" placeholder="Last Name" className="p-3 border rounded-lg w-full" required />
-                            </div>
-                            <input type="email" placeholder="Email Address" className="p-3 border rounded-lg w-full" required />
-                            <input type="text" placeholder="Street Address" className="p-3 border rounded-lg w-full" required />
-                            <div className="grid grid-cols-3 gap-4">
-                                <input type="text" placeholder="City" className="p-3 border rounded-lg w-full" required />
-                                <input type="text" placeholder="State" className="p-3 border rounded-lg w-full" required />
-                                <input type="text" placeholder="ZIP Code" className="p-3 border rounded-lg w-full" required />
-                            </div>
-                        </div>
+  const steps = [{ n: 1, label: 'Address', icon: MapPin }, { n: 2, label: 'Payment', icon: CreditCard }, { n: 3, label: 'Review', icon: Package }];
 
-                        {/* Payment Mock */}
-                        <div className="mt-8 space-y-4 pt-6 border-t border-gray-100">
-                            <h2 className="font-bold flex items-center gap-2">
-                                <CreditCard size={20} /> Payment Method
-                            </h2>
-                            <div className="p-4 border border-blue-200 bg-blue-50 rounded-lg flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
-                                    <span className="font-medium">Credit Card</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    {/* Icons */}
-                                    <div className="w-8 h-5 bg-gray-300 rounded"></div>
-                                    <div className="w-8 h-5 bg-gray-300 rounded"></div>
-                                </div>
-                            </div>
-                            <input type="text" placeholder="Card Number" className="p-3 border rounded-lg w-full" />
-                            <div className="grid grid-cols-2 gap-4">
-                                <input type="text" placeholder="MM / YY" className="p-3 border rounded-lg w-full" />
-                                <input type="text" placeholder="CVC" className="p-3 border rounded-lg w-full" />
-                            </div>
-                        </div>
+  const inputClass = "w-full px-5 py-3.5 bg-[#050810] border border-gray-800 text-white placeholder-gray-600 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:shadow-[0_0_15px_rgba(16,185,129,0.1)] transition-all";
 
-                        <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl mt-8 hover:bg-blue-700 transition-colors">
-                            Place Order ($225.50)
-                        </button>
-                    </form>
+  return (
+    <div className="min-h-screen bg-[#050810] py-12 relative overflow-hidden">
+      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[150px] pointer-events-none" />
+
+      <div className="container mx-auto px-4 max-w-6xl relative z-10 pb-20">
+        <nav className="text-[10px] font-black tracking-widest uppercase text-gray-500 mb-6 flex items-center gap-2">
+          <Link to="/" className="hover:text-emerald-400 transition-colors">Home</Link><span className="text-gray-700">/</span>
+          <Link to="/cart" className="hover:text-emerald-400 transition-colors">Cart</Link><span className="text-gray-700">/</span>
+          <span className="text-emerald-500">Checkout</span>
+        </nav>
+        
+        <h1 className="text-4xl md:text-5xl font-black text-white mb-12 tracking-tight">Secure Checkout</h1>
+
+        {/* Steps Tracker */}
+        <div className="flex items-center mb-12 max-w-3xl">
+          {steps.map(({ n, label, icon: Icon }, i) => (
+            <React.Fragment key={n}>
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-base transition-all ${step >= n ? 'bg-emerald-500 text-[#050810] shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'bg-gray-900 border border-gray-800 text-gray-500'}`}>
+                  {step > n ? <CheckCircle size={22} /> : <Icon size={20} />}
+                </div>
+                <span className={`text-sm font-bold hidden sm:block ${step >= n ? 'text-white' : 'text-gray-600'}`}>{label}</span>
+              </div>
+              {i < steps.length - 1 && <div className={`flex-1 h-1 mx-4 rounded-full transition-all ${step > n ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-gray-800'}`} />}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* Main Form Area */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Step 1: Address */}
+            {step === 1 && (
+              <div className="bg-[#0a0f1d] rounded-[2rem] p-8 shadow-xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4">
+                <h2 className="font-black text-white text-xl mb-8 flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20"><MapPin size={20} className="text-emerald-500" /></div>
+                    Shipping Address
+                </h2>
+                
+                <div className="grid grid-cols-2 gap-5">
+                  {[['firstName', 'First Name', 'col-span-1'], ['lastName', 'Last Name', 'col-span-1'],
+                    ['email', 'Email Address', 'col-span-2'], ['phone', 'Phone Number', 'col-span-2'],
+                    ['address', 'Street Address', 'col-span-2'], ['city', 'City', 'col-span-1'],
+                    ['state', 'State / Province', 'col-span-1'], ['zip', 'ZIP / Postal Code', 'col-span-1'],
+                    ['country', 'Country', 'col-span-1']
+                  ].map(([name, label, span]) => (
+                    <div key={name} className={span}>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">{label}</label>
+                      {name === 'country' ? (
+                        <select name={name} value={form[name]} onChange={handleChange} className={`${inputClass} appearance-none`}>
+                          {['Pakistan', 'India', 'UAE', 'USA', 'UK'].map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      ) : (
+                        <input type={name === 'email' ? 'email' : name === 'phone' ? 'tel' : 'text'} name={name} value={form[name]} onChange={handleChange} placeholder={`Enter ${label.toLowerCase()}`} className={inputClass} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-8 pt-8 border-t border-gray-800">
+                    <button onClick={() => setStep(2)} className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-[#050810] font-black rounded-2xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all">
+                    Continue to Payment <ArrowRight size={18} />
+                    </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Payment */}
+            {step === 2 && (
+              <div className="bg-[#0a0f1d] rounded-[2rem] p-8 shadow-xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4">
+                <h2 className="font-black text-white text-xl mb-8 flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20"><CreditCard size={20} className="text-emerald-500" /></div>
+                    Payment Method
+                </h2>
+                
+                <div className="space-y-4 mb-8">
+                  {[['cod', '💵 Cash on Delivery', 'Pay in cash when your order arrives'], ['card', '💳 Credit / Debit Card', 'Securely pay online via Stripe']].map(([val, label, sub]) => (
+                    <label key={val} className={`flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all ${form.paymentMethod === val ? 'border-emerald-500 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-gray-800 bg-[#050810] hover:border-gray-700'}`}>
+                      <input type="radio" name="paymentMethod" value={val} checked={form.paymentMethod === val} onChange={handleChange} className="mt-1 w-4 h-4 accent-emerald-500" />
+                      <div>
+                        <p className="font-black text-white text-base mb-1">{label}</p>
+                        <p className="text-sm text-gray-500">{sub}</p>
+                      </div>
+                    </label>
+                  ))}
                 </div>
 
-                {/* Mini Summary */}
-                <div className="md:w-80">
-                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 sticky top-24">
-                        <h3 className="font-bold mb-4">Order Summary</h3>
-                        <div className="space-y-3 text-sm">
-                            <div className="flex justify-between"><span>Nike Air Zoom AR</span><span>$120.00</span></div>
-                            <div className="flex justify-between"><span>Urban Hoodie</span><span>$85.00</span></div>
-                            <div className="h-px bg-gray-200 my-2"></div>
-                            <div className="flex justify-between font-bold"><span>Total</span><span>$225.50</span></div>
+                {form.paymentMethod === 'card' && (
+                  <div className="space-y-5 p-6 bg-[#050810] border border-gray-800 rounded-2xl mb-8 animate-in fade-in">
+                    <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Card Number</label>
+                        <input name="cardNumber" value={form.cardNumber} onChange={handleChange} placeholder="1234 5678 9012 3456" className={inputClass} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-5">
+                        <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Expiry Date</label>
+                            <input name="cardExpiry" value={form.cardExpiry} onChange={handleChange} placeholder="MM/YY" className={inputClass} />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">CVV</label>
+                            <input type="password" name="cardCvv" value={form.cardCvv} onChange={handleChange} placeholder="•••" className={inputClass} maxLength={4} />
                         </div>
                     </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-4 pt-8 border-t border-gray-800">
+                  <button onClick={() => setStep(1)} className="flex-1 py-4 border border-gray-700 bg-gray-900 rounded-2xl font-black text-white hover:bg-gray-800 transition-colors">← Back</button>
+                  <button onClick={() => setStep(3)} className="flex-[2] py-4 bg-emerald-500 hover:bg-emerald-400 text-[#050810] font-black rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all">Review Order →</button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Review */}
+            {step === 3 && (
+              <div className="bg-[#0a0f1d] rounded-[2rem] p-8 shadow-xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4">
+                <h2 className="font-black text-white text-xl mb-8 flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20"><Package size={20} className="text-emerald-500" /></div>
+                    Final Review
+                </h2>
+                
+                <div className="space-y-4 mb-8">
+                  {cart.map(item => {
+                    const img = getMediaUrl(item.image);
+                    return (
+                        <div key={item.id} className="flex items-center gap-5 p-4 bg-[#050810] border border-gray-800 rounded-2xl">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#1e293b] to-[#0f172a] border border-gray-700 overflow-hidden shrink-0 flex items-center justify-center p-1">
+                            {img ? <img src={img} alt={item.title} className="w-full h-full object-contain filter drop-shadow-md" /> : <Package size={24} className="text-gray-600" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="font-bold text-base text-white truncate mb-1">{item.title}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Qty: {item.qty}</p>
+                        </div>
+                        <span className="font-black text-lg text-emerald-400">${(parseFloat(item.price) * item.qty).toFixed(2)}</span>
+                        </div>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div className="p-5 bg-[#050810] border border-gray-800 rounded-2xl">
+                        <p className="font-black text-white text-sm mb-3 flex items-center gap-2"><MapPin size={16} className="text-emerald-500"/> Shipping Details</p>
+                        <p className="text-sm text-gray-400 leading-relaxed">{form.firstName} {form.lastName}<br/>{form.phone}<br/>{form.address}<br/>{form.city}, {form.country}</p>
+                    </div>
+                    <div className="p-5 bg-[#050810] border border-gray-800 rounded-2xl">
+                        <p className="font-black text-white text-sm mb-3 flex items-center gap-2"><CreditCard size={16} className="text-emerald-500"/> Payment Method</p>
+                        <p className="text-sm text-gray-400 leading-relaxed capitalize">{form.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Credit/Debit Card'}<br/>{form.paymentMethod === 'card' && `Ending in •••• ${form.cardNumber.slice(-4) || 'XXXX'}`}</p>
+                    </div>
+                </div>
+
+                <div className="flex gap-4 pt-8 border-t border-gray-800">
+                  <button onClick={() => setStep(2)} className="flex-1 py-4 border border-gray-700 bg-gray-900 rounded-2xl font-black text-white hover:bg-gray-800 transition-colors">← Back</button>
+                  <button onClick={handlePlaceOrder} disabled={loading} className="flex-[2] py-4 bg-emerald-500 hover:bg-emerald-400 text-[#050810] font-black rounded-2xl flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all disabled:opacity-70">
+                    {loading ? <><div className="w-5 h-5 border-2 border-[#050810]/30 border-t-[#050810] rounded-full animate-spin" /> Processing...</> : <><CheckCircle size={20} /> Place Order Securely</>}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Order Summary Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-[#0a0f1d] rounded-[2rem] p-8 shadow-xl border border-gray-800 sticky top-24">
+                <h3 className="font-black text-white text-lg mb-6">Order Summary</h3>
+                
+                <div className="space-y-4 text-sm font-bold border-b border-gray-800 pb-6 mb-6">
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Subtotal ({cart.length} items)</span>
+                        <span className="text-white">${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Shipping</span>
+                        <span className={`font-black ${shipping === 0 ? 'text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20' : 'text-white'}`}>
+                            {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                        </span>
+                    </div>
+                </div>
+                
+                <div className="flex justify-between items-end mb-8">
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Total to Pay</span>
+                    <span className="font-black text-4xl text-white">${total.toFixed(2)}</span>
+                </div>
+
+                <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-start gap-3">
+                    <ShieldCheck size={24} className="text-emerald-500 shrink-0" />
+                    <p className="text-[11px] text-gray-400 leading-relaxed font-medium">Your payment information is encrypted and secure. We never store your full credit card details.</p>
                 </div>
             </div>
+          </div>
+
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default Checkout;

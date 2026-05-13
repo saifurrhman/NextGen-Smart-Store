@@ -83,7 +83,7 @@ const RefundsReturns = () => {
     const handleBulkDelete = async () => {
         if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} selected refund requests?`)) return;
         try {
-            await Promise.all(selectedIds.map(id => api.delete(`/api/v1/orders/refunds/${id}/`)));
+            await Promise.all(selectedIds.map(id => api.delete(`/orders/refunds/${id}/`)));
             setRefunds(prev => prev.filter(r => !selectedIds.includes(r.id)));
             setMsg({ type: 'success', text: `${selectedIds.length} refund requests deleted successfully!` });
             clearSelection();

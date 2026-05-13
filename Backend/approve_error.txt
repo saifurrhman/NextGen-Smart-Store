@@ -1,0 +1,42 @@
+Traceback (most recent call last):
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\fields\__init__.py", line 1741, in to_python
+    decimal_value = decimal.Decimal(value)
+                    ^^^^^^^^^^^^^^^^^^^^^^
+TypeError: conversion from Decimal128 to Decimal is not supported
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Semester\New folder\NextGen-Smart-Store\Backend\apps\orders\views.py", line 409, in approve
+    existing_prod.save()
+  File "D:\Semester\New folder\NextGen-Smart-Store\Backend\apps\products\models.py", line 63, in save
+    super().save(*args, **kwargs)
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\base.py", line 814, in save
+    self.save_base(
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\base.py", line 877, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\base.py", line 990, in _save_table
+    updated = self._do_update(
+              ^^^^^^^^^^^^^^^^
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\base.py", line 1054, in _do_update
+    return filtered._update(values) > 0
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\query.py", line 1231, in _update
+    return query.get_compiler(self.db).execute_sql(CURSOR)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\sql\compiler.py", line 1984, in execute_sql
+    cursor = super().execute_sql(result_type)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\sql\compiler.py", line 1549, in execute_sql
+    sql, params = self.as_sql()
+                  ^^^^^^^^^^^^^
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\sql\compiler.py", line 1947, in as_sql
+    val = field.get_db_prep_save(val, connection=self.connection)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\fields\__init__.py", line 1760, in get_db_prep_save
+    self.to_python(value), self.max_digits, self.decimal_places
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SAIF UR REHMAN\AppData\Roaming\Python\Python312\site-packages\django\db\models\fields\__init__.py", line 1743, in to_python
+    raise exceptions.ValidationError(
+django.core.exceptions.ValidationError: ['“1299.00” value must be a decimal number.']

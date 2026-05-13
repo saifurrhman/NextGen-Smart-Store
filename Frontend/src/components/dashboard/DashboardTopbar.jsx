@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
+import { notificationsAPI } from '../../services/api';
 import {
     Search, Bell, Moon, Sun, AlignLeft, X, Settings,
     User, LogOut, ChevronDown, Check, ShoppingBag, RotateCcw
@@ -53,10 +54,27 @@ const DashboardTopbar = ({ pageTitle, user, role, onMobileToggle, onToggleSideba
                     }));
                     setNotifications(orders.length > 0 ? orders : [{ id: 1, title: 'All systems green', desc: 'No new alerts.', time: 'Now', unread: false, icon: Check }]);
                 }
-                // For Vendor, fetch own orders
-                else if (role === 'VENDOR') {
-                    // Assuming endpoint exists or fallback
-                    setNotifications([{ id: 1, title: 'Shop is live', desc: 'Welcome to your dashboard.', time: 'Now', unread: false, icon: Check }]);
+                // For Vendor and other roles, fetch from real Notifications API
+                if (role === 'VENDOR' || role === 'MERCHANT') {
+                    try {
+                        const res = await notificationsAPI.getAll();
+                        let items = res.data.results || res.data || [];
+                        if (items.length > 0) {
+                            setNotifications(items.slice(0, 10).map(n => ({
+                                id: n.id,
+                                title: n.title,
+                                desc: n.message,
+                                time: new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                                unread: !n.is_read,
+                                icon: Check,
+                                rawType: n.type
+                            })));
+                        } else {
+                            setNotifications([{ id: 1, title: 'Shop is live', desc: 'Welcome to your dashboard.', time: 'Now', unread: false, icon: Check }]);
+                        }
+                    } catch (e) {
+                         setNotifications([{ id: 1, title: 'Shop is live', desc: 'Welcome to your dashboard.', time: 'Now', unread: false, icon: Check }]);
+                    }
                 }
                 // For Delivery, fetch assigned tasks
                 else if (role === 'DELIVERY') {
@@ -190,21 +208,36 @@ const DashboardTopbar = ({ pageTitle, user, role, onMobileToggle, onToggleSideba
                         <div className="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.10)] border border-gray-100 overflow-hidden z-50">
                             <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
                                 <span className="text-[14px] font-bold text-gray-800">Notifications</span>
-                                <button className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                                <button onClick={async () => {
+                                    try {
+                                        await notificationsAPI.markAllRead();
+                                        setNotifications(prev => prev.map(n => ({...n, unread: false})));
+                                    } catch (e) {}
+                                }} className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                                     <Check size={11} /> Mark all read
                                 </button>
                             </div>
                             <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
                                 {loading && <div className="px-5 py-8 text-center text-gray-400 text-sm">Loading...</div>}
                                 {!loading && notifications.map(n => (
-                                    <div key={n.id} className="flex items-start gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors cursor-pointer">
-                                        <div className="mt-0.5 p-1.5 rounded-lg bg-emerald-100 text-emerald-600 flex-shrink-0">
+                                    <div key={n.id} onClick={async () => {
+                                        if (n.unread && !String(n.id).startsWith('order-') && n.id !== 1) {
+                                            try {
+                                                await notificationsAPI.markRead(n.id);
+                                                setNotifications(prev => prev.map(item => item.id === n.id ? {...item, unread: false} : item));
+                                            } catch (e) {}
+                                        }
+                                    }} className={`flex items-start gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors cursor-pointer ${n.unread ? 'bg-emerald-50/10' : ''}`}>
+                                        <div className={`mt-0.5 p-1.5 rounded-lg flex-shrink-0 ${n.unread ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20' : 'bg-emerald-100 text-emerald-600'}`}>
                                             {n.icon ? <n.icon size={15} /> : <div className="w-2 h-2 bg-current rounded-full m-1.5" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] font-semibold text-gray-800 truncate">{n.title}</p>
+                                            <p className={`text-[13px] text-gray-800 truncate ${n.unread ? 'font-bold' : 'font-semibold'}`}>{n.title}</p>
                                             <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{n.desc}</p>
-                                            <span className="text-[10px] text-gray-400 font-medium mt-1 inline-block">{n.time}</span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-[10px] text-gray-400 font-medium inline-block">{n.time}</span>
+                                                {n.unread && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

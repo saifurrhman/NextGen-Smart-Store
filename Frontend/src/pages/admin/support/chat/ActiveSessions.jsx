@@ -51,8 +51,8 @@ const ActiveSessions = () => {
     const fetchUsersAndAgents = async () => {
         try {
             const [usersRes, agentsRes] = await Promise.all([
-                api.get('/api/v1/users/?role=CUSTOMER'),
-                api.get('/api/v1/users/?role=ADMIN,SUB_ADMIN,SUPER_ADMIN')
+                api.get('/users/?role=CUSTOMER'),
+                api.get('/users/?role=ADMIN,SUB_ADMIN,SUPER_ADMIN')
             ]);
             setUsers(usersRes.data.results || usersRes.data);
             setAgents(agentsRes.data.results || agentsRes.data);
@@ -93,7 +93,7 @@ const ActiveSessions = () => {
     const handleDeleteSession = async (id) => {
         if (!window.confirm("Are you sure you want to delete this session?")) return;
         try {
-            await api.delete(`/api/v1/support/chat-sessions/${id}/`);
+            await api.delete(`/support/chat-sessions/${id}/`);
             fetchSessions();
         } catch (error) {
             console.error("Failed to delete session:", error);
@@ -106,9 +106,9 @@ const ActiveSessions = () => {
         setModalLoading(true);
         try {
             if (editingSession) {
-                await api.put(`/api/v1/support/chat-sessions/${editingSession.id}/`, formData);
+                await api.put(`/support/chat-sessions/${editingSession.id}/`, formData);
             } else {
-                await api.post('/api/v1/support/chat-sessions/', formData);
+                await api.post('/support/chat-sessions/', formData);
             }
             setIsModalOpen(false);
             fetchSessions();

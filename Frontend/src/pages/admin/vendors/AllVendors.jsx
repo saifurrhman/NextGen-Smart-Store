@@ -81,7 +81,7 @@ const AllVendors = () => {
         setCreateLoading(true);
         setMsg({ type: '', text: '' });
         try {
-            await api.post('/api/v1/vendors/', formData);
+            await api.post('/vendors/', formData);
             setMsg({ type: 'success', text: 'Vendor application created successfully!' });
             setFormData({
                 store_name: '',
@@ -112,7 +112,7 @@ const AllVendors = () => {
     const handleDeleteVendor = async (vendorId) => {
         if (!window.confirm('Are you sure you want to delete this vendor account? This will also affect their listed products.')) return;
         try {
-            await api.delete(`/api/v1/vendors/${vendorId}/`);
+            await api.delete(`/vendors/${vendorId}/`);
             setVendors(prev => prev.filter(v => v.id !== vendorId));
             setMsg({ type: 'success', text: 'Vendor deleted successfully!' });
             setTimeout(() => setMsg({ type: '', text: '' }), 3000);
@@ -169,7 +169,7 @@ const AllVendors = () => {
     const handleBulkDelete = async () => {
         if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} selected vendors?`)) return;
         try {
-            await Promise.all(selectedIds.map(id => api.delete(`/api/v1/vendors/${id}/`)));
+            await Promise.all(selectedIds.map(id => api.delete(`/vendors/${id}/`)));
             setVendors(prev => prev.filter(v => !selectedIds.includes(v.id)));
             setMsg({ type: 'success', text: `${selectedIds.length} vendors deleted successfully!` });
             clearSelection();

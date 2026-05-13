@@ -72,7 +72,7 @@ const CustomerSegmentation = () => {
                             <tr className="hover:bg-gray-50/50 transition-colors group">
                                 <td className="px-6 py-4 font-medium text-gray-900">VIP Spenders</td>
                                 <td className="px-6 py-4 text-gray-600">
-                                    >$500 lifetime spend
+                                    &gt;$500 lifetime spend
                                 </td>
                                 <td className="px-6 py-4 text-gray-600">1,240</td>
                                 <td className="px-6 py-4 text-gray-600">$840.00</td>
@@ -108,7 +108,7 @@ const CustomerSegmentation = () => {
                             <tr className="hover:bg-gray-50/50 transition-colors group">
                                 <td className="px-6 py-4 font-medium text-gray-900">Window Shoppers</td>
                                 <td className="px-6 py-4 text-gray-600">
-                                    >10 visits, 0 purchases
+                                    &gt;10 visits, 0 purchases
                                 </td>
                                 <td className="px-6 py-4 text-gray-600">12,800</td>
                                 <td className="px-6 py-4 text-gray-600">$0.00</td>

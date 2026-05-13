@@ -14,7 +14,7 @@ const DailyOperations = () => {
     const fetchDailyStats = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/api/v1/operations/daily-stats/');
+            const response = await api.get('/operations/daily-stats/');
             setOperations(response.data);
         } catch (error) {
             console.error("Failed to fetch daily operations:", error);

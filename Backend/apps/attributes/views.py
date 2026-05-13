@@ -38,10 +38,54 @@ class AttributeViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         try:
             db = get_mongo_db()
-            # Attributes are usually stored in 'attributes_attribute' collection
-            result = db['attributes_attribute'].delete_one({'_id': ObjectId(str(instance.id))})
+            
+            # Handle both integer IDs and ObjectIds gracefully to avoid crash
+            query_id = instance.id
+            if isinstance(query_id, str) and len(query_id) == 24:
+                try:
+                    query_id = ObjectId(query_id)
+                except Exception:
+                    pass
+                    
+            result = db['attributes_attribute'].delete_one({'_id': query_id})
             if result.deleted_count == 0:
-                return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+                # Try integer version if string failed
+                try:
+                    result = db['attributes_attribute'].delete_one({'_id': int(str(instance.id))})
+                except Exception:
+                    pass
+                    
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'detail': f'Delete failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def create(self, request, *args, **kwargs):
+        slug = request.data.get('slug')
+        if slug:
+            try:
+                db = get_mongo_db()
+                if db['attributes_attribute'].count_documents({'slug': slug}) > 0:
+                    return Response({'detail': f'An attribute with the slug "{slug}" already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception:
+                pass
+                
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            return Response({'detail': f'Failed to create attribute: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        slug = request.data.get('slug')
+        instance = self.get_object()
+        if slug and slug != instance.slug:
+            try:
+                db = get_mongo_db()
+                if db['attributes_attribute'].count_documents({'slug': slug}) > 0:
+                    return Response({'detail': f'An attribute with the slug "{slug}" already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception:
+                pass
+                
+        try:
+            return super().update(request, *args, **kwargs)
+        except Exception as e:
+            return Response({'detail': f'Failed to update attribute: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)

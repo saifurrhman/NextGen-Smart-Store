@@ -64,7 +64,7 @@ const DeliveryTeam = () => {
     const handleDeleteSpecialist = async (email) => {
         if (!window.confirm(`Are you sure you want to delete specialist ${email}?`)) return;
         try {
-            await api.delete(`/api/v1/users/${email}/`);
+            await api.delete(`/users/${email}/`);
             fetchTeam();
             setActiveMenuId(null);
         } catch (error) {
@@ -81,10 +81,10 @@ const DeliveryTeam = () => {
             if (editingSpecialist) {
                 const updateData = { ...formData };
                 if (!updateData.password) delete updateData.password;
-                await api.put(`/api/v1/users/${editingSpecialist.email}/`, updateData);
+                await api.put(`/users/${editingSpecialist.email}/`, updateData);
                 setMsg({ type: 'success', text: 'Specialist account updated successfully!' });
             } else {
-                await api.post('/api/v1/users/', {
+                await api.post('/users/', {
                     ...formData,
                     username: formData.email,
                     role: 'DELIVERY'
@@ -112,7 +112,7 @@ const DeliveryTeam = () => {
         setLoading(true);
         try {
             // Fetch users with role=DELIVERY
-            const response = await api.get(`/api/v1/users/?role=DELIVERY&page=${page}&search=${searchTerm}`);
+            const response = await api.get(`/users/?role=DELIVERY&page=${page}&search=${searchTerm}`);
             setTeam(response.data.results || []);
             setPagination({
                 count: response.data.count || 0,

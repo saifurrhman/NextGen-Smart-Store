@@ -55,8 +55,8 @@ const CreateOrder = () => {
         const fetchData = async () => {
             try {
                 const [custRes, prodRes] = await Promise.all([
-                    api.get('/api/v1/users/customers/'),
-                    api.get('/api/v1/products/'),
+                    api.get('/users/customers/'),
+                    api.get('/products/'),
                 ]);
                 setCustomers(custRes.data);
                 setProducts(prodRes.data);
@@ -112,7 +112,7 @@ const CreateOrder = () => {
         try {
             const addressFull = [orderDetails.shipping_address, orderDetails.city, orderDetails.postal_code]
                 .filter(Boolean).join(', ');
-            await api.post('/api/v1/orders/create/', {
+            await api.post('/orders/create/', {
                 user: selectedCustomer.id,
                 status: 'pending',
                 shipping_address: addressFull,

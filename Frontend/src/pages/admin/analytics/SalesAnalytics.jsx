@@ -17,7 +17,7 @@ const SalesAnalytics = () => {
         const fetchSalesData = async () => {
             setLoading(true);
             try {
-                const response = await api.get(`/api/v1/analytics/dashboard/?time_filter=${timeFilter}`);
+                const response = await api.get(`/analytics/dashboard/?time_filter=${timeFilter}`);
                 setData(response.data);
             } catch (error) {
                 console.error("Error fetching sales analytics:", error);

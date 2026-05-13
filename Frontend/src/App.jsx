@@ -27,10 +27,15 @@ import BlogDetail from './pages/public/BlogDetail';
 import PrivacyPolicy from './pages/public/PrivacyPolicy';
 import TermsConditions from './pages/public/TermsConditions';
 import ReturnPolicy from './pages/public/ReturnPolicy';
+import Wishlist from './pages/public/Wishlist';
+import ShippingPolicy from './pages/public/ShippingPolicy';
+import Categories from './pages/public/Categories';
+import CustomerReviews from './pages/public/CustomerReviews';
+import OrderTracking from './pages/public/OrderTracking';
 
 // Customer Pages
 import MyOrders from './pages/customer/MyOrders';
-import OrderTracking from './pages/customer/OrderTracking';
+import CustomerOrderTracking from './pages/customer/OrderTracking';
 import MyProfile from './pages/customer/MyProfile';
 import MyWishlist from './pages/customer/MyWishlist';
 import MyAddresses from './pages/customer/MyAddresses';
@@ -63,7 +68,9 @@ import EditVendorProduct from './pages/vendor/EditProduct';
 import WholesaleCatalog from './pages/vendor/WholesaleCatalog';
 import WholesaleProductDetail from './pages/vendor/WholesaleProductDetail';
 import MyBulkOrders from './pages/vendor/MyBulkOrders';
+import RefundsReturns from './pages/admin/orders/RefundsReturns';
 import AdminBulkOrders from './pages/admin/bulk-orders/AdminBulkOrders';
+import VendorProfileFull from './pages/admin/bulk-orders/VendorProfileFull';
 import AdminProductRequests from './pages/admin/product-requests/AdminProductRequests';
 import SuperAdminDashboard from './pages/admin/Dashboard';
 import AdminProfile from './pages/admin/AdminProfile';
@@ -167,7 +174,6 @@ import AllOrders from './pages/admin/orders/AllOrders';
 import CreateOrder from './pages/admin/orders/CreateOrder';
 import OrderDetails from './pages/admin/orders/OrderDetails';
 import OrderReports from './pages/admin/orders/OrderReports';
-import RefundsReturns from './pages/admin/orders/RefundsReturns';
 import AllProducts from './pages/admin/products/AllProducts';
 import AddProduct from './pages/admin/products/AddProduct';
 import EditProduct from './pages/admin/products/EditProduct';
@@ -175,6 +181,7 @@ import FeaturedProducts from './pages/admin/products/FeaturedProducts';
 import ProductCategories from './pages/admin/products/ProductCategories';
 import CreateCategory from './pages/admin/products/CreateCategory';
 import EditCategory from './pages/admin/products/EditCategory';
+import ProductPreview from './pages/admin/products/ProductPreview';
 import ProductAttributes from './pages/admin/products/ProductAttributes';
 import SizeManagement from './pages/admin/products/attributes/SizeManagement';
 import ColorManagement from './pages/admin/products/attributes/ColorManagement';
@@ -226,6 +233,11 @@ function App() {
           <Route path="privacy-policy" element={<PrivacyPolicy />} />
           <Route path="terms-conditions" element={<TermsConditions />} />
           <Route path="return-policy" element={<ReturnPolicy />} />
+          <Route path="wishlist" element={<Wishlist />} />
+          <Route path="shipping-policy" element={<ShippingPolicy />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="reviews" element={<CustomerReviews />} />
+          <Route path="order-tracking" element={<OrderTracking />} />
 
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -233,7 +245,7 @@ function App() {
         {/* Customer Dashboard Routes (Protected) */}
         <Route path="/customer" element={<CustomerLayout />}>
           <Route path="orders" element={<MyOrders />} />
-          <Route path="tracking" element={<OrderTracking />} />
+          <Route path="tracking" element={<CustomerOrderTracking />} />
           <Route path="profile" element={<MyProfile />} />
           <Route path="wishlist" element={<MyWishlist />} />
           <Route path="addresses" element={<MyAddresses />} />
@@ -352,9 +364,11 @@ function App() {
           <Route path="orders/reports" element={<OrderReports />} />
           <Route path="orders/refunds" element={<RefundsReturns />} />
           <Route path="bulk-orders" element={<AdminBulkOrders />} />
+          <Route path="bulk-orders/vendor/:email" element={<VendorProfileFull />} />
           <Route path="product-requests" element={<AdminProductRequests />} />
           <Route path="products/all" element={<AllProducts />} />
           <Route path="products/add" element={<AddProduct />} />
+          <Route path="products/preview/:id" element={<ProductPreview />} />
           <Route path="products/edit/:id" element={<EditProduct />} />
           <Route path="products/featured" element={<FeaturedProducts />} />
           <Route path="products/categories" element={<ProductCategories />} />

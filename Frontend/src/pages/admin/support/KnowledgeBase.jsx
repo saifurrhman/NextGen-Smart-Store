@@ -16,7 +16,7 @@ const KnowledgeBase = () => {
     const fetchArticles = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/api/v1/support/kb/?page=${page}&search=${searchTerm}`);
+            const response = await api.get(`/support/kb/?page=${page}&search=${searchTerm}`);
             setArticles(response.data.results);
             setPagination({
                 count: response.data.count,

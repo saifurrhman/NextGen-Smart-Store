@@ -13,7 +13,8 @@ import {
     Loader2,
     Calendar,
     Hash,
-    Info
+    Info,
+    Download
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -28,6 +29,26 @@ const MyBulkOrders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (orderId) => {
+        setDownloadingId(orderId);
+        try {
+            const response = await bulkOrdersAPI.downloadInvoice(orderId);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Invoice_Bulk_${orderId.slice(0, 8).toUpperCase()}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error('Download failed', err);
+            alert('Failed to download invoice. Please try again.');
+        } finally {
+            setDownloadingId(null);
+        }
+    };
 
     useEffect(() => {
         fetchOrders();
@@ -138,10 +159,20 @@ const MyBulkOrders = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-8 text-right">
-                                            <div>
-                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
-                                                <p className="text-lg font-bold text-gray-800 tracking-tight">PKR {order.total_amount ? parseFloat(order.total_amount).toLocaleString() : '0'}</p>
+                                        <div className="flex items-center gap-6 text-right">
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => handleDownload(order.id)}
+                                                    disabled={downloadingId === order.id}
+                                                    className="p-2.5 bg-gray-50 text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all border border-gray-100"
+                                                    title="Download Physical Bill"
+                                                >
+                                                    {downloadingId === order.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                                                </button>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
+                                                    <p className="text-lg font-bold text-gray-800 tracking-tight">PKR {order.total_amount ? parseFloat(order.total_amount).toLocaleString() : '0'}</p>
+                                                </div>
                                             </div>
                                             <div className="hidden sm:block">
                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date</p>

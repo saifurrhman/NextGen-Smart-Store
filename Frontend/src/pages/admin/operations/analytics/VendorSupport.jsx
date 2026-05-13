@@ -16,7 +16,7 @@ const VendorSupport = () => {
     const fetchTickets = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/api/v1/support/tickets/?page=${page}&search=${searchTerm}`);
+            const response = await api.get(`/support/tickets/?page=${page}&search=${searchTerm}`);
             setTickets(response.data.results);
             setPagination({
                 count: response.data.count,

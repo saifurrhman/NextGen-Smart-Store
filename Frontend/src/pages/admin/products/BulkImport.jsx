@@ -126,7 +126,7 @@ const BulkImport = () => {
         }, 400);
 
         try {
-            const res = await api.post('/api/v1/products/bulk-import/', formData, {
+            const res = await api.post('/products/bulk-import/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             clearInterval(interval);

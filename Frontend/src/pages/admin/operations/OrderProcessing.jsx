@@ -33,7 +33,7 @@ const OrderProcessing = () => {
         setLoading(true);
         try {
             // We fetch orders with statuses relevant to operations
-            const response = await api.get('/api/v1/orders/');
+            const response = await api.get('/orders/');
             const allOrders = response.data.results || response.data;
 
             // Map backend data to frontend format if needed, but here we can just use it
@@ -65,7 +65,7 @@ const OrderProcessing = () => {
 
     const handleStatusUpdate = async (orderId, newStatus) => {
         try {
-            await api.patch(`/api/v1/orders/${orderId}/`, { status: newStatus });
+            await api.patch(`/orders/${orderId}/`, { status: newStatus });
             fetchOrders();
         } catch (error) {
             console.error(`Failed to update order ${orderId} status:`, error);

@@ -29,7 +29,7 @@ const RevenueAnalytics = () => {
         setLoading(true);
         try {
             // In a real scenario, we might use the period filter in the API call
-            const response = await api.get(`/api/v1/finance/transactions/?search=${searchTerm}`);
+            const response = await api.get(`/finance/transactions/?search=${searchTerm}`);
             setRevenueRecords(response.data.results || response.data);
 
             // Calculate stats based on fetched data
@@ -60,7 +60,7 @@ const RevenueAnalytics = () => {
         try {
             // Backend doesn't have bulk delete for transactions usually, but we simulate it
             // For now, let's just update local state if bulk delete isn't supported on backend
-            // await Promise.all(selectedIds.map(id => api.delete(`/api/v1/finance/transactions/${id}/`)));
+            // await Promise.all(selectedIds.map(id => api.delete(`/finance/transactions/${id}/`)));
             setRevenueRecords(prev => prev.filter(r => !selectedIds.includes(r.id)));
             clearSelection();
             alert('Records deleted (Simulated)');

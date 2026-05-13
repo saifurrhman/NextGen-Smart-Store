@@ -14,7 +14,7 @@ const InventoryAlerts = () => {
         setLoading(true);
         try {
             // Fetch products and filter for low stock (e.g., < 10)
-            const response = await api.get('/api/v1/products/');
+            const response = await api.get('/products/');
             const allProducts = response.data.results || response.data;
             setProducts(allProducts.filter(p => p.stock < 10));
         } catch (error) {

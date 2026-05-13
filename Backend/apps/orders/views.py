@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.decorators import action
 from .models import Order, Refund, OrderReport, VendorBulkOrder, VendorBulkOrderItem
@@ -7,6 +8,10 @@ from apps.products.models import Product, ProductImage
 from core.utils import get_mongo_db
 from core.permissions import IsAdminRole
 from bson import ObjectId
+from django.core.mail import send_mail, EmailMessage
+from django.http import FileResponse
+from .utils import generate_bulk_order_invoice_pdf
+import io
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -28,95 +33,37 @@ class OrderViewSet(viewsets.ModelViewSet):
             if order_status:
                 query['status'] = order_status
 
-            # Payment status filter
-            payment_status = request.query_params.get('payment_status', '')
-            if payment_status:
-                query['payment_status'] = payment_status
+            # User filter
+            if not request.user.is_staff:
+                query['user_id'] = request.user.id
 
-            # Search
-            search = request.query_params.get('search', '').strip()
-            if search:
-                query['$or'] = [
-                    {'customer_name': {'$regex': search, '$options': 'i'}},
-                    {'customer_email': {'$regex': search, '$options': 'i'}},
-                ]
+            results = list(collection.find(query).sort('created_at', -1).limit(100))
+            
+            # Format results for frontend
+            for res in results:
+                res['id'] = str(res['_id'])
+                del res['_id']
 
-            # Pagination
-            try:
-                page = int(request.query_params.get('page', 1))
-                page_size = int(request.query_params.get('page_size', 20))
-            except (ValueError, TypeError):
-                page = 1
-                page_size = 20
-
-            skip = (page - 1) * page_size
-            total = collection.count_documents(query)
-            docs = list(collection.find(query).sort('_id', -1).skip(skip).limit(page_size))
-
-            from core.utils import sanitize_mongo_doc
-            results = sanitize_mongo_doc(docs)
-
-            return Response({
-                'count': total,
-                'page': page,
-                'page_size': page_size,
-                'results': results,
-            })
+            return Response(results)
         except Exception as e:
-            # Fallback: plain ORM without ordering
-            try:
-                qs = Order.objects.all()
-                serializer = self.get_serializer(qs, many=True)
-                return Response({'count': qs.count(), 'results': serializer.data})
-            except Exception as e2:
-                return Response({'count': 0, 'results': [], 'error': str(e2)})
+            return Response({"error": str(e)}, status=500)
 
 
-class RefundListView(generics.ListAPIView):
+class RefundViewSet(viewsets.ModelViewSet):
     queryset = Refund.objects.all()
     serializer_class = RefundSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def list(self, request, *args, **kwargs):
-        """Use raw PyMongo to avoid Djongo order_by crash."""
-        try:
-            db = get_mongo_db()
-            collection = db['orders_refund']
-            docs = list(collection.find({}).sort('_id', -1).limit(100))
-            from core.utils import sanitize_mongo_doc
-            results = sanitize_mongo_doc(docs)
-            return Response({'count': len(results), 'results': results})
-        except Exception as e:
-            return Response({'count': 0, 'results': [], 'error': str(e)})
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Refund.objects.all()
+        return Refund.objects.filter(order__user=self.request.user)
 
 
-class OrderReportViewSet(viewsets.ModelViewSet):
+class OrderReportViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = OrderReport.objects.all()
     serializer_class = OrderReportSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def list(self, request, *args, **kwargs):
-        """Use raw PyMongo to avoid Djongo order_by crash."""
-        try:
-            db = get_mongo_db()
-            collection = db['orders_orderreport']
-            docs = list(collection.find({}).sort('_id', -1).limit(100))
-            from core.utils import sanitize_mongo_doc
-            results = sanitize_mongo_doc(docs)
-            return Response({'count': len(results), 'results': results})
-        except Exception as e:
-            return Response({'count': 0, 'results': [], 'error': str(e)})
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        try:
-            db = get_mongo_db()
-            result = db['orders_orderreport'].delete_one({'_id': ObjectId(str(instance.id))})
-            if result.deleted_count == 0:
-                return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    permission_classes = [IsAdminRole]
 
 
 class VendorBulkOrderViewSet(viewsets.ModelViewSet):
@@ -124,266 +71,139 @@ class VendorBulkOrderViewSet(viewsets.ModelViewSet):
     serializer_class = VendorBulkOrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def list(self, request, *args, **kwargs):
-        """Use raw PyMongo to avoid timeouts and Djongo relationship crashes."""
-        try:
-            from core.utils import get_mongo_db
-            from django.conf import settings
-            db = get_mongo_db()
-            print(f">>> Server DB Name: {db.name}")
-            print(f">>> Server DB Host: {settings.DATABASES['default']['CLIENT']['host']}")
-            print(f">>> ORM Count: {VendorBulkOrder.objects.count()}")
-            print(f">>> PyMongo Count: {db['orders_vendorbulkorder'].count_documents({})}")
-            
-            collection = db['orders_vendorbulkorder']
-            
-            user = request.user
-            query = {}
-            if not (user.is_staff or getattr(user, 'role', '') in ('SUPER_ADMIN', 'SUB_ADMIN', 'ADMIN')):
-                query['vendor_id'] = user.id
-
-            # Simple pagination
-            limit = 50
-            docs = list(collection.find(query).sort('_id', -1).limit(limit))
-            
-            # Fetch all items for these orders in one go if possible, or per order for simplicity
-            item_coll = db['orders_vendorbulkitem']
-            
-            # Enrich with vendor emails and items manually to avoid ORM overhead
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            
-            results = []
-            for doc in docs:
-                # Sanitize ID
-                order_id_obj = doc.pop('_id')
-                doc['id'] = str(order_id_obj)
-                
-                # Fetch vendor email
-                v_id = doc.get('vendor_id')
-                email = "Missing Vendor"
-                if v_id:
-                    try:
-                        v_obj = User.objects.get(pk=v_id)
-                        email = v_obj.email
-                    except:
-                        pass
-                doc['vendor_email'] = email
-                
-                # Fetch Items
-                items_docs = list(item_coll.find({'bulk_order_id': order_id_obj}))
-                enriched_items = []
-                for i_doc in items_docs:
-                    i_doc['id'] = str(i_doc.pop('_id'))
-                    # Potentially fetch product title here if product_details is missing
-                    if 'master_product_id' in i_doc and not i_doc.get('product_details'):
-                        try:
-                            prod_coll = db['products_product']
-                            p_doc = prod_coll.find_one({'_id': i_doc['master_product_id']})
-                            if p_doc:
-                                i_doc['product_details'] = {'title': p_doc.get('title')}
-                        except:
-                            pass
-                    
-                    # Convert Decimals
-                    if 'price' in i_doc:
-                        i_doc['price'] = str(i_doc['price'])
-                    enriched_items.append(i_doc)
-                
-                doc['items'] = enriched_items
-
-                # Format amounts and dates for JSON
-                if 'total_amount' in doc:
-                    doc['total_amount'] = str(doc['total_amount'])
-                if 'created_at' in doc:
-                    doc['created_at'] = doc['created_at'].isoformat() if hasattr(doc['created_at'], 'isoformat') else str(doc['created_at'])
-                
-                results.append(doc)
-
-            return Response({
-                'count': len(results),
-                'results': results,
-            })
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return VendorBulkOrder.objects.all().order_by('-created_at')
+        return VendorBulkOrder.objects.filter(vendor=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(vendor=self.request.user)
 
-    def get_robust_object(self, pk):
+    def to_representation(self, instance):
         """
-        Robustly find a VendorBulkOrder, bypassing Djongo ORM lookup issues for ObjectIds.
+        Standard to_representation is slow for large bulk lists.
+        """
+        return super().to_representation(instance)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def download_invoice(self, request, pk=None):
+        """
+        Generates and returns the PDF invoice for a bulk order.
+        Available to both Admins and the Vendor who owns the order.
         """
         try:
-            from core.utils import get_mongo_db
-            from bson import ObjectId
+            order = self.get_object()
+            # Security check: Only admin or the specific vendor can download
+            if not request.user.is_staff and order.vendor != request.user:
+                return Response({'error': 'Unauthorized to download this invoice.'}, status=403)
             
-            db = get_mongo_db()
-            coll = db['orders_vendorbulkorder']
+            serializer = self.get_serializer(order)
+            pdf_bytes = generate_bulk_order_invoice_pdf(serializer.data)
             
-            # 1. Try PyMongo lookup first (most reliable)
-            doc = None
-            try:
-                doc = coll.find_one({'_id': ObjectId(str(pk))})
-            except Exception:
-                pass
-            
-            if not doc:
-                try:
-                    # Try as integer
-                    doc = coll.find_one({'_id': int(str(pk))})
-                except Exception:
-                    pass
-            
-            if doc:
-                # 2. Try to get ORM object using the confirmed ID
-                confirmed_id = doc['_id']
-                try:
-                    return VendorBulkOrder.objects.get(pk=confirmed_id)
-                except Exception:
-                    # 3. Last resort: Return the model manually populated from the dict 
-                    # Note: related fields like 'items' might still fail if ORM is partially broken
-                    obj = VendorBulkOrder()
-                    for key, val in doc.items():
-                        if key == '_id':
-                            obj.id = val
-                        elif hasattr(obj, key):
-                            setattr(obj, key, val)
-                    return obj
-            
-            return None
+            response = FileResponse(
+                io.BytesIO(pdf_bytes), 
+                content_type='application/pdf'
+            )
+            response['Content-Disposition'] = f'attachment; filename="Invoice_Bulk_{str(order.id)[:8]}.pdf"'
+            return response
         except Exception as e:
-            print(f">>> CRITICAL ERROR in get_robust_object: {e}")
-            return None
-
+            return Response({'error': f"Failed to generate PDF: {str(e)}"}, status=500)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdminRole])
     def approve(self, request, pk=None):
         try:
-            print(f">>> Reached approve action for order {pk}")
-            order = self.get_robust_object(pk)
-            print(f">>> get_robust_object returned: {order}")
-            if not order:
-                return Response({'detail': f'Bulk order {pk} not found.'}, status=404)
-
+            order = self.get_object()
             if order.status == 'shipped':
-                return Response({'detail': 'Order already fulfillment'}, status=400)
+                return Response({'error': 'Order already approved'}, status=400)
             
-            # Robust Vendor Lookup: Bypass order.vendor property to avoid Djongo lookup crashes
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            vendor = None
-            
-            # Try getting raw ID field
-            vendor_id = getattr(order, 'vendor_id', None)
-            if vendor_id:
-                try:
-                    # Try lookup by actual PK (ObjectId)
-                    vendor = User.objects.get(pk=vendor_id)
-                except Exception:
-                    try:
-                        # Fallback for integer IDs
-                        vendor = User.objects.get(pk=int(str(vendor_id)))
-                    except Exception:
-                        pass
-
+            vendor = order.vendor
             if not vendor:
-                return Response({'error': f'Cannot approve: order {pk} has no valid vendor (Raw ID: {vendor_id}).'}, status=400)
-            
-            # Robust Item Lookup: Fallback to PyMongo if ORM relationship fails
-            items = []
-            try:
-                items = list(order.items.all())
-            except Exception:
-                pass
-            
+                return Response({'error': 'No vendor associated with this order'}, status=400)
+
+            # 1. Load items reliably
+            items = list(order.items.all())
             if not items:
                 try:
                     from core.utils import get_mongo_db
                     db = get_mongo_db()
-                    item_docs = list(db['orders_vendorbulkitem'].find({'bulk_order_id': order.id}))
+                    item_docs = list(db['orders_vendorbulkorderitem'].find({'bulk_order_id': order.id}))
                     for idoc in item_docs:
-                        # Construct a mock item object
-                        from .models import VendorBulkOrderItem
-                        from apps.products.models import Product
-                        
                         m_item = VendorBulkOrderItem(
-                            id=idoc['_id'],
                             quantity=idoc.get('quantity', 0),
                             price=idoc.get('price', 0)
                         )
-                        # Fetch master product manually
                         mp_id = idoc.get('master_product_id')
                         if mp_id:
                             try:
                                 m_item.master_product = Product.objects.get(pk=mp_id)
-                            except Exception:
-                                pass
+                            except Exception: pass
                         items.append(m_item)
                 except Exception as e:
-                    print(f">>> ERROR fetching items via PyMongo: {e}")
+                    print(f"PyMongo fetch error: {e}")
 
             if not items:
-                return Response({'error': f'Order {pk} has no items or they could not be loaded.'}, status=400)
+                return Response({'error': 'Order has no items'}, status=400)
 
-            # Critical Logic: Allocate inventory to Vendor
+            # 2. Allocate inventory
             for item in items:
                 m_product = item.master_product
+                if not m_product: continue
 
-                if not m_product:
-                    continue
-
-                # Search by title + vendor as a semi-unique check.
-                existing_prod = Product.objects.filter(vendor=vendor, title=m_product.title).first()
-                
+                existing_prod = Product.objects.filter(vendor_id=vendor.id, title=m_product.title).first()
                 if existing_prod:
-                    existing_prod.stock += item.quantity
-                    existing_prod.save()
+                    try:
+                        db = get_mongo_db()
+                        db['products_product'].update_one(
+                            {'_id': existing_prod.id},
+                            {'$inc': {'stock': item.quantity}}
+                        )
+                    except Exception as e:
+                        print(f"Stock update failed: {e}")
                 else:
-                    # Create duplicate entry with vendor-unique slug and sku
                     from django.utils.text import slugify
-                    vendor_id_str = str(vendor.id)
-                    base_slug = slugify(m_product.title)
-                    unique_slug = f"{base_slug}-{vendor_id_str[:8]}"
+                    v_id_str = str(vendor.id)
+                    unique_slug = f"{slugify(m_product.title)}-{v_id_str[:8]}"
                     
-                    new_prod = Product.objects.create(
+                    Product.objects.create(
                         title=m_product.title,
                         slug=unique_slug,
                         description=m_product.description,
-                        price=m_product.price, 
-                        category=m_product.category,
+                        price=float(m_product.price or 0.0),
                         main_image=m_product.main_image,
                         stock=item.quantity,
                         is_active=True,
-                        vendor=vendor,
-                        sku=f"{m_product.sku}-{vendor_id_str[:8]}"[:100] if m_product.sku else None
+                        vendor_id=vendor.id,
+                        sku=f"{m_product.sku}-{v_id_str[:8]}"[:100] if m_product.sku else None
                     )
-                    
-                    # Copy gallery images
-                    for img_obj in m_product.images.all():
-                        ProductImage.objects.create(product=new_prod, image=img_obj.image)
 
-            # Final Update: Set status to shipped
+            # 3. Finalize order status
+            order.status = 'shipped'
+            order.save()
+
+            # 4. Notify & Email PDF
             try:
-                order.status = 'shipped'
-                order.save()
+                from apps.notifications.models import Notification
+                Notification.objects.create(
+                    recipient=vendor,
+                    title="Bulk Order Approved",
+                    message=f"Order #{str(order.id)[:8]} has been approved and stock allocated.",
+                    type='ORDER_UPDATE'
+                )
+
+                serializer = self.get_serializer(order)
+                pdf_content = generate_bulk_order_invoice_pdf(serializer.data)
+
+                msg = EmailMessage(
+                    subject=f"Bulk Order #{str(order.id)[:8].upper()} Approved",
+                    body=f"Hello,\n\nYour order #{str(order.id)[:8].upper()} is approved. PDF Bill is attached.",
+                    from_email='admin@nextgen.com',
+                    to=[vendor.email]
+                )
+                msg.attach(f'Invoice_{str(order.id)[:8]}.pdf', pdf_content, 'application/pdf')
+                msg.send()
             except Exception as e:
-                print(f">>> ORM save failed, using PyMongo fallback: {e}")
-                try:
-                    from core.utils import get_mongo_db
-                    db = get_mongo_db()
-                    db['orders_vendorbulkorder'].update_one(
-                        {'_id': order.id},
-                        {'$set': {'status': 'shipped', 'updated_at': datetime.now()}}
-                    )
-                except Exception as e2:
-                    return Response({'error': f'Failed to update order status: {e2}'}, status=500)
+                print(f"Alert failed: {e}")
 
-            return Response({'status': 'Approved & Inventory Allocated'})
-
-            
+            return Response({'status': 'Approved'})
         except Exception as e:
-            import traceback
-            error_details = traceback.format_exc()
-            print(error_details)
-            return Response({'error': f'Approval failed: {str(e)}'}, status=500)
+            return Response({'error': str(e)}, status=500)

@@ -112,6 +112,13 @@ export const bulkOrdersAPI = {
   getById: (id) => api.get(`/orders/bulk-orders/${id}/`),
   create: (data) => api.post('/orders/bulk-orders/', data),
   approve: (id) => api.post(`/orders/bulk-orders/${id}/approve/`),
+  downloadInvoice: (id) => api.get(`/orders/bulk-orders/${id}/download_invoice/`, { responseType: 'blob' }),
+};
+
+export const notificationsAPI = {
+  getAll: () => api.get('/notifications/'),
+  markAllRead: () => api.post('/notifications/mark_all_read/'),
+  markRead: (id) => api.post(`/notifications/${id}/mark_read/`),
 };
 
 export const profileAPI = {

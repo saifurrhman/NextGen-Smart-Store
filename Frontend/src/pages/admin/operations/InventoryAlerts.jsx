@@ -49,7 +49,7 @@ const InventoryAlerts = () => {
         e.preventDefault();
         setSaveLoading(true);
         try {
-            await api.patch(`/api/v1/products/${editingProduct.id}/`, {
+            await api.patch(`/products/${editingProduct.id}/`, {
                 min_stock: parseInt(newMinStock)
             });
             fetchAlerts();

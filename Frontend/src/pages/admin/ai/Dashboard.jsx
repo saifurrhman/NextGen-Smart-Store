@@ -18,9 +18,9 @@ const AIDashboard = () => {
         const fetchDashboardData = async () => {
             try {
                 const [statsRes, logsRes, statusRes] = await Promise.all([
-                    api.get('/api/v1/ai-automation/stats/'),
-                    api.get('/api/v1/ai-automation/logs/'),
-                    api.get('/api/v1/ai-automation/status/')
+                    api.get('/ai-automation/stats/'),
+                    api.get('/ai-automation/logs/'),
+                    api.get('/ai-automation/status/')
                 ]);
 
                 setStats(statsRes.data);

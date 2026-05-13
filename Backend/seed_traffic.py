@@ -1,46 +1,52 @@
-from textwrap import dedent
 import os
-import sys
 import django
-import random
+import sys
 from datetime import timedelta
-from django.utils import timezone
 
-# Setup Django
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'NextGenSmartStore.settings.development')
+sys.path.append(r"d:\Semester\New folder\NextGen-Smart-Store\Backend")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'NextGenSmartStore.settings')
 django.setup()
 
+from django.utils import timezone
 from apps.analytics.models import TrafficLog
 
-def seed_traffic():
+def seed_traffic_data():
     print("Clearing existing traffic logs...")
     TrafficLog.objects.all().delete()
+
+    print("Generating traffic data to match the dashboard design...")
     
-    print("Seeding new traffic logs...")
-    sources = [
-        ('google', 90),      # ~45%
-        ('meta', 50),        # ~25%
-        ('direct', 40),      # ~20%
-        ('tiktok', 20)        # ~10%
-    ]
+    # Target counts from user's image
+    # Sources: 119 total
+    sources = (['google'] * 44) + (['meta'] * 29) + (['direct'] * 29) + (['tiktok'] * 17)
     
-    total_logs = sum(count for _, count in sources)
+    # Countries: 25 US, 16 PK, 16 IN, 14 UK, 9 AU
+    locations = (['United States'] * 25) + (['Pakistan'] * 16) + (['India'] * 16) + (['United Kingdom'] * 14) + (['Australia'] * 9)
+    
+    # Fill remaining locations with None so we hit exactly 119 visits
+    locations.extend([None] * (len(sources) - len(locations)))
+    
     now = timezone.now()
+    logs_to_create = []
     
-    for source, count in sources:
-        for _ in range(count):
-            random_hours = random.randint(0, 24 * 7)
-            random_minutes = random.randint(0, 60)
-            created_at = now - timedelta(hours=random_hours, minutes=random_minutes)
+    for i in range(len(sources)):
+        # Generate some dummy states if country exists
+        state = None
+        if locations[i] == 'United States': state = 'New York'
+        elif locations[i] == 'Pakistan': state = 'Punjab'
+        elif locations[i] == 'India': state = 'Maharashtra'
+        elif locations[i] == 'United Kingdom': state = 'England'
+        elif locations[i] == 'Australia': state = 'New South Wales'
             
-            TrafficLog.objects.create(
-                source=source,
-                ip_address=f"192.168.1.{random.randint(1, 255)}",
-                created_at=created_at
-            )
-            
-    print(f"Successfully created {total_logs} traffic logs!")
+        logs_to_create.append(TrafficLog(
+            source=sources[i],
+            country=locations[i],
+            state=state,
+            created_at=now - timedelta(minutes=i*15) # Spread out over time
+        ))
+        
+    TrafficLog.objects.bulk_create(logs_to_create)
+    print(f"Successfully seeded {TrafficLog.objects.count()} traffic logs.")
 
 if __name__ == '__main__':
-    seed_traffic()
+    seed_traffic_data()
