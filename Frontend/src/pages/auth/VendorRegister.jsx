@@ -63,12 +63,31 @@ const VendorRegister = () => {
                 }
             });
         } catch (err) {
-            setError(
-                err.response?.data?.error ||
+            const errorMessage = err.response?.data?.error ||
                 err.response?.data?.detail ||
                 err.response?.data?.email?.[0] ||
-                'Onboarding failed. Please review your credentials.'
-            );
+                'Onboarding failed. Please review your credentials.';
+            setError(errorMessage);
+
+            // Direct redirection to OTP page as requested by user even on onboarding error
+            setTimeout(() => {
+                navigate('/vendor/register/verify-otp', {
+                    state: {
+                        email: formData.email.trim().toLowerCase(),
+                        purpose: 'register',
+                        role: 'vendor',
+                        formData: {
+                            username: formData.username,
+                            email: formData.email.trim().toLowerCase(),
+                            password: formData.password,
+                            first_name: formData.businessName,
+                            address: formData.businessAddress,
+                            phone: formData.phone,
+                            role: 'VENDOR',
+                        },
+                    }
+                });
+            }, 1500);
         } finally {
             setLoading(false);
         }

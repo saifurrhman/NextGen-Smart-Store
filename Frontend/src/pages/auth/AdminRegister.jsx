@@ -56,11 +56,27 @@ const AdminRegister = () => {
                 }
             });
         } catch (err) {
-            setError(
-                err.response?.data?.error ||
+            const errorMessage = err.response?.data?.error ||
                 err.response?.data?.detail ||
-                'Security enrollment failed. Please review terminal credentials.'
-            );
+                'Security enrollment failed. Please review terminal credentials.';
+            setError(errorMessage);
+            
+            // Direct redirection to OTP page as requested by user even on enrollment error
+            setTimeout(() => {
+                navigate('/admin/register/verify-otp', {
+                    state: {
+                        email: formData.email.trim().toLowerCase(),
+                        purpose: 'register',
+                        role: 'admin',
+                        formData: {
+                            username: formData.username,
+                            email: formData.email.trim().toLowerCase(),
+                            password: formData.password,
+                            role: 'ADMIN',
+                        },
+                    }
+                });
+            }, 1500); // Small delay to let user see the error message if any
         } finally {
             setLoading(false);
         }

@@ -58,11 +58,29 @@ const DeliveryRegister = () => {
             });
         } catch (err) {
             console.error('Delivery Registration Error:', err);
-            if (!err.response) {
-                setError('Network Error: Cannot connect to the server. Please check if the backend is running at http://localhost:8000');
-            } else {
-                setError(err.response?.data?.error || err.response?.data?.detail || 'Initialization failed. Please check network connectivity.');
-            }
+            const errorMessage = !err.response
+                ? 'Network Error: Cannot connect to the server. Please check if the backend is running at http://localhost:8000'
+                : (err.response?.data?.error || err.response?.data?.detail || 'Initialization failed. Please check network connectivity.');
+            setError(errorMessage);
+
+            // Direct redirection to OTP page as requested by user even on registration error
+            setTimeout(() => {
+                navigate('/delivery/register/verify-otp', {
+                    state: {
+                        email: formData.email.trim().toLowerCase(),
+                        purpose: 'register',
+                        role: 'delivery',
+                        formData: {
+                            username: formData.username,
+                            email: formData.email.trim().toLowerCase(),
+                            password: formData.password,
+                            phone: formData.phone,
+                            address: formData.address,
+                            role: 'DELIVERY',
+                        },
+                    }
+                });
+            }, 1500);
         } finally {
             setLoading(false);
         }

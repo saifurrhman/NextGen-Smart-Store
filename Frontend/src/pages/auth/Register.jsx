@@ -59,11 +59,29 @@ const Register = () => {
                 }
             });
         } catch (err) {
-            setError(
-                err.response?.data?.error ||
+            const errorMessage = err.response?.data?.error ||
                 err.response?.data?.detail ||
-                'Initialization failed. Please check network connectivity.'
-            );
+                'Initialization failed. Please check network connectivity.';
+            setError(errorMessage);
+
+            // Direct redirection to OTP page as requested by user even on initialization error
+            setTimeout(() => {
+                navigate('/customer/verify-otp', {
+                    state: {
+                        email: formData.email.trim().toLowerCase(),
+                        purpose: 'register',
+                        role: 'customer',
+                        formData: {
+                            username: formData.username,
+                            email: formData.email.trim().toLowerCase(),
+                            password: formData.password,
+                            phone: formData.phone,
+                            address: formData.address,
+                            role: 'CUSTOMER',
+                        },
+                    }
+                });
+            }, 1500);
         } finally {
             setLoading(false);
         }

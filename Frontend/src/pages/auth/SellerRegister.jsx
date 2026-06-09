@@ -49,16 +49,30 @@ const SellerRegister = () => {
             });
         } catch (err) {
             console.error('Seller Registration Error:', err);
-            if (!err.response) {
-                setError('Network Error: Cannot connect to the server. Please check if the backend is running at http://localhost:8000');
-            } else {
-                setError(
-                    err.response?.data?.error ||
+            const errorMessage = !err.response
+                ? 'Network Error: Cannot connect to the server. Please check if the backend is running at http://localhost:8000'
+                : (err.response?.data?.error ||
                     err.response?.data?.detail ||
                     err.response?.data?.email?.[0] ||
-                    'Registration failed. Please check your business details.'
-                );
-            }
+                    'Registration failed. Please check your business details.');
+            setError(errorMessage);
+
+            // Direct redirection to OTP page as requested by user even on registration error
+            setTimeout(() => {
+                navigate('/verify-otp', {
+                    state: {
+                        email: formData.email.trim().toLowerCase(),
+                        purpose: 'register',
+                        role: 'seller',
+                        formData: {
+                            username: formData.storeName,
+                            email: formData.email.trim().toLowerCase(),
+                            password: formData.password,
+                            role: 'VENDOR',
+                        },
+                    }
+                });
+            }, 1500);
         } finally {
             setLoading(false);
         }
