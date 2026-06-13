@@ -105,7 +105,7 @@ const AIAgentSettings = () => {
                             {/* Make.com Form */}
                             <div className="w-full p-5 rounded-lg border border-gray-100 bg-gray-50/50 space-y-4 mt-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded bg-indigo-600 text-white flex items-center justify-center font-bold">M</div>
+                                    <div className="w-8 h-8 rounded bg-emerald-600 text-white flex items-center justify-center font-bold">M</div>
                                     <h4 className="font-semibold text-gray-800">Make.com (Integromat)</h4>
                                 </div>
                                 <div>
@@ -129,7 +129,7 @@ const AIAgentSettings = () => {
                                 {/* Facebook */}
                                 <div>
                                     <h4 className="flex items-center gap-2 font-semibold text-gray-800 mb-3">
-                                        <Facebook className="text-blue-600" size={18} /> Meta (Facebook) Ads API
+                                        <Facebook className="text-emerald-600" size={18} /> Meta (Facebook) Ads API
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <input type="text" placeholder="Access Token" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500" />
@@ -142,13 +142,13 @@ const AIAgentSettings = () => {
                                 {/* Google Ads */}
                                 <div>
                                     <h4 className="flex items-center gap-2 font-semibold text-gray-800 mb-3">
-                                        <Search className="text-red-500" size={18} /> Google Ads API
+                                        <Search className="text-emerald-500" size={18} /> Google Ads API
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <input type="text" placeholder="Developer Token" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500" />
                                         <input type="text" placeholder="Customer ID (MCC)" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-500" />
                                     </div>
-                                    <div className="mt-3 text-xs text-gray-500 flex items-center gap-1.5 bg-blue-50 text-blue-700 p-2.5 rounded border border-blue-100">
+                                    <div className="mt-3 text-xs text-gray-500 flex items-center gap-1.5 bg-emerald-50 text-emerald-700 p-2.5 rounded border border-emerald-100">
                                         <Settings size={14} /> The AI Agent uses these to automatically pause/scale campaigns based on store revenue metrics.
                                     </div>
                                 </div>
@@ -195,7 +195,7 @@ const AIAgentSettings = () => {
                                 </div>
                             </div>
                             <div className="relative flex items-start gap-4">
-                                <span className="w-4 h-4 rounded-full bg-blue-500 shrink-0 mt-1 shadow-[0_0_0_3px_#eff6ff]"></span>
+                                <span className="w-4 h-4 rounded-full bg-emerald-500 shrink-0 mt-1 shadow-[0_0_0_3px_#f0f9f4]"></span>
                                 <div>
                                     <p className="text-xs font-semibold text-gray-800">Meta Pixel conversion fired</p>
                                     <p className="text-[10px] text-gray-400">1 hour ago</p>

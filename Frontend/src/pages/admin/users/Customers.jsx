@@ -189,8 +189,8 @@ const Customers = () => {
                                     </div>
                                     Export Excel
                                 </button>
-                                <button onClick={handleExportCSV} className="w-full text-left px-4 py-2.5 hover:bg-blue-50 text-gray-700 text-xs font-bold flex items-center gap-3 transition-colors">
-                                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                <button onClick={handleExportCSV} className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 text-gray-700 text-xs font-bold flex items-center gap-3 transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
                                         <Download size={14} />
                                     </div>
                                     Export CSV
@@ -229,12 +229,12 @@ const Customers = () => {
 
                     {/* Active Customers Card */}
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
                         <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
                         </button>
                         <div className="relative z-10">
-                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                            <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
                                 <UserCheck size={20} />
                             </div>
                             <h3 className="text-sm font-bold text-gray-500 mb-1 uppercase tracking-wider">Active Customers</h3>
@@ -263,12 +263,12 @@ const Customers = () => {
 
                     {/* VIP Customers Card */}
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-6 shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-500"></div>
                         <button className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 z-10">
                             <MoreVertical size={18} />
                         </button>
                         <div className="relative z-10">
-                            <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                            <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
                                 <UserCheck size={20} />
                             </div>
                             <h3 className="text-sm font-bold text-gray-500 mb-1 uppercase tracking-wider">VIP Members</h3>

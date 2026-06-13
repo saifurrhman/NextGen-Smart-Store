@@ -112,7 +112,7 @@ const DeliveryTopbar = ({ pageTitle, user, onMobileToggle, onToggleSidebar }) =>
                 >
                     <div className={`w-[18px] h-[18px] rounded-full bg-white shadow flex items-center justify-center transition-transform duration-300 ${darkMode ? 'translate-x-[22px]' : 'translate-x-0'}`}>
                         {darkMode
-                            ? <Moon size={9} className="text-indigo-600" />
+                            ? <Moon size={9} className="text-emerald-600" />
                             : <Sun size={9} className="text-amber-500" />
                         }
                     </div>

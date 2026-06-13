@@ -4,8 +4,8 @@ import { Grid, ArrowRight } from 'lucide-react';
 import api from '../../utils/api';
 import { useTheme, themes } from '../../context/ThemeContext';
 
-const CAT_COLORS = ['#EAF8E7','#EFF6FF','#FEF3C7','#FDF2F8','#EDE9FE','#FFF1F2','#F0F9FF','#F0FDF4','#FFF7ED','#F0FDFA'];
-const CAT_TEXT   = ['#16a34a','#2563eb','#d97706','#db2777','#7c3aed','#e11d48','#0284c7','#15803d','#ea580c','#0f766e'];
+const CAT_COLORS = ['#EAF8E7', '#EFF6FF', '#FEF3C7', '#FDF2F8', '#EDE9FE', '#FFF1F2', '#F0F9FF', '#F0FDF4', '#FFF7ED', '#F0FDFA'];
+const CAT_TEXT = ['#16a34a', '#2563eb', '#d97706', '#db2777', '#7c3aed', '#e11d48', '#0284c7', '#15803d', '#ea580c', '#0f766e'];
 
 const getMediaUrl = (url) => {
   if (!url) return null;
@@ -21,8 +21,19 @@ const Categories = () => {
 
   useEffect(() => {
     api.get('categories/?page_size=50').then(r => {
-      setCategories((r.data.results || r.data).filter(c => c.is_active));
-    }).catch(() => {}).finally(() => setLoading(false));
+      const activeCats = (r.data.results || r.data).filter(c => c.is_active);
+      const uniqueCats = [];
+      const catNames = new Set();
+      for (const cat of activeCats) {
+        const normName = cat.name.trim().toLowerCase();
+        const isInvalid = normName.includes('female') || normName.includes('women');
+        if (!catNames.has(normName) && !isInvalid) {
+          catNames.add(normName);
+          uniqueCats.push(cat);
+        }
+      }
+      setCategories(uniqueCats);
+    }).catch(() => { }).finally(() => setLoading(false));
   }, []);
 
   return (

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, Clock, Package, MapPin } from 'lucide-react';
+import { Truck, Clock, Package, MapPin, Zap, Globe } from 'lucide-react';
 import { useTheme, themes } from '../../context/ThemeContext';
 
 const ShippingPolicy = () => {
@@ -8,10 +8,10 @@ const ShippingPolicy = () => {
   const p = themes[activeTheme] || themes.green;
 
   const methods = [
-    { name: 'Standard Delivery', time: '3–5 Business Days', price: '$5.99', free: 'Free on orders over $50', icon: '🚚' },
-    { name: 'Express Delivery', time: '1–2 Business Days', price: '$12.99', free: 'Available in major cities', icon: '⚡' },
-    { name: 'Same Day Delivery', time: 'Order before 12 PM', price: '$19.99', free: 'Lahore, Karachi, Islamabad only', icon: '🏃' },
-    { name: 'International', time: '7–14 Business Days', price: 'Varies', free: 'Calculated at checkout', icon: '✈️' },
+    { name: 'Standard Delivery', time: '3–5 Business Days', price: 'Rs. 199', free: 'Free on orders over Rs. 3,000', icon: Truck },
+    { name: 'Express Delivery', time: '1–2 Business Days', price: 'Rs. 399', free: 'Available in major cities', icon: Zap },
+    { name: 'Same Day Delivery', time: 'Order before 12 PM', price: 'Rs. 599', free: 'Lahore, Karachi, Islamabad only', icon: Clock },
+    { name: 'International', time: '7–14 Business Days', price: 'Varies', free: 'Calculated at checkout', icon: Globe },
   ];
 
   return (
@@ -23,7 +23,7 @@ const ShippingPolicy = () => {
         </nav>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: p.primaryLight }}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: p.primaryLight }}>
               <Truck size={24} style={{ color: p.primary }} />
             </div>
             <div>
@@ -33,19 +33,24 @@ const ShippingPolicy = () => {
           </div>
 
           <div className="space-y-4 mb-10">
-            {methods.map((m, i) => (
-              <div key={i} className="flex items-center gap-5 p-5 rounded-2xl border border-gray-100 hover:border-gray-200 transition-all">
-                <span className="text-3xl">{m.icon}</span>
-                <div className="flex-1">
-                  <h3 className="font-black text-gray-900">{m.name}</h3>
-                  <p className="text-sm text-gray-500">{m.free}</p>
+            {methods.map((m, i) => {
+              const IconComponent = m.icon;
+              return (
+                <div key={i} className="flex items-center gap-5 p-5 rounded-2xl border border-gray-100 hover:border-gray-200 transition-all">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: p.primaryLight }}>
+                    <IconComponent size={22} style={{ color: p.primary }} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-black text-gray-900">{m.name}</h3>
+                    <p className="text-sm text-gray-500">{m.free}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-lg" style={{ color: p.primary }}>{m.price}</p>
+                    <p className="text-xs text-gray-400">{m.time}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-black" style={{ color: p.primary }}>{m.price}</p>
-                  <p className="text-xs text-gray-400">{m.time}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="space-y-6 text-sm text-gray-600">

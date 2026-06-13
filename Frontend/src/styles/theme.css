@@ -1,28 +1,41 @@
 /* UI/UX Design System - Color Palette & Tokens */
 :root {
-    /* Brand Colors - Ocean Green Scheme */
-    --color-brand: #4EA674;
-    --color-brand-dark: #023337;
-    --color-brand-light: #C1E6BA;
-    --color-brand-accent: #EAF8E7;
+    /* Brand Colors - Vibrant Green Accent (Consistent with storefront) */
+    --color-brand: #22c55e;
+    --color-brand-dark: #18181b;
+    --color-brand-light: #dcfce7;
+    --color-brand-accent: #f0fdf4;
 
     /* Action Colors - Primary Call-to-Action */
-    --color-action: #6467F2;
-    --color-action-hover: #5356D0;
+    --color-action: #22c55e;
+    --color-action-hover: #16a34a;
 
     /* Functional Colors */
-    --color-success: #21C45D;
-    --color-pending: #F0D411;
-    --color-error: #EF4343;
+    --color-success: #22c55e;
+    --color-pending: #eab308;
+    --color-error: #ef4444;
 
     /* Text Colors */
-    --color-text-main: #023337;
-    --color-text-sub: #7C7C7C;
+    --color-text-main: #18181b;
+    --color-text-sub: #4b5563;
 
     /* Backgrounds & Borders */
-    --color-bg-page: #F3F4F6;
-    /* Gray-100 equivalent for page background */
-    --color-bg-card: #FFFFFF;
-    --color-border: #E5E7EB;
-    /* Gray-200 */
+    --color-bg-page: #f3f4f6;
+    --color-bg-card: #ffffff;
+    --color-border: #e5e7eb;
+}
+
+/* Dark Mode Overrides */
+html.dark {
+    --color-brand: #22c55e;
+    --color-brand-dark: #27272a;
+    --color-brand-light: #3f3f46;
+    --color-brand-accent: #18181b;
+
+    --color-text-main: #f3f4f6;
+    --color-text-sub: #a1a1aa;
+
+    --color-bg-page: #18181b;
+    --color-bg-card: #27272a;
+    --color-border: #3f3f46;
 }

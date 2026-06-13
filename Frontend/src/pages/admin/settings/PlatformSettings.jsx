@@ -156,11 +156,11 @@ const PlatformSettings = () => {
                     {/* API Configs Tab */}
                     {activeTab === 'api' && (
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
 
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <Key size={20} className="text-blue-600" />
+                                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                                    <Key size={20} className="text-emerald-600" />
                                 </div>
                                 <div>
                                     <h2 className="text-xl font-bold text-gray-800">API Configurations</h2>
@@ -180,14 +180,14 @@ const PlatformSettings = () => {
                                         <input
                                             type="text"
                                             placeholder="G-XXXXXXXXXX"
-                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
+                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-mono"
                                         />
                                         <Globe size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                     </div>
                                 </div>
 
                                 <div className="pt-6 border-t border-gray-100 flex justify-end">
-                                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-200">
+                                    <button className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm shadow-emerald-200">
                                         <Save size={16} />
                                         Save Configurations
                                     </button>

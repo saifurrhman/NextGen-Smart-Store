@@ -111,6 +111,9 @@ import CategoryBanners from './pages/admin/content/banners/CategoryBanners';
 import CreateBanner from './pages/admin/content/banners/CreateBanner';
 import HeroSliders from './pages/admin/content/banners/HeroSliders';
 import PromotionalBanners from './pages/admin/content/banners/PromotionalBanners';
+import BrandsManager from './pages/admin/content/banners/BrandsManager';
+import NewsletterManager from './pages/admin/content/banners/NewsletterManager';
+import TestimonialsManager from './pages/admin/content/banners/TestimonialsManager';
 
 import AllPosts from './pages/admin/content/blog/AllPosts';
 import BlogCategories from './pages/admin/content/blog/BlogCategories';
@@ -426,6 +429,9 @@ function App() {
           {/* Content Department Sub-Routes */}
           <Route path="content/banners/hero-sliders" element={<HeroSliders />} />
           <Route path="content/banners/promotional" element={<PromotionalBanners />} />
+          <Route path="content/banners/brands" element={<BrandsManager />} />
+          <Route path="content/banners/testimonials" element={<TestimonialsManager />} />
+          <Route path="content/banners/newsletter" element={<NewsletterManager />} />
           <Route path="content/banners/category" element={<CategoryBanners />} />
           <Route path="content/banners/create" element={<CreateBanner />} />
 

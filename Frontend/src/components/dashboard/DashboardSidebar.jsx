@@ -55,6 +55,10 @@ const getNavLinks = (role) => {
                     {
                         group: 'Content', path: '/admin/content', icon: BookOpen, items: [
                             { path: '/admin/content/banners/hero-sliders', label: 'Banners' },
+                            { path: '/admin/content/banners/promotional', label: 'Flash Sale' },
+                            { path: '/admin/content/banners/brands', label: 'Trusted Brands' },
+                            { path: '/admin/content/banners/testimonials', label: 'Testimonials' },
+                            { path: '/admin/content/banners/newsletter', label: 'Newsletter' },
                             { path: '/admin/content/blog/posts', label: 'Blog' },
                             { path: '/admin/content/media/library', label: 'Media' },
                             { path: '/admin/content/pages/homepage', label: 'Pages' },
@@ -185,7 +189,7 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                     title={collapsed ? link.label : ''}
                     className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${isActive
                         ? 'bg-emerald-500 text-white shadow-sm'
-                        : 'text-gray-500 hover:bg-gray-50 hover:text-emerald-600'
+                        : 'text-text-sub hover:bg-bg-page/50 hover:text-emerald-500'
                         }`}
                 >
                     <link.icon
@@ -203,7 +207,7 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
 
     return (
         <aside
-            className={`fixed left-0 top-0 h-screen z-50 flex flex-col bg-white border-r border-gray-100 transition-all duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            className={`fixed left-0 top-0 h-screen z-50 flex flex-col bg-bg-card border-r border-border transition-all duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 } ${collapsed ? 'w-[90px]' : 'w-[266px]'}`}
         >
             {/* ─── Logo ─── */}
@@ -214,8 +218,8 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col">
-                            <span className="text-lg font-bold text-gray-800 tracking-tight leading-none uppercase">NextGen</span>
-                            <span className="text-[10px] font-bold text-emerald-600 tracking-[0.2em] uppercase mt-0.5">{logoLabel} Hub</span>
+                            <span className="text-lg font-bold text-text-main tracking-tight leading-none uppercase">NextGen</span>
+                            <span className="text-[10px] font-bold text-emerald-500 tracking-[0.2em] uppercase mt-0.5">{logoLabel} Hub</span>
                         </div>
                     )}
                 </div>
@@ -234,7 +238,7 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                 {/* Main menu */}
                 <div>
                     {!collapsed && (
-                        <p className="text-xs font-medium text-gray-400 px-4 mb-3">Main menu</p>
+                        <p className="text-xs font-semibold text-text-sub opacity-50 px-4 mb-3 uppercase tracking-wider">Main menu</p>
                     )}
                     <ul className="space-y-1">
                         {topLinks.map(renderLink)}
@@ -245,9 +249,9 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                 {subLinks.length > 0 && (
                     <div>
                         {!collapsed && (
-                            <p className="text-xs font-medium text-gray-400 px-4 mb-3">Departments</p>
+                            <p className="text-xs font-semibold text-text-sub opacity-50 px-4 mb-3 uppercase tracking-wider">Departments</p>
                         )}
-                        {collapsed && <div className="border-t border-gray-100 mx-2 mb-2" />}
+                        {collapsed && <div className="border-t border-border mx-2 mb-2" />}
 
                         <ul className="space-y-1">
                             {subLinks.map((group) => {
@@ -269,7 +273,7 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                                             title={collapsed ? group.group : ''}
                                             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${groupActive
                                                 ? 'bg-emerald-500 text-white shadow-sm'
-                                                : 'text-gray-500 hover:bg-gray-50 hover:text-emerald-600'
+                                                : 'text-text-sub hover:bg-bg-page/50 hover:text-emerald-500'
                                                 }`}
                                         >
                                             <Icon size={18} className={groupActive ? 'text-white' : 'text-gray-400 group-hover:text-emerald-500'} />
@@ -285,7 +289,7 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                                         </button>
 
                                         {!collapsed && isGroupOpen && (
-                                            <ul className="ml-5 mt-1 space-y-0.5 border-l-2 border-emerald-50 pl-2">
+                                            <ul className="ml-5 mt-1 space-y-0.5 border-l border-border pl-2">
                                                 {group.items.map((item) => {
                                                     const active = location.pathname === item.path;
                                                     return (
@@ -293,8 +297,8 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                                                             <NavLink
                                                                 to={item.path}
                                                                 className={`block px-3 py-1.5 rounded-md text-[13px] transition-colors ${active
-                                                                    ? 'text-emerald-600 font-bold bg-emerald-50'
-                                                                    : 'text-gray-500 hover:text-emerald-600 hover:bg-gray-50'
+                                                                    ? 'text-emerald-500 font-bold bg-emerald-500/10'
+                                                                    : 'text-text-sub hover:text-emerald-500 hover:bg-bg-page/50'
                                                                     }`}
                                                             >
                                                                 {item.label}
@@ -315,9 +319,9 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                 {adminLinks.length > 0 && (
                     <div>
                         {!collapsed && (
-                            <p className="text-xs font-medium text-gray-400 px-4 mb-3">Settings</p>
+                            <p className="text-xs font-semibold text-text-sub opacity-50 px-4 mb-3 uppercase tracking-wider">Settings</p>
                         )}
-                        {collapsed && <div className="border-t border-gray-100 mx-2 mb-2" />}
+                        {collapsed && <div className="border-t border-border mx-2 mb-2" />}
                         <ul className="space-y-1">
                             {adminLinks.map(renderLink)}
                         </ul>
@@ -327,15 +331,15 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
             </nav>
 
             {/* ─── Footer ─── */}
-            <div className="p-4 space-y-4 bg-white mt-auto border-t border-gray-50">
+            <div className="p-4 space-y-4 bg-bg-card mt-auto border-t border-border">
                 <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : 'px-2'}`}>
-                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-gray-200 shadow-sm bg-gray-100 flex items-center justify-center text-emerald-600 font-bold">
+                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-border shadow-sm bg-bg-page/50 flex items-center justify-center text-emerald-500 font-bold">
                         {(user?.username || user?.email || 'A').charAt(0).toUpperCase()}
                     </div>
                     {!collapsed && (
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-gray-800 truncate">{user?.username || 'User'}</p>
-                            <p className="text-[11px] font-medium text-gray-500 truncate">{user?.email || 'user@nextgen.com'}</p>
+                            <p className="text-sm font-bold text-text-main truncate">{user?.username || 'User'}</p>
+                            <p className="text-[11px] font-medium text-text-sub truncate">{user?.email || 'user@nextgen.com'}</p>
                         </div>
                     )}
                     {!collapsed && (
@@ -354,13 +358,13 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
                         href={footerUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-gray-800 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm bg-white"
+                        className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-emerald-400 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/10 transition-colors shadow-sm bg-emerald-500/5 shadow-emerald-500/10 animate-[pulse_3s_infinite]"
                     >
                         <div className="flex items-center gap-2">
-                            <Store size={16} className="text-emerald-500" />
+                            <Store size={16} className="text-emerald-400" />
                             <span>{footerLabel}</span>
                         </div>
-                        <ExternalLink size={14} className="text-gray-400" />
+                        <ExternalLink size={14} className="text-emerald-400" />
                     </a>
                 )}
 
