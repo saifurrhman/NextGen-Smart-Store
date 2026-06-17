@@ -7,10 +7,21 @@ class Campaign(models.Model):
         ('draft', 'Draft'),
         ('ended', 'Ended'),
     ]
+    PLATFORM_CHOICES = [
+        ('google', 'Google Ads'),
+        ('facebook', 'Facebook'),
+        ('instagram', 'Instagram'),
+        ('tiktok', 'TikTok'),
+        ('email', 'Email Marketing'),
+    ]
     name = models.CharField(max_length=255)
+    platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES, default='google')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
     budget = models.DecimalField(max_digits=10, decimal_places=2)
     spent = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    impressions = models.IntegerField(default=0)
+    clicks = models.IntegerField(default=0)
+    conversions = models.IntegerField(default=0)
     start_date = models.DateField()
     end_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)

@@ -320,7 +320,24 @@ const AddProduct = () => {
             setTimeout(() => navigate('/admin/products/all'), 2000);
         } catch (err) {
             console.error("Submit error:", err);
-            setMsg({ type: 'error', text: err.response?.data?.error || 'Failed to save product.' });
+            let errorMsg = 'Failed to save product.';
+            if (err.response?.data) {
+                if (typeof err.response.data === 'string') {
+                    errorMsg = err.response.data;
+                } else if (err.response.data.error) {
+                    errorMsg = err.response.data.error;
+                } else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else {
+                    errorMsg = Object.entries(err.response.data)
+                        .map(([field, msgs]) => {
+                            const message = Array.isArray(msgs) ? msgs.join(', ') : msgs;
+                            return `${field}: ${message}`;
+                        })
+                        .join(' | ');
+                }
+            }
+            setMsg({ type: 'error', text: errorMsg });
         } finally {
             setLoading(false);
         }
@@ -848,7 +865,7 @@ const AddProduct = () => {
                             {colors.map(color => {
                                 const isSelected = selectedColors.includes(color.code);
                                 return (
-                                    <button key={color.code} type="button" title={color.name}
+                                    <button key={`${color.name}-${color.code}`} type="button" title={color.name}
                                         onClick={() => toggleColor(color.code)}
                                         style={{ backgroundColor: color.code }}
                                         className={`w-8 h-8 rounded-lg transition-all shadow-sm border-2

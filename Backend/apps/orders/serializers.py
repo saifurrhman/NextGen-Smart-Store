@@ -96,52 +96,120 @@ class VendorBulkOrderSerializer(StringPrimaryKeyMixin, serializers.ModelSerializ
         items_data = validated_data.pop('items')
         vendor = validated_data.pop('vendor', None)
         
-        # FIX: Ensure vendor has a valid primary key for Djongo/Django relationship check.
-        # This addresses the "save() prohibited... due to unsaved related object 'vendor'" error.
-        if vendor and not vendor.pk:
+        # Safely unwrap SimpleLazyObject
+        if hasattr(vendor, '_wrapped'):
+            vendor = vendor._wrapped
+
+        # Retrieve vendor ID reliably
+        vendor_id = None
+        if vendor:
+            if hasattr(vendor, '_id') and vendor._id:
+                vendor_id = vendor._id
+            elif hasattr(vendor, 'id') and vendor.id:
+                vendor_id = vendor.id
+            elif hasattr(vendor, 'pk') and vendor.pk:
+                vendor_id = vendor.pk
+                
+        # If vendor_id is still missing, lookup in DB by email
+        if not vendor_id and vendor and hasattr(vendor, 'email') and vendor.email:
             try:
                 from core.utils import get_mongo_db
                 db = get_mongo_db()
-                # Direct collection access is most reliable when ORM mapping fails for ObjectIds
                 raw_user = db['users_user'].find_one({'email': vendor.email})
-                if raw_user and '_id' in raw_user:
-                    vendor.id = raw_user['_id']
-            except Exception as e:
-                print(f"Warning: Failed to manually recover vendor ID: {e}")
+                if raw_user:
+                    vendor_id = raw_user['_id']
+            except Exception:
+                pass
+
+        if not vendor_id:
+            raise serializers.ValidationError({"error": "Failed to identify vendor user."})
+
+        from bson import ObjectId
+        # Ensure vendor_id is an ObjectId instance
+        if isinstance(vendor_id, str):
+            vendor_id = ObjectId(vendor_id)
 
         try:
-            # Calculate total amount with explicit type casting to avoid TypeError
+            # Calculate total amount
             total_amount = Decimal('0.00')
             for item in items_data:
                 price = Decimal(str(item.get('price', '0.00')))
                 quantity = int(item.get('quantity', 50))
                 total_amount += price * quantity
-            
-            # Set total and vendor explicitly
-            validated_data['total_amount'] = total_amount
-            if vendor:
-                validated_data['vendor'] = vendor
-            
-            # Use an atomic-ish approach if possible, but Djongo doesn't support full transactions easily
-            bulk_order = VendorBulkOrder.objects.create(**validated_data)
-            
-            if items_data:
-                for item in items_data:
-                    # Explicitly convert nested data for item creation
-                    prod = item.get('master_product')
-                    qty = int(item.get('quantity', 50))
-                    prc = Decimal(str(item.get('price', '0.00')))
-                    
-                    VendorBulkOrderItem.objects.create(
-                        bulk_order=bulk_order, 
-                        master_product=prod,
-                        quantity=qty,
-                        price=prc
-                    )
-                
-            return bulk_order
-        except Exception as e:
-            raise serializers.ValidationError({"error": f"Failed to finalize order: {str(e)}"})
 
-        return representation
+            from core.utils import get_mongo_db
+            from datetime import datetime
+            db = get_mongo_db()
+
+            # Self-heal database: update any existing documents where 'id' is missing or null
+            # to prevent E11000 duplicate key error on index keyPattern: {'id': 1}
+            try:
+                for doc in db['orders_vendorbulkorder'].find({'id': None}):
+                    db['orders_vendorbulkorder'].update_one({'_id': doc['_id']}, {'$set': {'id': doc['_id']}})
+                for doc in db['orders_vendorbulkorderitem'].find({'id': None}):
+                    db['orders_vendorbulkorderitem'].update_one({'_id': doc['_id']}, {'$set': {'id': doc['_id']}})
+            except Exception:
+                pass
+            
+            # Generate new ObjectId for the bulk order
+            order_id = ObjectId()
+            
+            # Insert bulk order doc directly
+            now = datetime.now()
+            order_doc = {
+                '_id': order_id,
+                'id': order_id, # MUST match the _id and satisfy Djongo/Mongo index constraint
+                'vendor_id': vendor_id,
+                'status': 'pending',
+                'total_amount': str(total_amount), # Djongo stores DecimalField as string
+                'created_at': now,
+                'updated_at': now
+            }
+            db['orders_vendorbulkorder'].insert_one(order_doc)
+
+            # Insert bulk order items docs directly
+            if items_data:
+                item_docs = []
+                for item in items_data:
+                    prod = item.get('master_product')
+                    prod_id = None
+                    if prod:
+                        if hasattr(prod, '_id') and prod._id:
+                            prod_id = prod._id
+                        elif hasattr(prod, 'id') and prod.id:
+                            prod_id = prod.id
+                        elif hasattr(prod, 'pk') and prod.pk:
+                            prod_id = prod.pk
+                            
+                    if isinstance(prod_id, str):
+                        prod_id = ObjectId(prod_id)
+                        
+                    qty = int(item.get('quantity', 50))
+                    prc = str(Decimal(str(item.get('price', '0.00'))))
+                    
+                    item_id = ObjectId()
+                    item_docs.append({
+                        '_id': item_id,
+                        'id': item_id, # MUST match the _id and satisfy Djongo/Mongo index constraint
+                        'bulk_order_id': order_id,
+                        'master_product_id': prod_id,
+                        'quantity': qty,
+                        'price': prc
+                    })
+                if item_docs:
+                    db['orders_vendorbulkorderitem'].insert_many(item_docs)
+
+            # Return a constructed VendorBulkOrder instance so DRF serializer is happy
+            return VendorBulkOrder(
+                id=order_id,
+                vendor=vendor,
+                status='pending',
+                total_amount=total_amount,
+                created_at=now,
+                updated_at=now
+            )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise serializers.ValidationError({"error": f"Failed to finalize order: {str(e)}"})
 

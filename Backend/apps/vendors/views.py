@@ -582,6 +582,13 @@ class VendorProductDetailView(APIView):
             if not product:
                 return Response({'error': 'Product not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
             
+            # Fix Djongo bug where DecimalFields fetch Decimal128 objects which crash on save
+            from bson.decimal128 import Decimal128
+            for field in ['price', 'discount_price', 'discount_value']:
+                val = getattr(product, field, None)
+                if isinstance(val, Decimal128):
+                    setattr(product, field, val.to_decimal())
+
             # Extract gallery images
             gallery_images = request.FILES.getlist('gallery')
             

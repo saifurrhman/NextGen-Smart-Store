@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../utils/api';
 import useVoiceCommand from '../hooks/useVoiceCommand';
+import PublicChatWidget from '../components/public/PublicChatWidget';
 
 const P = { primary: '#10b981', dark: '#059669', light: '#d1fae5', xlight: '#ecfdf5' };
 
@@ -336,6 +337,9 @@ export default function PublicLayout() {
 
         </div>
       </footer>
+
+      {/* Public Chat Widget */}
+      <PublicChatWidget />
     </div>
   );
 }

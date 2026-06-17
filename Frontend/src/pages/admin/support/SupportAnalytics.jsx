@@ -27,8 +27,8 @@ const SupportAnalytics = () => {
         setLoading(true);
         try {
             const [ticketsRes, chatsRes] = await Promise.allSettled([
-                api.get('support/tickets/?page_size=100'),
-                api.get('support/chat-sessions/?page_size=100'),
+                api.get('/support/tickets/?page_size=100'),
+                api.get('/support/chat-sessions/?page_size=100'),
             ]);
 
             if (ticketsRes.status === 'fulfilled') {

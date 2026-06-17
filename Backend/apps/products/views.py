@@ -144,6 +144,297 @@ class ProductViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=400)
 
+    @action(detail=False, methods=['post'], url_path='bulk-import')
+    def bulk_import(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        import_mode = request.data.get('import_mode', 'add_new')
+
+        import io
+        import csv
+        from django.utils.text import slugify
+        from bson import ObjectId
+        from apps.categories.models import Category
+        
+        name = file_obj.name.lower()
+        if name.endswith('.csv'):
+            try:
+                csv_data = file_obj.read().decode('utf-8-sig')
+                csv_file = io.StringIO(csv_data)
+                reader = csv.DictReader(csv_file)
+            except Exception as e:
+                return Response({'errors': [f'Failed to parse CSV: {str(e)}']}, status=400)
+        elif name.endswith(('.xlsx', '.xls')):
+            try:
+                import openpyxl
+                wb = openpyxl.load_workbook(file_obj, data_only=True)
+                ws = wb.active
+                rows = list(ws.values)
+                if len(rows) < 1:
+                    return Response({'errors': ['Excel file is empty']}, status=400)
+                
+                # Find the first non-empty row to get headers
+                header_row_idx = 0
+                while header_row_idx < len(rows) and not any(rows[header_row_idx]):
+                    header_row_idx += 1
+                
+                if header_row_idx >= len(rows):
+                    return Response({'errors': ['Excel file contains only empty rows']}, status=400)
+                
+                headers = [str(h).strip().lower() for h in rows[header_row_idx] if h is not None]
+                reader = []
+                for row in rows[header_row_idx + 1:]:
+                    if any(row):
+                        row_dict = {}
+                        for i, h in enumerate(headers):
+                            if i < len(row) and h:
+                                row_dict[h] = row[i]
+                        reader.append(row_dict)
+            except ImportError:
+                return Response({'errors': ["Excel parsing requires 'openpyxl' library. Please install it or upload a CSV file instead."]}, status=400)
+            except Exception as e:
+                return Response({'errors': [f'Failed to parse Excel file: {str(e)}']}, status=400)
+        else:
+            return Response({'errors': ['Unsupported file format. Please upload a .csv or .xlsx file.']}, status=400)
+
+        created_count = 0
+        updated_count = 0
+        skipped_count = 0
+        failed_count = 0
+        errors = []
+
+        for row_idx, row in enumerate(reader, start=header_row_idx + 2 if name.endswith(('.xlsx', '.xls')) else 2):
+            try:
+                normalized_row = {str(k).strip().lower(): v for k, v in row.items() if k is not None}
+                
+                title = normalized_row.get('name') or normalized_row.get('title')
+                if not title or str(title).strip().lower() == 'none':
+                    errors.append(f"Row {row_idx}: 'name' or 'title' is required.")
+                    failed_count += 1
+                    continue
+                
+                title = str(title).strip()
+                sku = normalized_row.get('sku')
+                if sku is not None and str(sku).strip().lower() != 'none':
+                    sku = str(sku).strip()
+                else:
+                    sku = None
+                    
+                slug = normalized_row.get('slug')
+                if slug is not None and str(slug).strip().lower() != 'none':
+                    slug = str(slug).strip()
+                else:
+                    slug = slugify(title)
+
+                existing_product = None
+                if sku:
+                    existing_product = Product.objects.filter(sku=sku).first()
+                if not existing_product and slug:
+                    existing_product = Product.objects.filter(slug=slug).first()
+
+                if existing_product:
+                    if import_mode == 'add_new':
+                        skipped_count += 1
+                        continue
+                else:
+                    if import_mode == 'update_only':
+                        skipped_count += 1
+                        continue
+
+                price_str = normalized_row.get('price')
+                if price_str is not None and str(price_str).strip() != '' and str(price_str).strip().lower() != 'none':
+                    try:
+                        price_val = float(str(price_str).replace('$', '').strip())
+                    except ValueError:
+                        price_val = 0.0
+                else:
+                    price_val = 0.0
+
+                sale_price_str = normalized_row.get('sale_price') or normalized_row.get('discount_price')
+                discount_price_val = None
+                discount_type = 'NONE'
+                discount_value = 0.0
+                if sale_price_str is not None and str(sale_price_str).strip() != '' and str(sale_price_str).strip().lower() != 'none':
+                    try:
+                        discount_price_val = float(str(sale_price_str).replace('$', '').strip())
+                        if discount_price_val < price_val:
+                            discount_type = 'FIXED'
+                            discount_value = price_val - discount_price_val
+                        else:
+                            discount_price_val = None
+                    except ValueError:
+                        pass
+
+                stock_str = normalized_row.get('stock_quantity') or normalized_row.get('stock')
+                if stock_str is not None and str(stock_str).strip() != '' and str(stock_str).strip().lower() != 'none':
+                    try:
+                        stock_val = int(float(str(stock_str).strip()))
+                    except ValueError:
+                        stock_val = 0
+                else:
+                    stock_val = 0
+
+                category_name = normalized_row.get('category')
+                category_obj = None
+                if category_name is not None and str(category_name).strip() != '' and str(category_name).strip().lower() != 'none':
+                    category_name = str(category_name).strip()
+                    category_obj = Category.objects.filter(name__iexact=category_name).first()
+                    if not category_obj and category_name:
+                        category_obj = Category.objects.create(
+                            name=category_name,
+                            slug=slugify(category_name)
+                        )
+
+                color_str = normalized_row.get('color') or normalized_row.get('colors')
+                colors_data = None
+                if color_str is not None and str(color_str).strip() != '' and str(color_str).strip().lower() != 'none':
+                    color_list = [c.strip() for c in str(color_str).split('|') if c.strip()]
+                    import json
+                    colors_data = json.dumps(color_list)
+
+                size_str = normalized_row.get('size') or normalized_row.get('sizes')
+                sizes_data = None
+                if size_str is not None and str(size_str).strip() != '' and str(size_str).strip().lower() != 'none':
+                    import json
+                    size_list = [s.strip() for s in str(size_str).split('|') if s.strip()]
+                    sizes_data = json.dumps(size_list)
+
+                length = normalized_row.get('length')
+                width = normalized_row.get('width')
+                height = normalized_row.get('height')
+                dimensions = normalized_row.get('dimensions')
+                if not dimensions and (length or width or height):
+                    l = str(length).strip() if length is not None and str(length).strip().lower() != 'none' else '0'
+                    w = str(width).strip() if width is not None and str(width).strip().lower() != 'none' else '0'
+                    h = str(height).strip() if height is not None and str(height).strip().lower() != 'none' else '0'
+                    dimensions = f"{l}x{w}x{h}"
+                elif dimensions is not None and str(dimensions).strip().lower() == 'none':
+                    dimensions = None
+
+                is_active = True
+                active_str = str(normalized_row.get('is_active', 'true')).lower()
+                if active_str in ('false', '0', 'no'):
+                    is_active = False
+
+                highlight_featured = False
+                featured_str = str(normalized_row.get('featured', 'false')).lower()
+                if featured_str in ('true', '1', 'yes'):
+                    highlight_featured = True
+
+                tags = normalized_row.get('tags') or normalized_row.get('tag')
+                if tags is not None and str(tags).strip().lower() != 'none':
+                    tags = str(tags).strip()
+                else:
+                    tags = None
+
+                brand = normalized_row.get('brand')
+                if brand is not None and str(brand).strip().lower() != 'none':
+                    brand = str(brand).strip()
+                else:
+                    brand = None
+
+                description = normalized_row.get('description') or normalized_row.get('short_description', '')
+                if description is not None and str(description).strip().lower() != 'none':
+                    description = str(description).strip()
+                else:
+                    description = ''
+
+                material = normalized_row.get('material')
+                if material is not None and str(material).strip().lower() != 'none':
+                    material = str(material).strip()
+                else:
+                    material = None
+
+                weight = normalized_row.get('weight')
+                if weight is not None and str(weight).strip().lower() != 'none':
+                    weight = str(weight).strip()
+                else:
+                    weight = None
+
+                if existing_product:
+                    from bson.decimal128 import Decimal128
+                    for field in ['price', 'discount_price', 'discount_value']:
+                        val = getattr(existing_product, field, None)
+                        if isinstance(val, Decimal128):
+                            setattr(existing_product, field, val.to_decimal())
+
+                    existing_product.title = title
+                    existing_product.price = price_val
+                    existing_product.discount_price = discount_price_val
+                    existing_product.discount_type = discount_type
+                    existing_product.discount_value = discount_value
+                    existing_product.stock = stock_val
+                    existing_product.category = category_obj
+                    if colors_data:
+                        existing_product.colors_data = colors_data
+                    if sizes_data:
+                        existing_product.sizes_data = sizes_data
+                    if dimensions:
+                        existing_product.dimensions = dimensions
+                    existing_product.is_active = is_active
+                    existing_product.highlight_featured = highlight_featured
+                    if tags:
+                        existing_product.tag = tags
+                    if brand:
+                        existing_product.brand = brand
+                    if description:
+                        existing_product.description = description
+                    if material:
+                        existing_product.material = material
+                    if weight:
+                        existing_product.weight = weight
+                    
+                    existing_product.save()
+                    updated_count += 1
+                else:
+                    import random
+                    import string
+                    base_slug = slugify(title)
+                    if not base_slug:
+                        base_slug = "product"
+                    slug = base_slug
+                    while Product.objects.filter(slug=slug).exists():
+                        rand_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+                        slug = f"{base_slug}-{rand_suffix}"
+
+                    Product.objects.create(
+                        title=title,
+                        slug=slug,
+                        description=description or '',
+                        price=price_val,
+                        discount_price=discount_price_val,
+                        discount_type=discount_type,
+                        discount_value=discount_value,
+                        stock=stock_val,
+                        category=category_obj,
+                        brand=brand,
+                        material=material,
+                        dimensions=dimensions,
+                        colors_data=colors_data,
+                        sizes_data=sizes_data,
+                        is_active=is_active,
+                        highlight_featured=highlight_featured,
+                        tag=tags,
+                        weight=weight,
+                        vendor=request.user if request.user.is_authenticated else None
+                    )
+                    created_count += 1
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                errors.append(f"Row {row_idx}: {str(e)}")
+                failed_count += 1
+
+        return Response({
+            'created': created_count,
+            'updated': updated_count,
+            'skipped': skipped_count,
+            'failed': failed_count,
+            'errors': errors
+        }, status=200)
+
     def create(self, request, *args, **kwargs):
         gallery_images = request.FILES.getlist('gallery')
         data = request.data.copy()
@@ -188,9 +479,11 @@ class ProductRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.is_staff:
+        user = self.request.user
+        is_admin = user.is_staff or str(getattr(user, 'role', '')).upper() in ('SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN', 'ADMIN')
+        if is_admin:
             return ProductRequest.objects.all()
-        return ProductRequest.objects.filter(vendor=self.request.user)
+        return ProductRequest.objects.filter(vendor=user)
 
     def perform_create(self, serializer):
         serializer.save(vendor=self.request.user)
@@ -202,10 +495,15 @@ class ProductRequestViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Request already approved'}, status=400)
         
         # Logic to convert to Master Product
+        from bson.decimal128 import Decimal128
+        price_val = obj.suggested_price
+        if isinstance(price_val, Decimal128):
+            price_val = price_val.to_decimal()
+
         product = Product.objects.create(
             title=obj.title,
             description=obj.description,
-            price=obj.suggested_price,
+            price=price_val,
             category=obj.category,
             main_image=obj.image,
             vendor=None, # Master Product

@@ -10,6 +10,7 @@ const PlatformSettings = () => {
     const [activeTab, setActiveTab] = useState('localization');
     const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'en');
     const [selectedCurrency, setSelectedCurrency] = useState(currency || 'USD');
+    const [whatsappNumber, setWhatsappNumber] = useState(localStorage.getItem('admin_whatsapp') || '923001234567');
 
     // Sync state if context changes externally
     React.useEffect(() => {
@@ -29,6 +30,10 @@ const PlatformSettings = () => {
     const handleSave = () => {
         i18n.changeLanguage(selectedLanguage);
         setCurrency(selectedCurrency); // Updates global context
+        if (activeTab === 'api') {
+            localStorage.setItem('admin_whatsapp', whatsappNumber);
+            alert('API configurations saved successfully.');
+        }
     };
 
     const tabs = [
@@ -186,8 +191,27 @@ const PlatformSettings = () => {
                                     </div>
                                 </div>
 
+                                <div className="space-y-3">
+                                    <label className="text-sm font-semibold text-gray-700 block">
+                                        Support WhatsApp Number
+                                    </label>
+                                    <p className="text-xs text-gray-500 pb-1">
+                                        Enter the WhatsApp number (with country code, no '+') where customers will be redirected for support.
+                                    </p>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={whatsappNumber}
+                                            onChange={(e) => setWhatsappNumber(e.target.value)}
+                                            placeholder="923001234567"
+                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-mono"
+                                        />
+                                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">#</span>
+                                    </div>
+                                </div>
+
                                 <div className="pt-6 border-t border-gray-100 flex justify-end">
-                                    <button className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm shadow-emerald-200">
+                                    <button onClick={handleSave} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm shadow-emerald-200">
                                         <Save size={16} />
                                         Save Configurations
                                     </button>

@@ -1,0 +1,7 @@
+User Email: devugo.tech@gmail.com
+User is_staff: False
+User role: ADMIN
+User Authenticated: True
+Total Bulk Orders in DB: 27
+User ID from python: None (type: <class 'NoneType'>)
+Sample Orders in DB: [{'id': '1', '_id': '69b1b80ee70d86a1731db86b', 'vendor_id': '69b10c3df990abb5872be0e9', 'status': 'pending', 'total_amount': '425000.00'}, {'id': '2', '_id': '69b1bef469c8cdf3d7f61be3', 'vendor_id': '69b10c3df990abb5872be0e9', 'status': 'pending', 'total_amount': '100.00'}, {'id': '3', '_id': '69b1bf803862605d03f929bb', 'vendor_id': '69b10c3df990abb5872be0e9', 'status': 'pending', 'total_amount': '225000.00'}, {'id': '4', '_id': '69b1c16831db49a362be9c86', 'vendor_id': '69b10c3df990abb5872be0e9', 'status': 'pending', 'total_amount': '75000.00'}, {'id': '5', '_id': '69b267fa45df195a91e2acdc', 'vendor_id': '69b10c3df990abb5872be0e9', 'status': 'pending', 'total_amount': '225000.00'}]

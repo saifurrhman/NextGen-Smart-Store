@@ -100,7 +100,26 @@ const AddProduct = () => {
             setTimeout(() => navigate('/vendor/products'), 2000);
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.error || err.response?.data?.message || 'Failed to initialize product in network.');
+            let errorText = 'Failed to initialize product.';
+            if (err.response?.data) {
+                if (typeof err.response.data === 'string') {
+                    errorText = err.response.data;
+                } else if (err.response.data.error) {
+                    errorText = err.response.data.error;
+                } else if (err.response.data.message) {
+                    errorText = err.response.data.message;
+                } else if (err.response.data.detail) {
+                    errorText = err.response.data.detail;
+                } else {
+                    errorText = Object.entries(err.response.data)
+                        .map(([field, msgs]) => {
+                            const message = Array.isArray(msgs) ? msgs.join(', ') : msgs;
+                            return `${field}: ${message}`;
+                        })
+                        .join(' | ');
+                }
+            }
+            setError(errorText);
         } finally {
             setLoading(false);
         }

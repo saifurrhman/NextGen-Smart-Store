@@ -35,6 +35,16 @@ class User(AbstractUser):
     id = djongo_models.ObjectIdField(primary_key=True)
     email = models.EmailField(unique=True)
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        # Fix Djongo primary key mapping bug where instance.id is None/str(None)
+        if getattr(instance, 'id', None) is None or str(instance.id) == 'None' or getattr(instance, 'pk', None) is None:
+            _id_val = instance.__dict__.get('_id')
+            if _id_val:
+                instance.id = _id_val
+        return instance
+
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
@@ -49,6 +59,7 @@ class User(AbstractUser):
         ('DELIVERY', 'Delivery'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='CUSTOMER')
+    department = models.CharField(max_length=50, blank=True, null=True)
 
     date_of_birth = models.DateField(null=True, blank=True)
     bio = models.TextField(blank=True, null=True)

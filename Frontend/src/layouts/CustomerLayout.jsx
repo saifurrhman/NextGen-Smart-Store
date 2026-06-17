@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import PublicChatWidget from '../components/public/PublicChatWidget';
 
 const CustomerLayout = () => {
     const location = useLocation();
@@ -27,7 +28,12 @@ const CustomerLayout = () => {
         return <Navigate to={dashboardMap[normalizedRole] || '/'} replace />;
     }
 
-    return <Outlet />;
+    return (
+        <>
+            <Outlet />
+            <PublicChatWidget />
+        </>
+    );
 };
 
 export default CustomerLayout;

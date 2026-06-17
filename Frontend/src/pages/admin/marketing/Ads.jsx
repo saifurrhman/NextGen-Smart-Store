@@ -138,6 +138,69 @@ const Ads = () => {
                 </div>
             </div>
 
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden p-6 mb-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Target size={18} className="text-brand" /> Ad Performance Overview
+                </h3>
+                
+                {ads.length > 0 ? (
+                    <div className="flex items-end gap-2 h-48 w-full overflow-x-auto pb-2">
+                        {ads.slice(0, 15).map((ad, idx) => {
+                            // Calculate relative heights for the bars
+                            const maxSpend = Math.max(...ads.map(a => parseFloat(a.spend) || 0), 1);
+                            const maxImpressions = Math.max(...ads.map(a => parseInt(a.impressions) || 0), 1);
+                            
+                            const spendHeight = Math.max(((parseFloat(ad.spend) || 0) / maxSpend) * 100, 5);
+                            const impHeight = Math.max(((parseInt(ad.impressions) || 0) / maxImpressions) * 100, 5);
+                            
+                            return (
+                                <div key={ad.id || idx} className="flex flex-col justify-end items-center gap-2 min-w-[60px] flex-1 group">
+                                    <div className="flex items-end justify-center gap-1 w-full h-32 relative">
+                                        {/* Spend Bar */}
+                                        <div 
+                                            className="w-1/3 bg-emerald-400 rounded-t-sm transition-all group-hover:bg-emerald-500 relative"
+                                            style={{ height: `${spendHeight}%` }}
+                                            title={`Spend: PKR ${ad.spend}`}
+                                        >
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[10px] font-bold text-emerald-600 whitespace-nowrap bg-emerald-50 px-1.5 py-0.5 rounded transition-opacity">
+                                                PKR {Number(ad.spend).toLocaleString()}
+                                            </div>
+                                        </div>
+                                        {/* Impressions Bar */}
+                                        <div 
+                                            className="w-1/3 bg-blue-400 rounded-t-sm transition-all group-hover:bg-blue-500 relative"
+                                            style={{ height: `${impHeight}%` }}
+                                            title={`Impressions: ${ad.impressions}`}
+                                        >
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 text-[10px] font-bold text-blue-600 whitespace-nowrap bg-blue-50 px-1.5 py-0.5 rounded transition-opacity z-10">
+                                                {Number(ad.impressions).toLocaleString()} Imp
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-[10px] font-bold text-gray-500 truncate w-full text-center px-1">
+                                        {ad.campaign_name.length > 10 ? ad.campaign_name.substring(0, 10) + '...' : ad.campaign_name}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="h-48 w-full flex items-center justify-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <p className="text-sm text-gray-400 font-bold">No data to display graph.</p>
+                    </div>
+                )}
+                <div className="flex justify-center gap-6 mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-emerald-400"></div>
+                        <span className="text-xs font-bold text-gray-600">Ad Spend (PKR)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-blue-400"></div>
+                        <span className="text-xs font-bold text-gray-600">Impressions</span>
+                    </div>
+                </div>
+            </div>
+
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
                     <div className="relative flex-1 w-full max-w-md">

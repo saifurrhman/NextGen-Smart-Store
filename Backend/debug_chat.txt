@@ -1,0 +1,3 @@
+Incoming payload: {'customer_name': 'saifi', 'user': 'programmingwithsaifi@gmail.com', 'topic': 'sales', 'agent': 'devugo.tech@gmail.com', 'status': 'active', 'duration_seconds': 300}
+Error class: <class 'ValueError'>
+Error message: save() prohibited to prevent data loss due to unsaved related object 'user'.

@@ -12,6 +12,17 @@ class ProductSerializer(serializers.ModelSerializer):
     # Accept the string ID directly to map to category_id
     category = serializers.CharField(source='category_id', required=False, allow_null=True)
 
+    def to_internal_value(self, data):
+        ret = super().to_internal_value(data)
+        category_id = ret.get('category_id')
+        if category_id:
+            from bson import ObjectId
+            try:
+                ret['category_id'] = ObjectId(str(category_id))
+            except Exception:
+                raise serializers.ValidationError({"category": "Invalid Category ID format."})
+        return ret
+
     def get_category_name(self, obj):
         try:
             from core.utils import get_mongo_db

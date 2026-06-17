@@ -10,15 +10,12 @@ import {
 
 /* ─── Role-Based Links Definition ─── */
 
-const getNavLinks = (role) => {
+const getNavLinks = (role, user) => {
     switch (role) {
         case 'ADMIN':
         case 'SUPER_ADMIN':
-            return {
-                topLinks: [
-                    { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-                ],
-                subLinks: [
+        case 'SUB_ADMIN':
+            const allSubLinks = [
                     {
                         group: 'Orders', icon: Ticket, items: [
                             { path: '/admin/orders/all', label: 'Order Management' },
@@ -112,8 +109,35 @@ const getNavLinks = (role) => {
                             { path: '/admin/control-authority', label: 'Control Authority' },
                         ]
                     }
+                ];
+
+            // RBAC Filtering for Sub Admins
+            let filteredSubLinks = allSubLinks;
+            if (role === 'SUB_ADMIN') {
+                const dept = (user?.department || '').toLowerCase();
+                if (dept) {
+                    filteredSubLinks = allSubLinks.filter(link => {
+                        const linkGroup = link.group.toLowerCase();
+                        // Special rules for broad departments
+                        if (dept === 'content' && linkGroup === 'content') return true;
+                        if (dept === 'finance' && linkGroup === 'finance') return true;
+                        if (dept === 'marketing' && linkGroup === 'marketing') return true;
+                        if (dept === 'operations' && ['operations', 'orders', 'products', 'b2b wholesale'].includes(linkGroup)) return true;
+                        if (dept === 'support' && ['support', 'users & vendors'].includes(linkGroup)) return true;
+                        return false;
+                    });
+                } else {
+                    // Fail-safe: If somehow they have no department, they see nothing
+                    filteredSubLinks = [];
+                }
+            }
+
+            return {
+                topLinks: [
+                    { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
                 ],
-                adminLinks: [
+                subLinks: filteredSubLinks,
+                adminLinks: role === 'SUB_ADMIN' ? [] : [
                     { path: '/admin/profile', icon: Shield, label: 'Admin role' },
                     { path: '/admin/control-authority', icon: Settings, label: 'Control Authority' },
                 ],
@@ -160,7 +184,7 @@ const DashboardSidebar = ({ role, collapsed, onToggle, isMobileOpen, onMobileClo
     const navigate = useNavigate();
     const [openGroup, setOpenGroup] = useState('');
 
-    const { topLinks, subLinks, adminLinks, footerLabel, footerUrl } = getNavLinks(role);
+    const { topLinks, subLinks, adminLinks, footerLabel, footerUrl } = getNavLinks(role, user);
 
     const handleLogout = () => {
         const currentRole = localStorage.getItem('role')?.toUpperCase() || role;

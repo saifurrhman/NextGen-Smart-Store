@@ -19,64 +19,10 @@ const ProductImage = ({ src, alt, size = 48, className = "" }) => {
 };
 
 const cleanProductData = (p) => {
-  if (!p) return p;
-  const t = (p.title || '').toLowerCase();
-  const c = (p.category_name || '').toLowerCase();
-  
-  if (t.includes('drone') || t.includes('camera') || t.includes('phone') || t.includes('laptop') || t.includes('desk mat') || t.includes('deskmat') || t.includes('aura rgb') || c.includes('peripheral') || c.includes('peripherals')) {
-    return {
-      ...p,
-      title: "Premium Men's Leather Sneakers",
-      category_name: "Footwear",
-      price: "129.99",
-      main_image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=80",
-      description: "Classic court-inspired sneakers with sleek details and an ultra-cushioned insole for maximum comfort."
-    };
-  }
-  if (t.includes('bitcoin') || t.includes('cipher') || t.includes('hardware wallet')) {
-    return {
-      ...p,
-      title: "Premium Leather Bi-Fold Wallet",
-      category_name: "Accessories",
-      price: "45.00",
-      main_image: "https://images.unsplash.com/photo-1627124118304-729478f5ea0f?w=800&auto=format&fit=crop&q=80",
-      description: "Crafted from genuine full-grain leather, featuring multi-card slots, a spacious cash pocket, and RFID-blocking protection."
-    };
-  }
-  if (t.includes('smart bulb') || t.includes('bulb') || t.includes('luminous') || c.includes('gadgets')) {
-    return {
-      ...p,
-      title: "Classic Knit Crewneck Sweater",
-      category_name: "Outerwear",
-      price: "65.00",
-      discount_price: "39.00",
-      main_image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&auto=format&fit=crop&q=80",
-      description: "Super soft, mid-weight cotton knit sweater designed to keep you warm and comfortable in a refined classic profile."
-    };
-  }
-  if (t.includes('power bank') || t.includes('powerbank') || t.includes('zenith')) {
-    return {
-      ...p,
-      title: "Minimalist Canvas Backpack",
-      category_name: "Accessories",
-      price: "75.00",
-      main_image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80",
-      description: "Built for daily utility. High-density canvas backpack with a dedicated padded 15\" laptop sleeve and quick-access pockets."
-    };
-  }
-  if (t.includes('fitness tracker') || t.includes('pulse') || t.includes('tracker') || c.includes('wearables')) {
-    return {
-      ...p,
-      title: "Active Performance Sports Cap",
-      category_name: "Accessories",
-      price: "29.99",
-      discount_price: "19.99",
-      main_image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&auto=format&fit=crop&q=80",
-      description: "Lightweight, breathable athletic cap with moisture-wicking technology and an adjustable strap for an optimized fit."
-    };
-  }
+  // Just return product as-is - no filtering needed
   return p;
 };
+
 
 /* ─── Modern Deep Product Card (From Home.jsx) ─── */
 const Card = ({ product }) => {
@@ -131,8 +77,8 @@ const Card = ({ product }) => {
         <h3 className="font-bold text-gray-800 text-[15px] leading-snug line-clamp-2 mb-4 flex-1 group-hover:text-emerald-600 transition-colors">{product.title}</h3>
         <div className="flex items-end justify-between mt-auto">
           <div className="flex flex-col">
-            <span className="text-[11px] text-gray-400 line-through mb-0.5">${displayOriginalPrice.toFixed(2)}</span>
-            <span className="text-xl font-black text-gray-900">${displaySalePrice.toFixed(2)}</span>
+            <span className="text-[11px] text-gray-400 line-through mb-0.5">PKR {displayOriginalPrice.toFixed(0)}</span>
+            <span className="text-xl font-black text-gray-900">PKR {displaySalePrice.toFixed(0)}</span>
           </div>
           <button onClick={addCart} className="w-11 h-11 rounded-xl bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 hover:scale-105 transition-all shadow-md">
             <ShoppingCart size={18} fill="currentColor" />
@@ -153,7 +99,7 @@ export default function ProductListing() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('newest');
   const [selectedCat, setSelectedCat] = useState(searchParams.get('category') || '');
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [priceRange, setPriceRange] = useState([0, 500000]);
   const [viewMode, setViewMode] = useState('grid');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -166,14 +112,8 @@ export default function ProductListing() {
       const r = await api.get(url);
       let data = r.data.results || r.data;
 
-      // Filter and clean tech/electronics titles using global helper
+      // Map and clean product data
       data = data.map(cleanProductData);
-
-      // Filter out products belonging to female fashion if any exist
-      data = data.filter(p => {
-        const cat = (p.category_name || '').toLowerCase();
-        return !cat.includes('female') && !cat.includes('women');
-      });
 
       // Local filtering for price and sorting
       data = data.filter(p => parseFloat(p.discount_price || p.price) <= priceRange[1]);
@@ -199,8 +139,7 @@ export default function ProductListing() {
       const catNames = new Set();
       for (const cat of activeCats) {
         const normName = cat.name.trim().toLowerCase();
-        const isInvalid = normName.includes('female') || normName.includes('women') || normName.includes('electronic') || normName.includes('phone') || normName.includes('gadget') || normName.includes('peripheral') || normName.includes('wearable') || normName.includes('audio');
-        if (!catNames.has(normName) && !isInvalid) {
+        if (!catNames.has(normName)) {
           catNames.add(normName);
           uniqueCats.push(cat);
         }
@@ -294,11 +233,11 @@ export default function ProductListing() {
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Price Range
                   </h3>
                   <div className="px-2">
-                    <input type="range" min="0" max="2000" value={priceRange[1]} onChange={e => setPriceRange([0, parseInt(e.target.value)])}
+                    <input type="range" min="0" max="500000" value={priceRange[1]} onChange={e => setPriceRange([0, parseInt(e.target.value)])}
                       className="w-full accent-emerald-500 h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer" />
                     <div className="flex justify-between text-xs font-black mt-4">
-                      <span className="text-gray-500 bg-gray-50 px-3 py-1 rounded-lg border border-gray-200">$0</span>
-                      <span className="text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100">${priceRange[1]}</span>
+                      <span className="text-gray-500 bg-gray-50 px-3 py-1 rounded-lg border border-gray-200">PKR 0</span>
+                      <span className="text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100">PKR {priceRange[1].toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -306,7 +245,7 @@ export default function ProductListing() {
                 {/* Clear Filters */}
                 {(selectedCat || search || priceRange[1] < 2000) && (
                   <div className="pt-4 border-t border-gray-100">
-                    <button onClick={() => { setSelectedCat(''); setSearch(''); setPriceRange([0, 2000]); setPage(1); }}
+                  <button onClick={() => { setSelectedCat(''); setSearch(''); setPriceRange([0, 500000]); setPage(1); }}
                       className="w-full py-3 text-sm font-black rounded-xl transition-all border border-gray-250 text-gray-700 hover:bg-gray-50">
                       Clear All Filters
                     </button>
@@ -355,7 +294,7 @@ export default function ProductListing() {
                 </div>
                 <h3 className="font-black text-gray-900 text-xl mb-2">No Products Found</h3>
                 <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto">We couldn't find anything matching your current filters. Try adjusting your search criteria.</p>
-                <button onClick={() => { setSelectedCat(''); setSearch(''); setPriceRange([0, 2000]); }}
+                <button onClick={() => { setSelectedCat(''); setSearch(''); setPriceRange([0, 500000]); }}
                   className="px-8 py-3 bg-emerald-500 text-white font-black rounded-xl hover:bg-emerald-600 transition-colors shadow-md">
                   Reset Filters
                 </button>
@@ -390,8 +329,8 @@ export default function ProductListing() {
 
                         <div className="flex items-center justify-between mt-auto">
                           <div className="flex items-end gap-3">
-                            <span className="text-2xl font-black text-gray-900">${displaySalePrice.toFixed(2)}</span>
-                            <span className="text-sm text-gray-400 line-through mb-1">${displayOriginalPrice.toFixed(2)}</span>
+                            <span className="text-2xl font-black text-gray-900">PKR {displaySalePrice.toFixed(0)}</span>
+                            <span className="text-sm text-gray-400 line-through mb-1">PKR {displayOriginalPrice.toFixed(0)}</span>
                           </div>
                           <button onClick={e => addCartList(product, e)} className="px-6 py-2.5 bg-emerald-500 text-white text-sm font-black rounded-xl hover:bg-emerald-600 transition-all shadow-md">
                             Add to Cart

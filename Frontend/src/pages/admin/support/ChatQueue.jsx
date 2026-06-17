@@ -33,7 +33,7 @@ const ChatQueue = () => {
     const fetchSessions = async () => {
         setLoading(true);
         try {
-            let url = `support/chat-sessions/?status=${filter}`;
+            let url = `/support/chat-sessions/?status=${filter}`;
             if (searchTerm) url += `&search=${searchTerm}`;
             const res = await api.get(url);
             setSessions(res.data.results || res.data);
@@ -53,7 +53,7 @@ const ChatQueue = () => {
         setActionLoading(sessionId);
         try {
             const newStatus = action === 'accept' ? 'active' : 'closed';
-            await api.patch(`support/chat-sessions/${sessionId}/`, { status: newStatus });
+            await api.patch(`/support/chat-sessions/${sessionId}/`, { status: newStatus });
             showMsg(`Session ${action === 'accept' ? 'accepted' : 'closed'} successfully.`, 'success');
             fetchSessions();
         } catch {
@@ -66,7 +66,7 @@ const ChatQueue = () => {
     const handleCreateSession = async (e) => {
         e.preventDefault();
         try {
-            await api.post('support/chat-sessions/', { ...newSession, status: 'waiting' });
+            await api.post('/support/chat-sessions/', { ...newSession, status: 'waiting' });
             setIsCreateOpen(false);
             setNewSession({ customer_name: '', topic: '' });
             showMsg('Chat session created.', 'success');

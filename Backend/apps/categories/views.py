@@ -45,8 +45,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
             if is_active_param != '':
                 query['is_active'] = (is_active_param.lower() == 'true')
-            elif not (request.user and request.user.is_staff):
-                query['is_active'] = True
+            else:
+                user = request.user
+                is_admin = user and (user.is_staff or str(getattr(user, 'role', '')).upper() in ('SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN', 'ADMIN'))
+                if not is_admin:
+                    query['is_active'] = True
 
             # Pagination
             try:

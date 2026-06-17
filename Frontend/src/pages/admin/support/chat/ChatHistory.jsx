@@ -37,7 +37,7 @@ const ChatHistory = () => {
     const fetchSessions = async () => {
         setLoading(true);
         try {
-            let url = `support/chat-sessions/?search=${searchTerm}`;
+            let url = `/support/chat-sessions/?search=${searchTerm}`;
             if (filters.status) url += `&status=${filters.status}`;
             const response = await api.get(url);
             setSessions(response.data.results || response.data);
@@ -79,7 +79,7 @@ const ChatHistory = () => {
     const handleDeleteSession = async (id) => {
         if (!window.confirm("Are you sure you want to delete this historical record?")) return;
         try {
-            await api.delete(`support/chat-sessions/${id}/`);
+            await api.delete(`/support/chat-sessions/${id}/`);
             fetchSessions();
         } catch (error) {
             console.error("Failed to delete record:", error);
@@ -91,7 +91,7 @@ const ChatHistory = () => {
         e.preventDefault();
         setModalLoading(true);
         try {
-            await api.put(`support/chat-sessions/${editingSession.id}/`, formData);
+            await api.put(`/support/chat-sessions/${editingSession.id}/`, formData);
             setIsModalOpen(false);
             fetchSessions();
         } catch (error) {
@@ -118,7 +118,7 @@ const ChatHistory = () => {
 
     const handleExportExcel = () => {
         const dataToExport = sessions.map(session => ({
-            "Session ID": `CHAT-${session.id + 1000}`,
+            "Session ID": `CHAT-${String(session.id).slice(-6).toUpperCase()}`,
             "Customer": session.customer_name || session.user_details?.username || 'Guest',
             "Topic": session.topic,
             "Agent": session.agent_details?.username || 'Unassigned',
@@ -132,7 +132,7 @@ const ChatHistory = () => {
 
     const handleExportCSV = () => {
         const dataToExport = sessions.map(session => ({
-            "Session ID": `CHAT-${session.id + 1000}`,
+            "Session ID": `CHAT-${String(session.id).slice(-6).toUpperCase()}`,
             "Customer": session.customer_name || session.user_details?.username || 'Guest',
             "Topic": session.topic,
             "Agent": session.agent_details?.username || 'Unassigned',
@@ -147,7 +147,7 @@ const ChatHistory = () => {
     const handleExportPDF = () => {
         const columns = ["ID", "Customer", "Topic", "Agent", "Duration", "Date"];
         const dataToExport = sessions.map(session => [
-            `CHAT-${session.id + 1000}`,
+            `CHAT-${String(session.id).slice(-6).toUpperCase()}`,
             session.customer_name || session.user_details?.username || 'Guest',
             session.topic,
             session.agent_details?.username || 'Unassigned',
@@ -251,7 +251,7 @@ const ChatHistory = () => {
                             ) : sessions.length > 0 ? (
                                 sessions.map((session) => (
                                     <tr key={session.id} className="hover:bg-gray-50/50 transition-colors group">
-                                        <td className="px-6 py-4 font-mono font-bold text-gray-400 text-xs">CHAT-{session.id + 1000}</td>
+                                        <td className="px-6 py-4 font-mono font-bold text-gray-400 text-xs">CHAT-{String(session.id).slice(-6).toUpperCase()}</td>
                                         <td className="px-6 py-4 text-gray-700 font-bold">
                                             {session.customer_name || session.user_details?.username || 'Guest'}
                                         </td>

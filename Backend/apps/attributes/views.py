@@ -15,46 +15,97 @@ class AttributeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
     def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
         
+        # 1. Try standard Djongo ORM lookup with integer fallback
         try:
-            # Try parsing as integer for legacy entries created before ObjectId migration
-            obj = queryset.get(**{self.lookup_field: int(lookup_value)})
-        except ValueError:
-            try:
-                # Fallback to normal string lookup (ObjectId)
-                obj = queryset.get(**{self.lookup_field: lookup_value})
-            except Exception:
-                raise Http404("Not found.")
-        except Exception:
-            raise Http404("Not found.")
+            return Attribute.objects.get(id=int(lookup_value))
+        except (ValueError, TypeError):
+            pass
             
-        self.check_object_permissions(self.request, obj)
-        return obj
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
         try:
+            return Attribute.objects.get(id=lookup_value)
+        except Exception:
+            pass
+
+        try:
+            from bson import ObjectId
+            return Attribute.objects.get(id=ObjectId(lookup_value))
+        except Exception:
+            pass
+
+        # 2. Fallback to raw MongoDB lookup to bypass Djongo ORM limitations
+        try:
+            from core.utils import get_mongo_db
+            from bson import ObjectId
             db = get_mongo_db()
             
-            # Handle both integer IDs and ObjectIds gracefully to avoid crash
-            query_id = instance.id
-            if isinstance(query_id, str) and len(query_id) == 24:
-                try:
-                    query_id = ObjectId(query_id)
-                except Exception:
-                    pass
-                    
-            result = db['attributes_attribute'].delete_one({'_id': query_id})
+            query_ids = [lookup_value]
+            try:
+                query_ids.append(ObjectId(lookup_value))
+            except Exception:
+                pass
+            try:
+                query_ids.append(int(lookup_value))
+            except Exception:
+                pass
+                
+            doc = db['attributes_attribute'].find_one({
+                '$or': [
+                    {'_id': {'$in': query_ids}},
+                    {'id': {'$in': query_ids}},
+                    {'id': lookup_value},
+                    {'id': str(lookup_value)}
+                ]
+            })
+            
+            if doc:
+                obj = Attribute(
+                    id=doc.get('_id'),
+                    name=doc.get('name'),
+                    slug=doc.get('slug'),
+                    terms=doc.get('terms'),
+                    is_active=doc.get('is_active', True)
+                )
+                self.check_object_permissions(self.request, obj)
+                return obj
+        except Exception:
+            pass
+
+        raise Http404("Not found.")
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            from core.utils import get_mongo_db
+            from bson import ObjectId
+            db = get_mongo_db()
+            
+            lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+            lookup_value = self.kwargs[lookup_url_kwarg]
+            
+            query_ids = [lookup_value]
+            try:
+                query_ids.append(ObjectId(lookup_value))
+            except Exception:
+                pass
+            try:
+                query_ids.append(int(lookup_value))
+            except Exception:
+                pass
+                
+            result = db['attributes_attribute'].delete_one({
+                '$or': [
+                    {'_id': {'$in': query_ids}},
+                    {'id': {'$in': query_ids}},
+                    {'id': lookup_value},
+                    {'id': str(lookup_value)}
+                ]
+            })
+            
             if result.deleted_count == 0:
-                # Try integer version if string failed
-                try:
-                    result = db['attributes_attribute'].delete_one({'_id': int(str(instance.id))})
-                except Exception:
-                    pass
-                    
+                return Response({'detail': 'Attribute not found.'}, status=status.HTTP_404_NOT_FOUND)
+                
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({'detail': f'Delete failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

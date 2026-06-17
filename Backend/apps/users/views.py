@@ -234,18 +234,18 @@ class AcceptInviteView(APIView):
                 return Response({'error': 'Password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Check if user already exists
-            user = None
-            try:
-                user = User.objects.get(email=inv.email)
+            user = User.objects.filter(email=inv.email).first()
+            if user:
                 # Update existing user
                 user.set_password(password)
                 user.role = 'SUB_ADMIN'
+                user.department = inv.department
                 if name:
                     parts = name.split(' ', 1)
                     user.first_name = parts[0]
                     user.last_name = parts[1] if len(parts) > 1 else ''
                 user.save()
-            except User.DoesNotExist:
+            else:
                 # Create new user
                 parts = name.split(' ', 1) if name else ['', '']
                 user = User.objects.create_user(
@@ -255,6 +255,7 @@ class AcceptInviteView(APIView):
                     first_name=parts[0] if parts else '',
                     last_name=parts[1] if len(parts) > 1 else '',
                     role='SUB_ADMIN',
+                    department=inv.department,
                     is_active=True,
                 )
 

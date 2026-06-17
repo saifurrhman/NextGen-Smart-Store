@@ -92,19 +92,14 @@ class LoginView(APIView):
             )
 
         # ── Find user by email (primary) or username (fallback) ──
-        user = None
-        try:
-            user = User.objects.get(email=login_id.lower())
+        user = User.objects.filter(email=login_id.lower()).first()
+        if user:
             logger.info(f"LoginView: found user by email: {user.email}")
-        except User.DoesNotExist:
-            pass
-
+            
         if user is None:
-            try:
-                user = User.objects.get(username=login_id)
+            user = User.objects.filter(username=login_id).first()
+            if user:
                 logger.info(f"LoginView: found user by username: {user.username}")
-            except User.DoesNotExist:
-                pass
 
         if user is None:
             logger.warning(f"LoginView: no user found for {login_id}")
@@ -213,6 +208,10 @@ class VerifyOTPView(APIView):
         if not all([email, code, purpose]):
             return Response({'error': 'email, code, and purpose are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Development OTP Bypass
+        if settings.DEBUG and code == '123456':
+            return Response({'message': 'OTP verified.', 'verified': True}, status=status.HTTP_200_OK)
+
         # NOTE: djongo has known bugs with:
         #  1. ORDER BY  → use Python sort instead of .latest()
         #  2. Boolean field filters (is_used=False) → filter in Python
@@ -252,20 +251,23 @@ class RegisterWithOTPView(APIView):
         email = request.data.get('email', '').strip().lower()
         code = request.data.get('code', '').strip()
 
-        # Re-verify OTP before creating account
-        # NOTE: djongo boolean filter bug — fetch by email+code+purpose, filter is_used in Python
-        all_otps = list(OTPCode.objects.filter(email=email, code=code, purpose=OTPCode.PURPOSE_REGISTER))
-        logger.info(f"RegisterWithOTP: total OTPs found for {email}: {len(all_otps)}")
+        is_debug_bypass = settings.DEBUG and code == '123456'
 
-        candidates = [o for o in all_otps if not o.is_used]
-        if not candidates:
-            logger.warning(f"RegisterWithOTP: no unused OTP for email={email}")
-            return Response({'error': 'Invalid or expired verification code.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not is_debug_bypass:
+            # Re-verify OTP before creating account
+            # NOTE: djongo boolean filter bug — fetch by email+code+purpose, filter is_used in Python
+            all_otps = list(OTPCode.objects.filter(email=email, code=code, purpose=OTPCode.PURPOSE_REGISTER))
+            logger.info(f"RegisterWithOTP: total OTPs found for {email}: {len(all_otps)}")
 
-        otp = sorted(candidates, key=lambda x: x.created_at, reverse=True)[0]
+            candidates = [o for o in all_otps if not o.is_used]
+            if not candidates:
+                logger.warning(f"RegisterWithOTP: no unused OTP for email={email}")
+                return Response({'error': 'Invalid or expired verification code.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not otp.is_valid():
-            return Response({'error': 'Code expired. Please register again.'}, status=status.HTTP_400_BAD_REQUEST)
+            otp = sorted(candidates, key=lambda x: x.created_at, reverse=True)[0]
+
+            if not otp.is_valid():
+                return Response({'error': 'Code expired. Please register again.'}, status=status.HTTP_400_BAD_REQUEST)
 
         ALLOWED_ROLES = ['CUSTOMER', 'VENDOR', 'SUB_ADMIN', 'DELIVERY', 'ADMIN', 'SUPER_ADMIN']
         role = request.data.get('role', 'CUSTOMER').upper()
@@ -289,12 +291,25 @@ class RegisterWithOTPView(APIView):
             logger.info(f"RegisterWithOTP: password hash = {user.password[:40] if user.password else 'EMPTY!'}")
             logger.info(f"RegisterWithOTP: check_password = {user.check_password(raw_password)}")
 
+            # Create VendorProfile if registering as a VENDOR
+            if role == 'VENDOR':
+                from apps.vendors.models import VendorProfile
+                VendorProfile.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'store_name': user.first_name or f"{user.username}'s Store",
+                        'store_description': "Welcome to our store!",
+                        'status': 'pending'
+                    }
+                )
+
             # Build JWT tokens manually (bypass djongo bugs)
             refresh = RefreshToken()
             refresh['user_id'] = str(user.email)
 
-            otp.is_used = True
-            otp.save()
+            if not is_debug_bypass:
+                otp.is_used = True
+                otp.save()
             
             serializer = UserSerializer(user)
             return Response({
@@ -362,6 +377,19 @@ class RegisterView(generics.CreateAPIView):
                 address=request.data.get('address', ''),
                 role=role,
             )
+
+            # Create VendorProfile if registering as a VENDOR
+            if role == 'VENDOR':
+                from apps.vendors.models import VendorProfile
+                VendorProfile.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'store_name': user.first_name or f"{user.username}'s Store",
+                        'store_description': "Welcome to our store!",
+                        'status': 'pending'
+                    }
+                )
+
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:

@@ -31,10 +31,23 @@ class UserViewSet(viewsets.ModelViewSet):
         # Sort by date_joined descending (Python side for Djongo compatibility)
         qs.sort(key=lambda u: u.date_joined, reverse=True)
 
-        # Role filter
+        # Role filter (supporting comma-separated values and spelling variations)
         role = self.request.query_params.get('role', '')
         if role:
-            qs = [u for u in qs if u.role == role]
+            role_list = []
+            for r in role.split(','):
+                r_cleaned = r.strip().upper()
+                if not r_cleaned:
+                    continue
+                role_list.append(r_cleaned)
+                # Ensure underscored and non-underscored variants are included
+                if 'ADMIN' in r_cleaned:
+                    if '_' in r_cleaned:
+                        role_list.append(r_cleaned.replace('_', ''))
+                    else:
+                        if r_cleaned == 'SUPERADMIN': role_list.append('SUPER_ADMIN')
+                        if r_cleaned == 'SUBADMIN': role_list.append('SUB_ADMIN')
+            qs = [u for u in qs if str(getattr(u, 'role', '')).upper() in role_list]
 
         # Search filter (name or email)
         search = self.request.query_params.get('search', '').strip().lower()
@@ -108,9 +121,9 @@ class UserViewSet(viewsets.ModelViewSet):
         """Return role-wise user counts."""
         all_users = list(User.objects.all())
         total = len(all_users)
-        customers = sum(1 for u in all_users if getattr(u, 'role', '') == 'CUSTOMER')
-        vendors = sum(1 for u in all_users if getattr(u, 'role', '') == 'VENDOR')
-        admins = sum(1 for u in all_users if getattr(u, 'role', '') in ('SUPER_ADMIN', 'SUB_ADMIN', 'ADMIN'))
+        customers = sum(1 for u in all_users if str(getattr(u, 'role', '')).upper() == 'CUSTOMER')
+        vendors = sum(1 for u in all_users if str(getattr(u, 'role', '')).upper() == 'VENDOR')
+        admins = sum(1 for u in all_users if str(getattr(u, 'role', '')).upper() in ('SUPER_ADMIN', 'SUPERADMIN', 'SUB_ADMIN', 'SUBADMIN', 'ADMIN'))
         return Response({
             'total': total,
             'customers': customers,

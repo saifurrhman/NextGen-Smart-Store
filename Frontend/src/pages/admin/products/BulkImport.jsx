@@ -132,6 +132,7 @@ const BulkImport = () => {
             clearInterval(interval);
             setProgress(100);
             setResults(res.data);
+            setErrors(res.data.errors || []);
             setStep(4);
         } catch (err) {
             clearInterval(interval);
@@ -371,7 +372,7 @@ const BulkImport = () => {
 
     // ─── STEP 4: Complete ───────────────────────────────────
     const renderComplete = () => {
-        const hasErrors = errors.length > 0;
+        const hasErrors = errors.length > 0 || (results?.failed > 0);
         return (
             <div className="space-y-6">
                 <div className={`rounded-2xl p-6 flex items-start gap-4 ${hasErrors ? 'bg-amber-50 border border-amber-100' : 'bg-emerald-50 border border-emerald-100'}`}>

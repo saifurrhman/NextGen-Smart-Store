@@ -42,7 +42,7 @@ class ChatSession(models.Model):
         ('active', 'Active'),
         ('closed', 'Closed'),
     ]
-    customer_name = models.CharField(max_length=255) # For guests
+    customer_name = models.CharField(max_length=255, blank=True, default='') # For guests
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='chat_sessions')
     topic = models.CharField(max_length=255)
     agent = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='agent_sessions')

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Flag, Search, Download as ExportIcon, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight, ChevronDown, FileText } from 'lucide-react';
+import { Flag, Search, Download as ExportIcon, Plus, MoreVertical, Edit2, Trash2, ChevronLeft, ChevronRight, ChevronDown, FileText, CheckCircle2 } from 'lucide-react';
 import api from '../../../utils/api';
 import { exportToExcel, exportToPDF, exportToCSV } from '../../../utils/exportUtils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,9 +18,19 @@ const Campaigns = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedCampaign, setSelectedCampaign] = useState(null);
+    const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
+    const [selectedIntegration, setSelectedIntegration] = useState(null);
+    const [integrationForm, setIntegrationForm] = useState({ accountId: '', accessToken: '' });
+    const [connectedPlatforms, setConnectedPlatforms] = useState({
+        meta: localStorage.getItem('meta_connected') === 'true',
+        google: localStorage.getItem('google_connected') === 'true',
+        tiktok: localStorage.getItem('tiktok_connected') === 'true',
+    });
+
     const [formData, setFormData] = useState({
         name: '',
         status: 'scheduled',
+        platform: 'facebook',
         budget: '',
         spent: '0',
         start_date: '',
@@ -31,6 +41,7 @@ const Campaigns = () => {
         setFormData({
             name: '',
             status: 'scheduled',
+            platform: 'facebook',
             budget: '',
             spent: '0',
             start_date: '',
@@ -49,6 +60,7 @@ const Campaigns = () => {
         setFormData({
             name: campaign.name,
             status: campaign.status,
+            platform: campaign.platform || 'facebook',
             budget: campaign.budget,
             spent: campaign.spent,
             start_date: campaign.start_date,
@@ -130,9 +142,32 @@ const Campaigns = () => {
         setPage(1);
     };
 
+    const handleConnectPlatform = (platformId) => {
+        setSelectedIntegration(platformId);
+        setIntegrationForm({ accountId: '', accessToken: '' });
+        setIsIntegrationModalOpen(true);
+    };
+
+    const handleSaveIntegration = (e) => {
+        e.preventDefault();
+        // Save to local storage for persistence
+        localStorage.setItem(`${selectedIntegration}_connected`, 'true');
+        setConnectedPlatforms(prev => ({ ...prev, [selectedIntegration]: true }));
+        setIsIntegrationModalOpen(false);
+        alert(`Successfully connected to ${selectedIntegration.toUpperCase()}!`);
+    };
+
+    const handleDisconnectPlatform = (platformId) => {
+        if(window.confirm('Are you sure you want to disconnect this platform?')) {
+            localStorage.setItem(`${platformId}_connected`, 'false');
+            setConnectedPlatforms(prev => ({ ...prev, [platformId]: false }));
+        }
+    };
+
     const handleExportExcel = () => {
         const dataToExport = campaigns.map(c => ({
             "Campaign Name": c.name,
+            "Platform": c.platform,
             "Status": c.status,
             "Budget": c.budget,
             "Spent": c.spent,
@@ -180,10 +215,30 @@ const Campaigns = () => {
                 { label: 'Scheduled', value: 'scheduled' },
                 { label: 'Ended', value: 'ended' },
             ]
+        },
+        {
+            key: 'platform',
+            label: 'Platform',
+            options: [
+                { label: 'All Platforms', value: '' },
+                { label: 'Facebook', value: 'facebook' },
+                { label: 'Instagram', value: 'instagram' },
+                { label: 'Google Ads', value: 'google' },
+            ]
         }
     ];
 
     const totalPages = Math.ceil(pagination.count / 10);
+
+    const getPlatformIcon = (platform) => {
+        switch (platform) {
+            case 'facebook': return <div className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-[10px]">FB</div>;
+            case 'instagram': return <div className="w-6 h-6 rounded bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white flex items-center justify-center font-bold text-[10px]">IG</div>;
+            case 'google': return <div className="w-6 h-6 rounded bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-[10px] shadow-sm"><span className="text-blue-500">G</span></div>;
+            case 'tiktok': return <div className="w-6 h-6 rounded bg-black text-white flex items-center justify-center font-bold text-[10px]">TK</div>;
+            default: return <div className="w-6 h-6 rounded bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-[10px]">?</div>;
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -264,6 +319,44 @@ const Campaigns = () => {
                 </div>
             </div>
 
+            {/* Ad Integrations Header */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                    { id: 'meta', name: 'Meta Ads (Facebook & IG)', connected: connectedPlatforms.meta, bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700', icon: 'FB/IG' },
+                    { id: 'google', name: 'Google Ads', connected: connectedPlatforms.google, bg: 'bg-green-50', border: 'border-green-100', text: 'text-green-700', icon: 'GAds' },
+                    { id: 'tiktok', name: 'TikTok Ads', connected: connectedPlatforms.tiktok, bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-500', icon: 'TK' },
+                ].map((ad, i) => (
+                    <div key={i} className={`p-4 rounded-xl border ${ad.border} ${ad.bg} flex items-center justify-between`}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center font-black text-xs text-gray-700">
+                                {ad.icon}
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-800">{ad.name}</h4>
+                                <p className={`text-xs font-semibold flex items-center gap-1 ${ad.connected ? ad.text : 'text-gray-400'}`}>
+                                    {ad.connected ? <><CheckCircle2 size={12} /> Connected</> : 'Not Connected'}
+                                </p>
+                            </div>
+                        </div>
+                        {ad.connected ? (
+                            <button 
+                                onClick={() => handleDisconnectPlatform(ad.id)}
+                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-red-500 hover:bg-red-50 transition-colors shadow-sm"
+                            >
+                                Disconnect
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={() => handleConnectPlatform(ad.id)}
+                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                Connect
+                            </button>
+                        )}
+                    </div>
+                ))}
+            </div>
+
             {/* Main Content Area */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 
@@ -292,12 +385,13 @@ const Campaigns = () => {
                     <table className="w-full text-sm text-left">
                         <thead className="bg-[#eaf4f0] text-emerald-800 font-bold tracking-wider">
                             <tr>
+                                <th className="px-6 py-3">Platform</th>
                                 <th className="px-6 py-3">Campaign Name</th>
                                 <th className="px-6 py-3">Status</th>
+                                <th className="px-6 py-3">Performance</th>
                                 <th className="px-6 py-3">Budget</th>
                                 <th className="px-6 py-3">Spent</th>
-                                <th className="px-6 py-3">Start Date</th>
-                                <th className="px-6 py-3">End Date</th>
+                                <th className="px-6 py-3">Dates</th>
                                 <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -311,6 +405,9 @@ const Campaigns = () => {
                             ) : campaigns.length > 0 ? (
                                 campaigns.map((campaign) => (
                                     <tr key={campaign.id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            {getPlatformIcon(campaign.platform || 'facebook')}
+                                        </td>
                                         <td className="px-6 py-4 font-medium text-gray-900">{campaign.name}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${campaign.status === 'active' ? 'bg-green-50 text-green-700' :
@@ -322,10 +419,18 @@ const Campaigns = () => {
                                                 {campaign.status}
                                             </span>
                                         </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-gray-500"><span className="font-bold text-gray-800">{campaign.clicks || 0}</span> Clicks</span>
+                                                <span className="text-xs text-gray-500"><span className="font-bold text-gray-800">{campaign.impressions || 0}</span> Imp.</span>
+                                            </div>
+                                        </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">PKR {Number(campaign.budget).toLocaleString()}</td>
                                         <td className="px-6 py-4 text-emerald-600 font-bold">PKR {Number(campaign.spent).toLocaleString()}</td>
-                                        <td className="px-6 py-4 text-gray-500 text-xs">{campaign.start_date}</td>
-                                        <td className="px-6 py-4 text-gray-900 font-bold">{campaign.end_date}</td>
+                                        <td className="px-6 py-4 text-gray-500 text-xs flex flex-col">
+                                            <span>{campaign.start_date}</span>
+                                            <span className="text-gray-400">to {campaign.end_date}</span>
+                                        </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
@@ -419,6 +524,36 @@ const Campaigns = () => {
                             </div>
 
                             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Platform</label>
+                                        <select
+                                            name="platform"
+                                            value={formData.platform}
+                                            onChange={handleFormChange}
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-medium"
+                                        >
+                                            <option value="facebook">Facebook Ads</option>
+                                            <option value="instagram">Instagram Ads</option>
+                                            <option value="google">Google Ads</option>
+                                            <option value="tiktok">TikTok Ads</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
+                                        <select
+                                            name="status"
+                                            value={formData.status}
+                                            onChange={handleFormChange}
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-medium"
+                                        >
+                                            <option value="active">Active</option>
+                                            <option value="scheduled">Scheduled</option>
+                                            <option value="ended">Ended</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Campaign Name</label>
                                     <input
@@ -434,19 +569,6 @@ const Campaigns = () => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
-                                        <select
-                                            name="status"
-                                            value={formData.status}
-                                            onChange={handleFormChange}
-                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-medium"
-                                        >
-                                            <option value="active">Active</option>
-                                            <option value="scheduled">Scheduled</option>
-                                            <option value="ended">Ended</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Budget (PKR)</label>
                                         <input
                                             type="number"
@@ -458,6 +580,18 @@ const Campaigns = () => {
                                             placeholder="50000"
                                         />
                                     </div>
+                                    {isEditing && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-gray-500 uppercase">Spent (PKR)</label>
+                                            <input
+                                                type="number"
+                                                name="spent"
+                                                value={formData.spent}
+                                                onChange={handleFormChange}
+                                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-medium"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -498,6 +632,84 @@ const Campaigns = () => {
                                         className="px-6 py-2.5 bg-brand text-white rounded-xl text-sm font-bold hover:bg-brand-dark transition-all shadow-lg shadow-brand/20 font-bold"
                                     >
                                         {isEditing ? 'Save Changes' : 'Create Campaign'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Integration Modal */}
+            <AnimatePresence>
+                {isIntegrationModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 text-left">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsIntegrationModalOpen(false)}
+                            className="absolute inset-0 bg-brand-dark/20 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden"
+                        >
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                <h3 className="text-lg font-bold text-gray-800 capitalize">
+                                    Connect {selectedIntegration} Ads
+                               </h3>
+                                <button
+                                    onClick={() => setIsIntegrationModalOpen(false)}
+                                    className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                                >
+                                    <Plus size={20} className="rotate-45 text-gray-500" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSaveIntegration} className="p-6 space-y-4">
+                                <p className="text-sm text-gray-500 pb-2">
+                                    Enter your API credentials to securely connect your {selectedIntegration} ad account.
+                                </p>
+                                
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Account / Business ID</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={integrationForm.accountId}
+                                        onChange={(e) => setIntegrationForm({...integrationForm, accountId: e.target.value})}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-medium"
+                                        placeholder={`e.g. ${selectedIntegration === 'meta' ? '1023948573' : 'AW-123456789'}`}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Access Token / API Key</label>
+                                    <input
+                                        type="password"
+                                        required
+                                        value={integrationForm.accessToken}
+                                        onChange={(e) => setIntegrationForm({...integrationForm, accessToken: e.target.value})}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-medium"
+                                        placeholder="Enter your secret token"
+                                    />
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsIntegrationModalOpen(false)}
+                                        className="px-6 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-6 py-2.5 bg-brand text-white rounded-xl text-sm font-bold hover:bg-brand-dark transition-all shadow-lg shadow-brand/20"
+                                    >
+                                        Connect Account
                                     </button>
                                 </div>
                             </form>
